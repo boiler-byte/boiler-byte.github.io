@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Boilers Room · Repo Übersicht</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     /* ---------- GLOBAL RESET & VARIABLES ---------- */
     * {
@@ -14,6 +11,30 @@
       padding: 0;
       box-sizing: border-box;
     }
+
+
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(fonts/SpaceGrotesk-VariableFont_wght.ttf) format('woff2');
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(fonts/SpaceGrotesk-VariableFont_wght.ttf) format('woff2');
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(fonts/SpaceGrotesk-VariableFont_wght.ttf) format('woff2');
+}
+
 
     :root {
       --bg-deep: #0a0a0c;
@@ -61,7 +82,7 @@
       --card-bg: rgba(18, 20, 24, 0.8);
       --card-radius: 12px;
       --transition-smooth: 0.25s cubic-bezier(0.2, 0, 0, 1);
-      --font-serif: 'Playfair Display', 'Cormorant', Georgia, serif;
+      --font-serif: 'Space Grotesk', 'Cormorant', Georgia, serif;
       --font-mono: 'Space Grotesk', 'SF Mono', 'Fira Code', monospace;
     }
 
@@ -133,7 +154,7 @@
     .hero h1 {
       font-size: clamp(2.8rem, 10vw, 5.5rem);
       line-height: 1.1;
-      color: #fff;
+      color: #91822b9c;
       font-weight: 700;
       text-shadow: 0 0 30px rgba(255, 123, 44, 0.3), 0 0 60px rgba(44, 212, 255, 0.15);
       max-width: 900px;
@@ -164,6 +185,7 @@
       user-select: none;
       line-height: 1;
       z-index: -1;
+      text-shadow: 0px 0px 39px #91822b25;
     }
 
     /* ---------- FILTER BAR (STICKY) ---------- */
@@ -594,14 +616,16 @@
       outline: 2px solid var(--cyan-base);
       outline-offset: 3px;
     }
+
+    #searchClear { display:none}
   </style>
 </head>
 <body>
   <div class="container">
     <header class="hero">
-      <h1>Boiler Room</h1>
+      <h1>der Boiler Room</h1>
       <p class="claim">Eine kuratierte Sammlung von Tools, Games &amp; Experimenten — direkt aus dem Maschinenraum.</p>
-      <span class="watermark" aria-hidden="true">BYTE</span>
+      <span class="watermark" aria-hidden="true">db</span>
     </header>
 
     <!-- STICKY FILTER + SEARCH -->
@@ -634,7 +658,7 @@
         <a href="https://github.com/boiler-byte" target="_blank" rel="noopener">GitHub</a>
       </div>
       <div class="footer-credits">
-        <span>© 2025 Boilers Byte Room · mit ⚡ &amp; Koffein</span>
+        <span>© 2025 Boiler-Byte · mit <span style="color: #0cb34c;">☮</span> &amp; Teein</span>
       </div>
     </div>
   </footer>
