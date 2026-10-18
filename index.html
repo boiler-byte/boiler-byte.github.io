@@ -262,7 +262,7 @@
     /* ---------- SUCHE ---------- */
     .search-wrap {
       position: relative;
-      flex: 0 1 320px;
+      flex: 0 1 220px;
       min-width: 220px;
     }
 
@@ -646,7 +646,7 @@
             type="search"
             class="search-input"
             id="searchInput"
-            placeholder="Suchen… (Name, Tag, Beschreibung)"
+            placeholder="Suchen…"
             aria-label="Repos durchsuchen"
             autocomplete="off"
           >
@@ -682,8 +682,8 @@
       const types = {
         game: { label: 'Games', color: 'orange' },
         tool: { label: 'Tools', color: 'cyan' },
-        music: { label: 'Music', color: 'violet' },
-        misc: { label: 'Misc', color: 'pink' },
+        // music: { label: 'Music', color: 'violet' },
+        misc: { label: 'Misc', color: 'green' },
         // orange: { label: 'Orange' },   // z.B. Games / Action
         // cyan:   { label: 'Cyan'   },   // z.B. Tools / Utilities
         // violet: { label: 'Violet' },   // z.B. Experiments / Art
@@ -718,18 +718,18 @@
             tags: ['Gedächtnistraining', 'Mobil']
         },
         {
-            label: "Typeshooter",
-            img: 'img/typeshooter.png',
-            description: 'Schieß die tödlichen Wörter ab.',
+            label: "Sudoku",
+            img: 'img/sudoku.png',
+            description: 'Ein simples Sudoku.',
             type: 'game',
-            url: 'https://boiler-byte.github.io/Typeshooter/',
+            url: 'https://boiler-byte.github.io/Sudoku/',
             year: 2026,
-            tags: ['Speed Typing', 'High-Score']
+            tags: ['Mobile', 'Riddle']
         },
         {
             label: "Snake",
             img: 'img/snake.png',
-            description: 'Snake, wie man es liebt.',
+            description: 'Snake, wie man es liebt. Mit smarter Touchsteuerung an den Ecken.',
             type: 'game',
             url: 'https://boiler-byte.github.io/Snake/',
             year: 2026,
@@ -755,13 +755,13 @@
             featured: 'wide'
         },
         {
-            label: "Sudoku",
-            img: 'img/sudoku.png',
-            description: 'Ein simples Sudoku.',
+            label: "Typeshooter",
+            img: 'img/typeshooter.png',
+            description: 'Schieß die tödlichen Wörter ab.',
             type: 'game',
-            url: 'https://boiler-byte.github.io/Sudoku/',
+            url: 'https://boiler-byte.github.io/Typeshooter/',
             year: 2026,
-            tags: ['Mobile', 'Riddle']
+            tags: ['Speed Typing', 'High-Score']
         },
         {
             label: "Dame",
@@ -776,7 +776,7 @@
             label: "Synthesizer",
             img: 'img/synthesizer.jpg',
             description: 'Einfacher Synthesizer für unterwegs.',
-            type: 'music',
+            type: 'tool',
             url: 'https://boiler-byte.github.io/Synthesizer/',
             year: 2026,
             tags: ['Mobile', 'Keyboard']
@@ -785,7 +785,7 @@
             label: "Drums",
             img: 'img/drums.jpg',
             description: 'Einfaches HTML-Schlagzeug für unterwegs.',
-            type: 'music',
+            type: 'tool',
             url: 'https://boiler-byte.github.io/Drums/',
             year: 2026,
             tags: ['Mobile', 'Drumpad']
