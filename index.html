@@ -676,6 +676,7 @@
         game: { label: 'Games', color: 'orange' },
         tool: { label: 'Tools', color: 'cyan' },
         music: { label: 'Music', color: 'violet' },
+        misc: { label: 'Misc', color: 'pink' },
         // orange: { label: 'Orange' },   // z.B. Games / Action
         // cyan:   { label: 'Cyan'   },   // z.B. Tools / Utilities
         // violet: { label: 'Violet' },   // z.B. Experiments / Art
@@ -693,14 +694,21 @@
       // (nicht gesetzt / false) -> normale Kachel
       const repos = [
         {
+            label: "PWA",
+            img: 'img/pwa.png',
+            description: 'Alle Apps können als PWA über das Browser-Menü installiert und im Vollbild genutzt werden.',
+            type: 'misc',
+            tags: ['Gedächtnistraining', 'Mobil'],
+            featured: 'tall', //wide,tall
+        },
+        {
             label: "Memory",
             img: 'img/memory.webp',
             description: 'Das gute, alte Memory mit Custom Themes.',
             type: 'game',
             url: 'https://boiler-byte.github.io/Memory/',
             year: 2026,
-            tags: ['Gedächtnistraining', 'Mobil'],
-            featured: 'tall', //wide,tall
+            tags: ['Gedächtnistraining', 'Mobil']
         },
         {
             label: "Typeshooter",
