@@ -922,14 +922,18 @@ footer {
 }
 
 /* ---------- FOCUS ---------- */
-.chip:focus-visible,
 .card:focus-within,
 .search-input:focus-visible,
-.view-btn:focus-visible,
 a:focus-visible {
-  outline: 2px solid var(--cyan-base);
-  outline-offset: 3px;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(44, 212, 255, 0.85),
+              0 0 16px var(--cyan-dim);
 }
+
+/* Maus-Klick: keinen Fokusring zeigen, nur Tastatur */
+.chip:focus:not(:focus-visible) { outline: none; box-shadow: none; }
+.chip:focus { outline: none; box-shadow: none; }
+.chip:focus-visible { box-shadow: 0 0 0 2px rgba(44, 212, 255, 0.85); }
 
 /* #searchClear { display:none} */
 /* Natives Clear-X von type="search" ausblenden */
