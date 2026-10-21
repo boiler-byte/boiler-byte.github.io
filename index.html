@@ -931,7 +931,19 @@ a:focus-visible {
   outline-offset: 3px;
 }
 
-#searchClear { display:none}
+/* #searchClear { display:none} */
+/* Natives Clear-X von type="search" ausblenden */
+.search-input::-webkit-search-cancel-button,
+.search-input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+/* Firefox/andere: gar keinen Dekorations-Button */
+.search-input::-moz-search-cancel-button {
+  display: none;
+}
 
 .view-icons, .view-list {
   [data-label="Android Vollbild"], [data-label="Android Vollbild"] { display: none;}
@@ -1679,6 +1691,17 @@ a:focus-visible {
           clearTimeout(debounceTimer);
           debounceTimer = setTimeout(() => {
             activeSearch = val.trim();
+
+            //Bei aktiver Suche auf "Alle" wechseln
+            if (activeSearch.length > 0 && activeFilter !== 'all') {
+              activeFilter = 'all';
+              document.querySelectorAll('.chip').forEach(c => {
+                const isAll = c.dataset.type === 'all';
+                c.classList.toggle('active', isAll);
+                c.setAttribute('aria-pressed', isAll ? 'true' : 'false');
+              });
+            }
+
             repoGrid.style.opacity = '0.3';
             setTimeout(() => {
               renderRepos();
