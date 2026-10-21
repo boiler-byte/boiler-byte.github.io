@@ -247,6 +247,7 @@ h1, h2, h3 {
   text-transform: uppercase;
 }
 
+
 .chip:hover {
   color: #fff;
   border-color: rgba(255, 255, 255, 0.25);
@@ -256,7 +257,7 @@ h1, h2, h3 {
 .chip.active {
   color: #fff;
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.7);
   box-shadow: 0 0 16px rgba(255, 255, 255, 0.1);
 }
 
@@ -267,6 +268,27 @@ h1, h2, h3 {
 .chip[data-type="green"].active  { border-color: var(--green-base);  box-shadow: 0 0 20px var(--green-dim); }
 .chip[data-type="pink"].active   { border-color: var(--pink-base);   box-shadow: 0 0 20px var(--pink-dim); }
 .chip[data-type="gold"].active   { border-color: var(--gold-base);   box-shadow: 0 0 20px var(--gold-dim); }
+
+/* NEU: Favoriten-Chip */
+.chip[data-type="favorites"] {
+  position: relative;
+}
+.chip[data-type="favorites"].active {
+  border-color: var(--gold-base);
+  box-shadow: 0 0 20px var(--gold-dim);
+  color: var(--gold-base);
+}
+.chip[data-type="favorites"] .fav-count {
+  display: inline-block;
+  margin-left: 0.4rem;
+  font-size: 0.5rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 10px;
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--gold-base);
+  border: 1px solid var(--gold-border);
+  vertical-align: middle;
+}
 
 /* ---------- SUCHE ---------- */
 .search-wrap {
@@ -443,6 +465,72 @@ h1, h2, h3 {
   z-index: 3;
 }
 
+/* NEU: Favoriten-Stern */
+.fav-btn {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.6rem;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(10, 10, 12, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 5;
+  transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.fav-btn:hover {
+  /* color: var(--gold-base); */
+  border-color: var(--gold-border);
+  background: rgba(10, 10, 12, 0.92);
+  transform: scale(1.08);
+  box-shadow: 0 0 14px var(--gold-dim);
+}
+
+.fav-btn:focus-visible {
+  outline: 2px solid var(--gold-base);
+  outline-offset: 2px;
+}
+
+.fav-btn.is-fav {
+  color: var(--gold-base);
+  border-color: var(--gold-border);
+  box-shadow: 0 0 14px var(--gold-dim);
+  background: rgba(30, 24, 8, 0.85);
+}
+
+.fav-btn.is-fav svg {
+  fill: var(--gold-base);
+  filter: drop-shadow(0 0 4px var(--gold-dim));
+}
+
+@keyframes favPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.35); }
+  70%  { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+
+.fav-btn.pop { animation: favPop 0.4s cubic-bezier(0.2, 0, 0, 1); }
+
+.fav-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  display: block;
+  pointer-events: none;
+}
+
 .card-content {
   padding: 1.4rem 1.4rem 1.6rem;
   display: flex;
@@ -581,6 +669,19 @@ footer {
 }
 
 /* ---------- RESPONSIVE ---------- */
+@media (max-width: 620px) {
+
+  .filter-chips { gap: 0.5rem; margin: auto; }
+  .search-wrap { margin: auto; }
+  .chip {
+    font-size: 1.2rem;
+    font-weight: 400;
+    padding: 0.5rem 0.8rem;
+  }
+  .chip>.text { display: none; }
+  .chip>.label {font-size:0.8rem;}
+}
+
 @media (min-width: 640px) {
   .grid { grid-template-columns: repeat(2, 1fr); }
 
@@ -675,7 +776,7 @@ a:focus-visible {
         <a href="https://github.com/boiler-byte" target="_blank" rel="noopener">GitHub</a>
       </div>
       <div class="footer-credits">
-        <span>© 2026 Boiler-Byte · mit <span style="color: #0cb34c;">☮</span> &amp; Teein</span>
+        <span>© 2026 Boiler · mit <span style="color: #0cb34c;">☮</span> &amp; Teein</span>
       </div>
     </div>
   </footer>
@@ -687,13 +788,13 @@ a:focus-visible {
       // ======================================================
       // DATENMODELL
       // ======================================================
-      // Types sind jetzt nach FARBEN benannt (statt game/tool/misc).
-      // Die Keys entsprechen den CSS-Variablen: --{key}-base, --{key}-dim, ...
+      // 🗂️ Alle
+      // ⭐ Favoriten
       const types = {
-        game: { label: 'Games', color: 'orange' },
-        tool: { label: 'Tools', color: 'cyan' },
+        game: { label: 'Games', symbol: '🕹️', color: 'orange' },
+        tool: { label: 'Tools', symbol: '🔧', color: 'cyan' },
         // music: { label: 'Music', color: 'violet' },
-        misc: { label: 'Misc', color: 'green' },
+        misc: { label: 'Misc', symbol: '🔖', color: 'green' },
         // orange: { label: 'Orange' },   // z.B. Games / Action
         // cyan:   { label: 'Cyan'   },   // z.B. Tools / Utilities
         // violet: { label: 'Violet' },   // z.B. Experiments / Art
@@ -703,12 +804,8 @@ a:focus-visible {
       };
 
       // ======================================================
-      // REPOS (Beispieldaten mit verschiedenen Featured-Größen)
+      // REPOS
       // ======================================================
-      // featured: true         -> 2x2 (große Kachel)
-      // featured: "wide"       -> 2x1 (breite Kachel)
-      // featured: "tall"       -> 1x2 (hohe Kachel)
-      // (nicht gesetzt / false) -> normale Kachel
       const repos = [
         {
             label: "Android Vollbild",
@@ -837,8 +934,106 @@ a:focus-visible {
             year: 2026,
             tags: ['Bildbearbeitung', 'Thumbmaker']
         },
+
         
+        {
+            label: "QRCode",
+            img: 'img/qrcode.png',
+            description: 'QR Codes erstellen, scannen und verwalten.',
+            type: 'tool',
+            url: 'https://boiler-byte.github.io/QRCode/',
+            year: 2026,
+            tags: ['WLAN', 'Links', 'Texte', 'SMS']
+        },
+        {
+            label: "Wetter",
+            img: 'img/wetter.png',
+            description: 'Geklonte Wetter App mit öffentlicher API.',
+            type: 'tool',
+            url: 'https://boiler-byte.github.io/Wetter/',
+            year: 2026,
+            tags: ['API', 'Geo-Location']
+        },
+        {
+            label: "Authenticator",
+            img: 'img/authenticator.png',
+            description: 'Lokale Schlüssel, AES verschlüssel mit Import/Export, kann Google lesen.',
+            type: 'tool',
+            url: 'https://boiler-byte.github.io/Authenticator/',
+            year: 2026,
+            tags: ['Tresor', '2nd Factor']
+        },
+        {
+            label: "Clipwork",
+            img: 'img/clipwork.png',
+            description: 'Einfache Videobearbeitung.',
+            type: 'tool',
+            url: 'https://boiler-byte.github.io/Clipwork/',
+            year: 2026,
+            tags: ['Lokal', 'Mobil']
+        },
+        {
+            label: "Haushaltsdurchblick",
+            img: 'img/haushaltsdurchblick.png',
+            description: 'Überblick über das, was reinkommt, rausgeht und bleibt.',
+            type: 'tool',
+            url: 'https://boiler-byte.github.io/Haushaltsdurchblick/',
+            year: 2026,
+            tags: ['Budgets', 'Auswertungen']
+        },
       ];
+
+      // ======================================================
+      // FAVORITEN (localStorage)
+      // ======================================================
+      const FAV_KEY = 'boilerRoomFavorites';
+      let favorites = new Set();
+
+      // Fallback, falls localStorage nicht verfügbar ist
+      let storageOK = true;
+      try {
+        const testKey = '__boilerTest__';
+        localStorage.setItem(testKey, '1');
+        localStorage.removeItem(testKey);
+      } catch (e) {
+        storageOK = false;
+      }
+
+      function loadFavorites() {
+        if (!storageOK) return;
+        try {
+          const raw = localStorage.getItem(FAV_KEY);
+          if (!raw) return;
+          const arr = JSON.parse(raw);
+          if (Array.isArray(arr)) {
+            favorites = new Set(arr.filter(x => typeof x === 'string'));
+          }
+        } catch (e) {
+          console.warn('Favoriten konnten nicht geladen werden:', e);
+        }
+      }
+
+      function saveFavorites() {
+        if (!storageOK) return;
+        try {
+          localStorage.setItem(FAV_KEY, JSON.stringify(Array.from(favorites)));
+        } catch (e) {
+          console.warn('Favoriten konnten nicht gespeichert werden:', e);
+        }
+      }
+
+      function isFavorite(label) {
+        return favorites.has(label);
+      }
+
+      function toggleFavorite(label) {
+        if (favorites.has(label)) {
+          favorites.delete(label);
+        } else {
+          favorites.add(label);
+        }
+        saveFavorites();
+      }
 
       // ---------- DOM REFS ----------
       const filterChips  = document.getElementById('filterChips');
@@ -855,19 +1050,34 @@ a:focus-visible {
       function renderFilterChips() {
         const allChip = document.createElement('button');
         allChip.className = 'chip active';
-        allChip.textContent = 'Alle';
+        allChip.innerHTML = '<span class="label">Alle</span>';
         allChip.dataset.type = 'all';
         allChip.setAttribute('aria-pressed', 'true');
         filterChips.appendChild(allChip);
 
+        // Favoriten-Chip
+        const favChip = document.createElement('button');
+        favChip.className = 'chip';
+        favChip.dataset.type = 'favorites';
+        favChip.setAttribute('aria-pressed', 'false');
+        favChip.innerHTML = '⭐ <span class="text">Fav</span><span class="fav-count" id="favCount">0</span>';
+        filterChips.appendChild(favChip);
+
         Object.entries(types).forEach(([key, type]) => {
           const chip = document.createElement('button');
           chip.className = 'chip';
-          chip.textContent = type.label;
+          chip.innerHTML = type.symbol + ' <span class="text">' + type.label + '</span>';
           chip.dataset.type = key;
           chip.setAttribute('aria-pressed', 'false');
           filterChips.appendChild(chip);
         });
+
+        updateFavCount();
+      }
+
+      function updateFavCount() {
+        const el = document.getElementById('favCount');
+        if (el) el.textContent = String(favorites.size);
       }
 
       // ---------- SUCH-FILTER ----------
@@ -884,12 +1094,14 @@ a:focus-visible {
         return haystack.includes(q);
       }
 
+      // ---------- SVG-Stern ----------
+      const STAR_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.95 5.98 6.6.96-4.78 4.66 1.13 6.57L12 17.58l-5.9 3.09 1.13-6.57L2.45 9.44l6.6-.96L12 2.5z"/></svg>';
+
       // ---------- KARTEN ERZEUGEN ----------
       function createCard(repo, index) {
         const card = document.createElement('article');
         card.className = 'card';
 
-        // Featured-Klassen anhand des Werts
         if (repo.featured === true) {
           card.classList.add('featured');
         } else if (repo.featured === 'wide') {
@@ -899,17 +1111,16 @@ a:focus-visible {
         }
 
         card.dataset.type = repo.type;
+        card.dataset.label = repo.label;
         card.setAttribute('tabindex', '0');
         card.setAttribute('aria-label', `${repo.label} – ${repo.description}`);
 
-        // Farbvariablen setzen
         const t = types[repo.type].color;
         card.style.setProperty('--accent', `var(--${t}-base)`);
         card.style.setProperty('--accent-dim', `var(--${t}-dim)`);
         card.style.setProperty('--accent-glow', `var(--${t}-glow)`);
         card.style.setProperty('--accent-border', `var(--${t}-border)`);
 
-        // Stagger Delay
         card.style.transitionDelay = `${(index % 12) * 60}ms`;
 
         // Bild
@@ -928,6 +1139,53 @@ a:focus-visible {
         badge.className = 'type-badge';
         badge.textContent = types[repo.type]?.label || repo.type;
         imageDiv.appendChild(badge);
+
+        // NEU: Favoriten-Stern
+        const favBtn = document.createElement('button');
+        favBtn.type = 'button';
+        favBtn.className = 'fav-btn' + (isFavorite(repo.label) ? ' is-fav' : '');
+        favBtn.innerHTML = STAR_SVG;
+        favBtn.setAttribute('aria-pressed', isFavorite(repo.label) ? 'true' : 'false');
+        favBtn.setAttribute('aria-label',
+          (isFavorite(repo.label) ? 'Aus Favoriten entfernen: ' : 'Zu Favoriten hinzufügen: ') + repo.label
+        );
+        favBtn.title = isFavorite(repo.label) ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen';
+
+        favBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          toggleFavorite(repo.label);
+          const nowFav = isFavorite(repo.label);
+          favBtn.classList.toggle('is-fav', nowFav);
+          favBtn.setAttribute('aria-pressed', nowFav ? 'true' : 'false');
+          favBtn.setAttribute('aria-label',
+            (nowFav ? 'Aus Favoriten entfernen: ' : 'Zu Favoriten hinzufügen: ') + repo.label
+          );
+          favBtn.title = nowFav ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen';
+          favBtn.classList.remove('pop');
+          void favBtn.offsetWidth; // reflow, um Animation neu zu starten
+          favBtn.classList.add('pop');
+          updateFavCount();
+
+          // Wenn gerade der Favoriten-Filter aktiv ist und der Eintrag entfernt wurde,
+          // soll die Karte verschwinden.
+          if (activeFilter === 'favorites' && !nowFav) {
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+              renderRepos();
+            }, 220);
+          }
+        });
+
+        // Verhindert, dass der Stern das Karten-Keyboard-Event auslöst
+        favBtn.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.stopPropagation();
+          }
+        });
+
+        imageDiv.appendChild(favBtn);
 
         // Inhalt
         const content = document.createElement('div');
@@ -974,9 +1232,11 @@ a:focus-visible {
           card.style.cursor = 'pointer';
           card.addEventListener('click', (e) => {
             if (e.target.closest('a')) return;
+            if (e.target.closest('.fav-btn')) return; // Stern nicht als Link-Klick werten
             window.open(repo.url, '_blank', 'noopener,noreferrer');
           });
           card.addEventListener('keydown', (e) => {
+            if (e.target.closest('.fav-btn')) return;
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
               window.open(repo.url, '_blank', 'noopener,noreferrer');
@@ -987,12 +1247,19 @@ a:focus-visible {
         return card;
       }
 
-      // ---------- GRID RENDERN (mit Filter + Suche) ----------
+      // ---------- GRID RENDERN ----------
       function renderRepos() {
         repoGrid.innerHTML = '';
 
         const filtered = repos.filter(repo => {
-          const typeOk   = activeFilter === 'all' || repo.type === activeFilter;
+          let typeOk;
+          if (activeFilter === 'all') {
+            typeOk = true;
+          } else if (activeFilter === 'favorites') {
+            typeOk = isFavorite(repo.label);
+          } else {
+            typeOk = repo.type === activeFilter;
+          }
           const searchOk = matchesSearch(repo, activeSearch);
           return typeOk && searchOk;
         });
@@ -1000,7 +1267,11 @@ a:focus-visible {
         if (filtered.length === 0) {
           const empty = document.createElement('div');
           empty.className = 'empty-state';
-          empty.textContent = '— Keine Repos gefunden —';
+          if (activeFilter === 'favorites') {
+            empty.textContent = '— Noch keine Favoriten — markiere Projekte mit ★';
+          } else {
+            empty.textContent = '— Keine Repos gefunden —';
+          }
           repoGrid.appendChild(empty);
           return;
         }
@@ -1009,7 +1280,6 @@ a:focus-visible {
           repoGrid.appendChild(createCard(repo, i));
         });
 
-        // Reveal
         requestAnimationFrame(() => {
           document.querySelectorAll('.card').forEach((card, idx) => {
             setTimeout(() => {
@@ -1058,7 +1328,6 @@ a:focus-visible {
 
           activeFilter = chip.dataset.type;
 
-          // Sanftes Aus-/Einblenden
           repoGrid.style.opacity = '0.3';
           setTimeout(() => {
             renderRepos();
@@ -1094,7 +1363,6 @@ a:focus-visible {
           searchInput.focus();
         });
 
-        // ESC zum Leeren
         searchInput.addEventListener('keydown', (e) => {
           if (e.key === 'Escape' && searchInput.value) {
             e.preventDefault();
@@ -1105,6 +1373,7 @@ a:focus-visible {
 
       // ---------- INIT ----------
       function init() {
+        loadFavorites();
         renderFilterChips();
         renderRepos();
         setupFilters();
