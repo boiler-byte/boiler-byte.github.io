@@ -951,6 +951,24 @@ a:focus-visible {
   .card.featured-tall .card-content h3 { font-size: 0.8rem; }
   .card.featured .card-content h3 { font-size: 0.8rem; }
 } 
+
+/* Fokus durch Scroll-Mitte */
+.card.in-focus {
+  transform: translateY(-6px) scale(1.005);
+  border-color: var(--accent-glow, var(--orange-glow));
+  box-shadow: 0 12px 32px -8px var(--accent-dim, var(--orange-dim)),
+              0 0 0 1px var(--accent-glow, var(--orange-glow)),
+              0 0 28px var(--accent-glow, var(--orange-glow));
+}
+.card.in-focus::before { opacity: 1; }
+.card.in-focus .card-image img {
+  transform: scale(1.04);
+  filter: brightness(1) contrast(1.1);
+}
+.card.in-focus .card-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-12px);
+}
 </style>
 </head>
 <body>
@@ -1831,6 +1849,53 @@ a:focus-visible {
         });
       }
 
+      let focusObserver = null;
+      let focusedCard = null;
+
+      function setupFocusObserver() {
+        if (!window.matchMedia('(hover: none)').matches) return; // Desktop: aus
+        
+        // Nur in der Card-Ansicht sinnvoll
+        if (activeView !== 'cards') {
+          clearFocus();
+          if (focusObserver) { focusObserver.disconnect(); focusObserver = null; }
+          return;
+        }
+
+        if (focusObserver) focusObserver.disconnect();
+
+        focusObserver = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            const card = entry.target;
+            if (entry.isIntersecting) {
+              // Neue Karte im Fokus-Streifen
+              if (focusedCard && focusedCard !== card) {
+                focusedCard.classList.remove('in-focus');
+              }
+              focusedCard = card;
+              card.classList.add('in-focus');
+            } else if (focusedCard === card) {
+              card.classList.remove('in-focus');
+              focusedCard = null;
+            }
+          });
+        }, {
+          // Fokus-Streifen: obere und untere Grenze je ~40% vom Viewport
+          // => nur die mittleren ~20% zählen.
+          rootMargin: '-20% 0px -20% 0px',
+          threshold: 0
+        });
+
+        document.querySelectorAll('.card').forEach(c => focusObserver.observe(c));
+      }
+
+      function clearFocus() {
+        if (focusedCard) {
+          focusedCard.classList.remove('in-focus');
+          focusedCard = null;
+        }
+      }
+
       // ---------- INIT ----------
       function init() {
         loadFavorites();
@@ -1845,10 +1910,13 @@ a:focus-visible {
         setupSearch();
         setupViewSwitch();
         setupGridDnd();
+        setupFocusObserver();
 
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
           document.querySelectorAll('.card').forEach(c => c.classList.add('visible'));
         }
+
+        
       }
 
       init();
