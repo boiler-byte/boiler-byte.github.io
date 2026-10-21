@@ -350,6 +350,62 @@ h1, h2, h3 {
 .search-wrap.has-value .search-icon { display: none; }
 .search-wrap.has-value .search-clear { display: block; }
 
+/* ---------- VIEW DROPDOWN ---------- */
+.view-dropdown {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.view-select {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.55rem 1rem;
+  border-radius: 40px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: border-color var(--transition-smooth), box-shadow var(--transition-smooth);
+  /* background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%239aa3b2' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>"); */
+  background-repeat: no-repeat;
+  background-position: right 0.9rem center;
+
+  -webkit-appearance: none;-moz-appearance: none;appearance: none;
+  outline: none;
+}
+
+.view-select:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.view-select:focus {
+  outline: none;
+  border-color: var(--cyan-base);
+  box-shadow: 0 0 18px var(--cyan-dim);
+}
+
+/* Optionen (Browser-Styling begrenzt, aber Dark-Mode-freundlich) */
+.view-select option {
+  background: #14161a;
+  color: var(--text-muted);
+}
+
+/* Screenreader-only */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ---------- GRID ---------- */
 .grid {
   display: grid;
@@ -465,13 +521,44 @@ h1, h2, h3 {
   z-index: 3;
 }
 
+/* ---------- STATUS-BADGES ---------- */
+.status-badge {
+  position: absolute;
+  bottom: 0.6rem;
+  left: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.3rem 0.7rem;
+  border-radius: 20px;
+  background: rgba(10, 10, 12, 0.85);
+  backdrop-filter: blur(4px);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.status-badge.status-beta {
+  color: var(--gold-base);
+  border: 1px solid var(--gold-border);
+  box-shadow: 0 0 12px var(--gold-dim);
+}
+.status-badge.status-alpha {
+  color: var(--pink-base);
+  border: 1px solid var(--pink-border);
+  box-shadow: 0 0 12px var(--pink-dim);
+}
+
 /* NEU: Favoriten-Stern */
 .fav-btn {
   position: absolute;
-  top: 0.6rem;
-  left: 0.6rem;
   width: 38px;
   height: 38px;
+  top: 0.75rem;
+  left: 0.75rem;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.15);
   background: rgba(10, 10, 12, 0.75);
@@ -490,7 +577,6 @@ h1, h2, h3 {
 }
 
 .fav-btn:hover {
-  /* color: var(--gold-base); */
   border-color: var(--gold-border);
   background: rgba(10, 10, 12, 0.92);
   transform: scale(1.08);
@@ -668,11 +754,121 @@ footer {
   font-family: var(--font-mono);
 }
 
+/* ---------- LISTEN-ANSICHT ---------- */
+.grid.view-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-bottom: 3rem;
+}
+.view-list .card {
+  flex-direction: row;
+  align-items: center;
+  padding: 0;
+  transform: none !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  opacity: 1;
+}
+.view-list .card:hover {
+  transform: translateX(4px) !important;
+  box-shadow: 0 4px 16px -4px var(--accent-dim), 0 0 0 1px var(--accent-glow);
+}
+.view-list .card::before {
+  width: 3px;
+}
+.view-list .card-image,
+.view-list .card-tooltip {
+  display: none;
+}
+.view-list .card-content {
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  width: 100%;
+}
+.view-list .card-content h3 {
+  font-size: 1rem;
+  min-width: 160px;
+}
+.view-list .card-content .description { display: none; }
+.view-list .card-meta { margin-top: 0; margin-left: auto; }
+.view-list .type-badge,
+.view-list .status-badge {
+  position: static;
+  transform: none;
+  box-shadow: none;
+  flex-shrink: 0;
+}
+
+/* Grip / Drag-Handle */
+.drag-handle {
+  cursor: grab;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  padding: 0 0.5rem 0 0.75rem;
+  flex-shrink: 0;
+  user-select: none;
+  touch-action: none;
+  letter-spacing: -2px;
+}
+.drag-handle:active { cursor: grabbing; }
+.view-list .card.dragging { opacity: 0.4; }
+.view-list .card.drag-over { outline: 2px dashed var(--gold-base); }
+
+/* ---------- ICON-ANSICHT ---------- */
+.grid.view-icons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.75rem;
+}
+.view-icons .card {
+  transform: none !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  opacity: 1;
+}
+.view-icons .card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 6px 18px -4px var(--accent-dim), 0 0 0 1px var(--accent-glow);
+}
+.view-icons .card::before { width: 2px; }
+.view-icons .card-image,
+.view-icons .card-tooltip,
+.view-icons .card-meta,
+.view-icons .fav-btn { display: none; }
+.view-icons .card-content {
+  padding: 0.9rem 0.7rem;
+  align-items: center;
+  text-align: center;
+  gap: 0.35rem;
+}
+.view-icons .card-content h3 { font-size: 0.8rem; }
+.view-icons .card-content .description { display: none; }
+.view-icons .repo-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+.view-icons .type-badge,
+.view-icons .status-badge {
+  position: static;
+  transform: none;
+  font-size: 0.55rem;
+  padding: 0.15rem 0.4rem;
+  box-shadow: none;
+}
+
+/* Icon im Content (Card + Liste) */
+.repo-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
 /* ---------- RESPONSIVE ---------- */
 @media (max-width: 620px) {
 
   .filter-chips { gap: 0.5rem; margin: auto; }
-  .search-wrap { margin: auto; }
+  .search-wrap { margin: auto; min-width: 180px; width: 180px; flex: 0 1 180px; }
+  .view-dropdown { margin: auto; }
   .chip {
     font-size: 1.2rem;
     font-weight: 400;
@@ -729,12 +925,20 @@ footer {
 .chip:focus-visible,
 .card:focus-within,
 .search-input:focus-visible,
+.view-btn:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--cyan-base);
   outline-offset: 3px;
 }
 
 #searchClear { display:none}
+
+.view-icons, .view-list {
+  [data-label="Android Vollbild"], [data-label="Android Vollbild"] { display: none;}
+  .card.featured-wide .card-content h3 { font-size: 0.8rem; }
+  .card.featured-tall .card-content h3 { font-size: 0.8rem; }
+  .card.featured .card-content h3 { font-size: 0.8rem; }
+} 
 </style>
 </head>
 <body>
@@ -751,6 +955,14 @@ a:focus-visible {
       <div class="filter-inner">
         <div class="filter-chips" id="filterChips">
           <!-- Chips werden per JS injiziert -->
+        </div>
+        <div class="view-dropdown">
+          <label for="viewSelect" class="visually-hidden">Ansicht</label>
+          <select id="viewSelect" class="view-select" aria-label="Ansicht">
+            <option value="cards">⊞</option>
+            <option value="list">☰</option>
+            <option value="icons">▦</option>
+          </select>
         </div>
         <div class="search-wrap" id="searchWrap">
           <input
@@ -776,7 +988,7 @@ a:focus-visible {
         <a href="https://github.com/boiler-byte" target="_blank" rel="noopener">GitHub</a>
       </div>
       <div class="footer-credits">
-        <span>© 2026 Boiler · mit <span style="color: #0cb34c;">☮</span> &amp; Teein</span>
+        <span>© 2026 der Boiler · mit <span style="color: #0cb34c;">☮</span> &amp; Teein</span>
       </div>
     </div>
   </footer>
@@ -803,16 +1015,25 @@ a:focus-visible {
         // gold:   { label: 'Gold'   },   // NEU: Education / Docs
       };
 
+      // Status-Mapping für optionale Badges
+      const STATUS = {
+        beta:  { label: 'Beta',  symbol: '🧪' },
+        alpha: { label: 'Alpha', symbol: '🧪🧪🧪' }, //⚡
+      };
+
       // ======================================================
       // REPOS
       // ======================================================
+      // Optionales "icon" (Emoji/Symbol) für kompakte Ansichten.
+      // Optionales "status" ("beta" | "alpha") für Badge.
       const repos = [
         {
             label: "Android Vollbild",
             img: 'img/pwa.png',
-            description: 'Alle Apps können als PWA (Progressive-Web-App) über das Browser-Menü installiert und im Vollbild auf Android-Geräten genutzt werden. Auch "der Boiler Room" kann installiert werden und ist dann der App-Launcher :-)',
+            description: 'Alle Apps können als PWA (Progressive-Web-App) über das Browser-Menü installiert und im Vollbild auf Android-Geräten genutzt werden. Auch "der Boiler Room" kann installiert werden und ist dann der App-Launcher. Wenn Sie ernsthaft eine oder mehrere Tools für Ihre Zwecke verwenden, werden sich zwangsweise mit der Zeit persönliche Daten anhäufen. Achten Sie darauf, in dem Browser möglichst keine oder nur vertrauenswürdige Plugins zu verwenden. Haushaltsbuch, Authenticator und QRCode sind dafür gemacht, erheblich sensible Daten aufzunehmen. Also Augen auf! :-)',
             type: 'misc',
-            tags: ['Gedächtnistraining', 'Mobil'],
+            year: 2026,
+            tags: ['Information', 'Installation'],
             featured: 'tall', //wide,tall
         },
         {
@@ -827,6 +1048,7 @@ a:focus-visible {
         {
             label: "Memory",
             img: 'img/memory.webp',
+            status: 'beta',
             description: 'Das gute, alte Memory mit Custom Themes.',
             type: 'game',
             url: 'https://boiler-byte.github.io/Memory/',
@@ -836,6 +1058,7 @@ a:focus-visible {
         {
             label: "Sudoku",
             img: 'img/sudoku.png',
+            status: 'beta',
             description: 'Ein simples Sudoku.',
             type: 'game',
             url: 'https://boiler-byte.github.io/Sudoku/',
@@ -845,6 +1068,7 @@ a:focus-visible {
         {
             label: "Dateiumbenenner",
             img: 'img/dateiumbenenner.png',
+            status: 'beta',
             description: 'Ultimatives Tool um mehrere Dateien oder Verzeichnisse umzubenennen.',
             type: 'tool',
             url: 'https://github.com/boiler-byte/Dateiumbenenner',
@@ -864,6 +1088,7 @@ a:focus-visible {
         {
             label: "Typeshooter",
             img: 'img/typeshooter.png',
+            status: 'beta',
             description: 'Schieß die tödlichen Wörter ab.',
             type: 'game',
             url: 'https://boiler-byte.github.io/Typeshooter/',
@@ -890,6 +1115,90 @@ a:focus-visible {
             tags: ['2-Spieler', 'Brettspiel', 'Mobil'],
         },
         {
+            label: "Snake",
+            img: 'img/snake.png',
+            status: 'beta',
+            description: 'Snake, wie man es liebt. Mit smarter Touchsteuerung an den Ecken.',
+            type: 'game',
+            url: 'https://boiler-byte.github.io/Snake/',
+            year: 2026,
+            tags: ['Mobile', 'Classic', 'Nokia']
+        },
+        {
+            label: "Countdowns",
+            img: 'img/countdown.png',
+            status: 'beta',
+            description: 'Countdowns mit Bildern und Wiederholungen.',
+            type: 'tool',
+            url: 'https://boiler-byte.github.io/Countdown/',
+            year: 2026,
+            tags: ['Sonstiges']
+        },
+        {
+            label: "Bildstapel-Verarbeitung",
+            img: 'img/bildstapelverarbeitung.png',
+            status: 'beta',
+            description: 'Auflösung, Rotation, Zuschneiden, Farbe entfernen.',
+            type: 'tool',
+            url: 'https://boiler-byte.github.io/Bildstapelverarbeitung/',
+            year: 2026,
+            tags: ['Bildbearbeitung', 'Thumbmaker']
+        },
+
+        
+        {
+            label: "QRCode",
+            img: 'img/qrcode.png',
+            status: 'alpha',
+            description: 'QR Codes erstellen, scannen und verwalten.',
+            type: 'tool',
+            url: 'https://boiler-byte.github.io/QRCode/',
+            year: 2026,
+            tags: ['Lokal', 'Sensible Daten']
+        },
+        {
+            label: "Wetter",
+            img: 'img/wetter.png',
+            status: 'beta',
+            description: 'Geklonte Wetter App mit öffentlicher API.',
+            type: 'tool',
+            url: 'https://boiler-byte.github.io/Wetter/',
+            year: 2026,
+            tags: ['API', 'Geo-Location']
+        },
+        {
+            label: "Authenticator",
+            img: 'img/authenticator.png',
+            status: 'alpha',
+            description: 'Lokale Schlüssel, AES verschlüssel mit Import/Export, kann Google lesen.',
+            type: 'tool',
+            url: 'https://boiler-byte.github.io/Authenticator/',
+            year: 2026,
+            tags: ['Lokal', 'Sensible Daten']
+        },
+        {
+            label: "Clipwork",
+            img: 'img/clipwork.png',
+            status: 'alpha',
+            description: 'Einfache Videobearbeitung.',
+            type: 'tool',
+            url: 'https://boiler-byte.github.io/Clipwork/',
+            year: 2026,
+            tags: ['Lokal', 'Mobil']
+        },
+        {
+            label: "Haushalts-Durchblick",
+            img: 'img/haushaltsdurchblick.png',
+            status: 'alpha',
+            description: 'Überblick über das, was reinkommt, rausgeht und bleibt.',
+            type: 'tool',
+            url: 'https://boiler-byte.github.io/Haushaltsdurchblick/',
+            year: 2026,
+            tags: ['Lokal', 'Sensible Daten']
+        },
+
+        
+        {
             label: "Synthesizer",
             img: 'img/synthesizer.jpg',
             description: 'Einfacher Synthesizer für unterwegs.',
@@ -907,87 +1216,16 @@ a:focus-visible {
             year: 2026,
             tags: ['Mobile', 'Drumpad']
         },
-        {
-            label: "Snake",
-            img: 'img/snake.png',
-            description: 'Snake, wie man es liebt. Mit smarter Touchsteuerung an den Ecken.',
-            type: 'game',
-            url: 'https://boiler-byte.github.io/Snake/',
-            year: 2026,
-            tags: ['Mobile', 'Classic', 'Nokia']
-        },
-        {
-            label: "Countdowns",
-            img: 'img/countdown.png',
-            description: 'Countdowns mit Bildern und Wiederholungen.',
-            type: 'tool',
-            url: 'https://boiler-byte.github.io/Countdown/',
-            year: 2026,
-            tags: ['Sonstiges']
-        },
-        {
-            label: "Bildstapel-Verarbeitung",
-            img: 'img/bildstapelverarbeitung.png',
-            description: 'Auflösung, Rotation, Zuschneiden, Farbe entfernen.',
-            type: 'tool',
-            url: 'https://boiler-byte.github.io/Bildstapelverarbeitung/',
-            year: 2026,
-            tags: ['Bildbearbeitung', 'Thumbmaker']
-        },
-
-        
-        {
-            label: "QRCode",
-            img: 'img/qrcode.png',
-            description: 'QR Codes erstellen, scannen und verwalten.',
-            type: 'tool',
-            url: 'https://boiler-byte.github.io/QRCode/',
-            year: 2026,
-            tags: ['WLAN', 'Links', 'Texte', 'SMS']
-        },
-        {
-            label: "Wetter",
-            img: 'img/wetter.png',
-            description: 'Geklonte Wetter App mit öffentlicher API.',
-            type: 'tool',
-            url: 'https://boiler-byte.github.io/Wetter/',
-            year: 2026,
-            tags: ['API', 'Geo-Location']
-        },
-        {
-            label: "Authenticator",
-            img: 'img/authenticator.png',
-            description: 'Lokale Schlüssel, AES verschlüssel mit Import/Export, kann Google lesen.',
-            type: 'tool',
-            url: 'https://boiler-byte.github.io/Authenticator/',
-            year: 2026,
-            tags: ['Tresor', '2nd Factor']
-        },
-        {
-            label: "Clipwork",
-            img: 'img/clipwork.png',
-            description: 'Einfache Videobearbeitung.',
-            type: 'tool',
-            url: 'https://boiler-byte.github.io/Clipwork/',
-            year: 2026,
-            tags: ['Lokal', 'Mobil']
-        },
-        {
-            label: "Haushaltsdurchblick",
-            img: 'img/haushaltsdurchblick.png',
-            description: 'Überblick über das, was reinkommt, rausgeht und bleibt.',
-            type: 'tool',
-            url: 'https://boiler-byte.github.io/Haushaltsdurchblick/',
-            year: 2026,
-            tags: ['Budgets', 'Auswertungen']
-        },
       ];
 
       // ======================================================
       // FAVORITEN (localStorage)
       // ======================================================
       const FAV_KEY = 'boilerRoomFavorites';
+      const ORDER_KEY = 'boilerRoomFavOrder';
+      const VIEW_KEY = 'boilerRoomView';
       let favorites = new Set();
+      let favOrder = [];
 
       // Fallback, falls localStorage nicht verfügbar ist
       let storageOK = true;
@@ -1022,6 +1260,67 @@ a:focus-visible {
         }
       }
 
+      function loadFavOrder() {
+        if (!storageOK) return;
+        try {
+          const raw = localStorage.getItem(ORDER_KEY);
+          if (raw) {
+            const arr = JSON.parse(raw);
+            if (Array.isArray(arr)) favOrder = arr.filter(x => typeof x === 'string');
+          }
+        } catch (e) {
+          console.warn('Favoriten-Reihenfolge konnte nicht geladen werden:', e);
+        }
+      }
+
+      function saveFavOrder() {
+        if (!storageOK) return;
+        try {
+          localStorage.setItem(ORDER_KEY, JSON.stringify(favOrder));
+        } catch (e) {
+          console.warn('Favoriten-Reihenfolge konnte nicht gespeichert werden:', e);
+        }
+      }
+
+      // Reihenfolge mit aktuellen Favoriten abgleichen:
+      // entfernte raus, neue hinten anfügen.
+      function syncFavOrder() {
+        favOrder = favOrder.filter(l => favorites.has(l));
+        favorites.forEach(l => { if (!favOrder.includes(l)) favOrder.push(l); });
+        saveFavOrder();
+      }
+
+      // Entfernt Labels aus Favoriten & Reihenfolge, die es in `repos` nicht (mehr) gibt.
+      // Gibt zurück, ob etwas geändert wurde.
+      function sanitizeFavorites() {
+        const validLabels = new Set(repos.map(r => r.label));
+        let changed = false;
+
+        // Favoriten säubern
+        const cleanFavs = new Set();
+        favorites.forEach(label => {
+          if (validLabels.has(label)) {
+            cleanFavs.add(label);
+          } else {
+            changed = true;
+          }
+        });
+        if (changed) favorites = cleanFavs;
+
+        // Reihenfolge säubern
+        const beforeOrder = favOrder.length;
+        favOrder = favOrder.filter(label => validLabels.has(label));
+        if (favOrder.length !== beforeOrder) changed = true;
+
+        if (changed) {
+          saveFavorites();
+          saveFavOrder();
+          updateFavCount();
+          console.info('[Boiler] Ungültige Favoriten-Labels entfernt.');
+        }
+        return changed;
+      }
+
       function isFavorite(label) {
         return favorites.has(label);
       }
@@ -1033,6 +1332,8 @@ a:focus-visible {
           favorites.add(label);
         }
         saveFavorites();
+        syncFavOrder();
+        updateFavCount();
       }
 
       // ---------- DOM REFS ----------
@@ -1041,10 +1342,12 @@ a:focus-visible {
       const searchInput  = document.getElementById('searchInput');
       const searchWrap   = document.getElementById('searchWrap');
       const searchClear  = document.getElementById('searchClear');
+      const viewSelect   = document.getElementById('viewSelect');
 
       // ---------- AKTIVER STATE ----------
       let activeFilter = 'all';
       let activeSearch = '';
+      let activeView   = 'cards'; // 'cards' | 'list' | 'icons'
 
       // ---------- FILTER CHIPS ----------
       function renderFilterChips() {
@@ -1090,6 +1393,7 @@ a:focus-visible {
           ...(repo.tags || []),
           String(repo.year || ''),
           types[repo.type]?.label || repo.type,
+          repo.status ? (STATUS[repo.status]?.label || repo.status) : '',
         ].join(' ').toLowerCase();
         return haystack.includes(q);
       }
@@ -1134,13 +1438,21 @@ a:focus-visible {
         img.height = 500;
         imageDiv.appendChild(img);
 
-        // Badge
+        // Badge (Typ)
         const badge = document.createElement('span');
         badge.className = 'type-badge';
         badge.textContent = types[repo.type]?.label || repo.type;
         imageDiv.appendChild(badge);
 
-        // NEU: Favoriten-Stern
+        // Status-Badge (optional)
+        if (repo.status && STATUS[repo.status]) {
+          const sBadge = document.createElement('span');
+          sBadge.className = 'status-badge status-' + repo.status;
+          sBadge.textContent = STATUS[repo.status].symbol + ' ' + STATUS[repo.status].label;
+          imageDiv.appendChild(sBadge);
+        }
+
+        // Favoriten-Stern
         const favBtn = document.createElement('button');
         favBtn.type = 'button';
         favBtn.className = 'fav-btn' + (isFavorite(repo.label) ? ' is-fav' : '');
@@ -1191,8 +1503,9 @@ a:focus-visible {
         const content = document.createElement('div');
         content.className = 'card-content';
 
+        // Icon (optional, für Liste & Icon-Ansicht)
         const title = document.createElement('h3');
-        title.textContent = repo.label;
+        title.innerHTML = '<span class="repo-icon">' + ( repo.icon ?? '' ) + '</span>' + repo.label;
 
         const desc = document.createElement('p');
         desc.className = 'description';
@@ -1232,11 +1545,13 @@ a:focus-visible {
           card.style.cursor = 'pointer';
           card.addEventListener('click', (e) => {
             if (e.target.closest('a')) return;
-            if (e.target.closest('.fav-btn')) return; // Stern nicht als Link-Klick werten
+            if (e.target.closest('.fav-btn')) return;
+            if (e.target.closest('.drag-handle')) return;
             window.open(repo.url, '_blank', 'noopener,noreferrer');
           });
           card.addEventListener('keydown', (e) => {
             if (e.target.closest('.fav-btn')) return;
+            if (e.target.closest('.drag-handle')) return;
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
               window.open(repo.url, '_blank', 'noopener,noreferrer');
@@ -1251,7 +1566,7 @@ a:focus-visible {
       function renderRepos() {
         repoGrid.innerHTML = '';
 
-        const filtered = repos.filter(repo => {
+        let filtered = repos.filter(repo => {
           let typeOk;
           if (activeFilter === 'all') {
             typeOk = true;
@@ -1263,6 +1578,15 @@ a:focus-visible {
           const searchOk = matchesSearch(repo, activeSearch);
           return typeOk && searchOk;
         });
+
+        // Favoriten-Sortierung anwenden
+        if (activeFilter === 'favorites') {
+          const pos = (label) => {
+            const i = favOrder.indexOf(label);
+            return i === -1 ? 9999 : i;
+          };
+          filtered = filtered.slice().sort((a, b) => pos(a.label) - pos(b.label));
+        }
 
         if (filtered.length === 0) {
           const empty = document.createElement('div');
@@ -1280,15 +1604,23 @@ a:focus-visible {
           repoGrid.appendChild(createCard(repo, i));
         });
 
-        requestAnimationFrame(() => {
-          document.querySelectorAll('.card').forEach((card, idx) => {
-            setTimeout(() => {
-              card.classList.add('visible');
-            }, idx * 40);
+        // Reduced-motion respektieren
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduceMotion || activeView !== 'cards') {
+          document.querySelectorAll('.card').forEach(card => card.classList.add('visible'));
+        } else {
+          requestAnimationFrame(() => {
+            document.querySelectorAll('.card').forEach((card, idx) => {
+              setTimeout(() => {
+                card.classList.add('visible');
+              }, idx * 40);
+            });
           });
-        });
+          observeCards();
+        }
 
-        observeCards();
+        // Drag & Drop in der Listen-Ansicht (nur bei Favoriten-Filter)
+        enableListDrag();
       }
 
       // ---------- INTERSECTION OBSERVER ----------
@@ -1371,20 +1703,132 @@ a:focus-visible {
         });
       }
 
+      // ---------- ANSICHTS-WECHSEL ----------
+      function applyViewClasses() {
+        repoGrid.classList.remove('view-cards', 'view-list', 'view-icons');
+        if (activeView !== 'cards') repoGrid.classList.add('view-' + activeView);
+
+        if (viewSelect) viewSelect.value = activeView;
+      }
+
+      function setView(view, persist) {
+        activeView = view;
+        if (persist) {
+          try {
+            if (storageOK) localStorage.setItem(VIEW_KEY, view);
+          } catch (e) {}
+        }
+        applyViewClasses();
+        renderRepos();
+      }
+
+      function loadView() {
+        if (!storageOK) return;
+        try {
+          const v = localStorage.getItem(VIEW_KEY);
+          if (v === 'cards' || v === 'list' || v === 'icons') {
+            activeView = v;
+          }
+        } catch (e) {}
+      }
+
+      
+
+      function setupViewSwitch() {
+        viewSelect.addEventListener('change', () => {
+          if (viewSelect.value === activeView) return;
+          setView(viewSelect.value, true);
+        });
+      }
+
+      // ---------- DRAG & DROP (Listen-Ansicht, Favoriten) ----------
+      // Wird bei jedem renderRepos() neu aufgesetzt, die Container-Events
+      // werden aber nur einmalig in init() gebunden.
+      let draggedCard = null;
+
+      function enableListDrag() {
+        if (activeView !== 'list' || activeFilter !== 'favorites') return;
+
+        const cards = Array.from(repoGrid.querySelectorAll('.card'));
+
+        cards.forEach(card => {
+          // Handle vorn einfügen
+          const handle = document.createElement('div');
+          handle.className = 'drag-handle';
+          handle.textContent = '⋮⋮';
+          handle.setAttribute('aria-label', 'Zum Sortieren ziehen');
+          handle.setAttribute('draggable', 'true');
+          card.insertBefore(handle, card.firstChild);
+          card.setAttribute('draggable', 'true');
+
+          handle.addEventListener('dragstart', (e) => {
+            draggedCard = card;
+            card.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            try { e.dataTransfer.setData('text/plain', card.dataset.label); } catch (err) {}
+          });
+          handle.addEventListener('dragend', () => {
+            card.classList.remove('dragging');
+            repoGrid.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+            draggedCard = null;
+            // Neue Reihenfolge speichern
+            favOrder = Array.from(repoGrid.querySelectorAll('.card'))
+              .map(c => c.dataset.label);
+            saveFavOrder();
+          });
+        });
+      }
+
+      function setupGridDnd() {
+        repoGrid.addEventListener('dragover', (e) => {
+          if (!draggedCard) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          const target = e.target.closest('.card');
+          if (!target || target === draggedCard) return;
+
+          repoGrid.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+          target.classList.add('drag-over');
+
+          const rect = target.getBoundingClientRect();
+          const before = (e.clientY - rect.top) < rect.height / 2;
+          repoGrid.insertBefore(draggedCard, before ? target : target.nextSibling);
+        });
+
+        repoGrid.addEventListener('drop', (e) => {
+          if (!draggedCard) return;
+          e.preventDefault();
+        });
+
+        repoGrid.addEventListener('dragleave', (e) => {
+          // Nur entfernen, wenn wir den Grid wirklich verlassen
+          if (e.target === repoGrid) {
+            repoGrid.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+          }
+        });
+      }
+
       // ---------- INIT ----------
       function init() {
         loadFavorites();
+        loadFavOrder();
+        sanitizeFavorites();   // ungültige Labels entfernen
+        syncFavOrder();
+        loadView();
         renderFilterChips();
+        applyViewClasses();
         renderRepos();
         setupFilters();
         setupSearch();
+        setupViewSwitch();
+        setupGridDnd();
+
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          document.querySelectorAll('.card').forEach(c => c.classList.add('visible'));
+        }
       }
 
       init();
-
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        document.querySelectorAll('.card').forEach(c => c.classList.add('visible'));
-      }
     })();
   </script>
 </body>
