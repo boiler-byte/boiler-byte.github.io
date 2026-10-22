@@ -802,19 +802,57 @@ footer {
 }
 
 /* Grip / Drag-Handle */
+/* Grip / Drag-Handle – nur noch visueller Hinweis.
+   Die eigentliche Drag-Fläche ist die komplette Zeile (.card). */
 .drag-handle {
-  cursor: grab;
   color: var(--text-muted);
-  font-size: 1.1rem;
-  padding: 0 0.5rem 0 0.75rem;
+  font-size: 1.2rem;
+  padding: 0 0.6rem 0 0.85rem;
   flex-shrink: 0;
   user-select: none;
-  touch-action: none;
+  pointer-events: none;        /* Touches/Klicks gehen an die Karte */
   letter-spacing: -2px;
+  opacity: 0.55;
+  transition: opacity 0.2s ease, color 0.2s ease;
 }
-.drag-handle:active { cursor: grabbing; }
-.view-list .card.dragging { opacity: 0.4; }
-.view-list .card.drag-over { outline: 2px dashed var(--gold-base); }
+.view-list .card:hover .drag-handle {
+  opacity: 0.9;
+  color: #fff;
+}
+
+/* Ganze Zeile als Drag-Quelle */
+.view-list .card[draggable="true"] {
+  cursor: grab;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;  /* iOS: Callout beim Long-Press unterdrücken */
+}
+.view-list .card[draggable="true"]:active { cursor: grabbing; }
+
+/* „Gegriffen“-Zustand: leicht kippen, anheben, farbig hervorheben */
+.view-list .card.dragging {
+  opacity: 0.92;
+  transform: rotate(-2deg) scale(1.015) !important;
+  border-color: var(--accent-glow, var(--orange-glow)) !important;
+  box-shadow:
+    0 16px 34px -10px rgba(0, 0, 0, 0.85),
+    0 0 0 1px var(--accent-glow, var(--orange-glow)),
+    0 0 26px var(--accent-dim, var(--orange-dim)) !important;
+  z-index: 20;
+  cursor: grabbing;
+}
+.view-list .card.dragging .drag-handle {
+  opacity: 1;
+  color: var(--accent-glow, var(--orange-glow));
+}
+
+/* Drop-Ziel */
+.view-list .card.drag-over {
+  outline: 2px dashed var(--gold-base);
+}
+
+
+
 
 /* ---------- ICON-ANSICHT ---------- */
 .grid.view-icons {
@@ -1019,7 +1057,7 @@ a:focus-visible {
   <footer>
     <div class="container footer-inner">
       <div class="footer-links">
-        <a href="https://github.com/boiler-byte" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/myprojectpages" target="_blank" rel="noopener">GitHub</a>
       </div>
       <div class="footer-credits">
         <span>© 2026 der Boiler · mit <span style="color: #0cb34c;">☮</span> &amp; Teein</span>
@@ -1064,7 +1102,7 @@ a:focus-visible {
         {
             label: "Android Vollbild",
             img: 'img/pwa.png',
-            description: 'Alle Apps können als PWA (Progressive-Web-App) über das Browser-Menü installiert und im Vollbild auf Android-Geräten genutzt werden. Auch "der Boiler Room" kann installiert werden und ist dann der App-Launcher. Wenn Sie ernsthaft eine oder mehrere Tools für Ihre Zwecke verwenden, werden sich zwangsweise mit der Zeit persönliche Daten anhäufen. Achten Sie darauf, in dem Browser möglichst keine oder nur vertrauenswürdige Plugins zu verwenden. Haushaltsbuch, Authenticator und QRCode sind dafür gemacht, erheblich sensible Daten aufzunehmen. Also Augen auf! :-)',
+            description: 'Alle Apps können als PWA (Progressive-Web-App) über das Browser-Menü installiert und im Vollbild auf Android-Geräten genutzt werden. Auch "der Boiler Room" kann installiert werden und ist dann der App-Launcher. Wenn Sie ernsthaft eine oder mehrere Tools für Ihre Zwecke verwenden, werden sich zwangsweise mit der Zeit persönliche Daten anhäufen. Achten Sie darauf, in dem Browser möglichst keine oder nur vertrauenswürdige Plugins zu verwenden. Augen auf! :-)',
             type: 'misc',
             year: 2026,
             tags: ['Information', 'Installation'],
@@ -1171,8 +1209,7 @@ a:focus-visible {
         {
             label: "Bildstapel-Verarbeitung",
             img: 'img/bildstapelverarbeitung.png',
-            status: 'beta',
-            description: 'Auflösung, Rotation, Zuschneiden, Farbe entfernen.',
+            description: 'Auflösungen, Rotation, Zuschneiden, Freistellen, Zerlegen, SVG Vektorkonvertierung.',
             type: 'tool',
             url: 'https://boiler-byte.github.io/Bildstapelverarbeitung/',
             year: 2026,
@@ -1181,8 +1218,8 @@ a:focus-visible {
         {
             label: "Authenticator",
             img: 'img/authenticator.png',
-            status: 'alpha',
-            description: 'Lokale Schlüssel, AES verschlüssel mit Import/Export, kann Google lesen.',
+            status: 'beta',
+            description: 'Lokale Schlüssel, AES verschlüssel mit Import/Export.',
             type: 'tool',
             url: 'https://boiler-byte.github.io/Authenticator/',
             year: 2026,
@@ -1211,12 +1248,12 @@ a:focus-visible {
             tags: ['Lokal', 'Sensible Daten']
         },
         {
-            label: "Clipwork",
-            img: 'img/clipwork.png',
+            label: "Clipwerk",
+            img: 'img/clipwerk.png',
             status: 'alpha',
             description: 'Einfache Videobearbeitung.',
             type: 'tool',
-            url: 'https://boiler-byte.github.io/Clipwork/',
+            url: 'https://boiler-byte.github.io/Clipwerk/',
             year: 2026,
             tags: ['Lokal', 'Mobil']
         },
@@ -1259,6 +1296,25 @@ a:focus-visible {
             url: 'https://github.com/boiler-byte/Dateiumbenenner',
             year: 2026,
             tags: ['Dateisystem', 'Lebenshelfer']
+        },
+        {
+            label: "Weihnachtsfeier",
+            img: 'img/weihnachtsfeier.jpg',
+            description: 'Bericht einer Weihnachtsfeier aus der Sicht von Reik.',
+            type: 'misc',
+            url: 'https://boiler-byte.github.io/Weihnachtsfeier',
+            year: 2026,
+            tags: ['How High', 'Peace']
+        },
+        {
+            label: "Textanalyse",
+            img: 'img/Textanalyse.png',
+            status: 'beta',
+            description: 'Zählen von Wörtern, Sätzen, Häufigkeiten uvm.',
+            type: 'tool',
+            url: 'https://boiler-byte.github.io/Textanalyse',
+            year: 2026,
+            tags: ['Texte', 'Keywords']
         },
       ];
 
@@ -1801,28 +1857,32 @@ a:focus-visible {
       // werden aber nur einmalig in init() gebunden.
       let draggedCard = null;
 
-      function enableListDrag() {
+            function enableListDrag() {
         if (activeView !== 'list' || activeFilter !== 'favorites') return;
 
         const cards = Array.from(repoGrid.querySelectorAll('.card'));
 
         cards.forEach(card => {
-          // Handle vorn einfügen
+          // Griff-Icon bleibt als visueller Hinweis – aber ohne eigene Drag-Logik.
           const handle = document.createElement('div');
           handle.className = 'drag-handle';
           handle.textContent = '⋮⋮';
-          handle.setAttribute('aria-label', 'Zum Sortieren ziehen');
-          handle.setAttribute('draggable', 'true');
+          handle.setAttribute('aria-hidden', 'true');
           card.insertBefore(handle, card.firstChild);
+
+          // Die GESAMTE Zeile ist draggable – viel größere Trefferfläche,
+          // gerade auf Touch-Geräten, wo der Long-Press sonst genau den
+          // kleinen Griff treffen musste.
           card.setAttribute('draggable', 'true');
 
-          handle.addEventListener('dragstart', (e) => {
+          card.addEventListener('dragstart', (e) => {
             draggedCard = card;
             card.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
             try { e.dataTransfer.setData('text/plain', card.dataset.label); } catch (err) {}
           });
-          handle.addEventListener('dragend', () => {
+
+          card.addEventListener('dragend', () => {
             card.classList.remove('dragging');
             repoGrid.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
             draggedCard = null;
