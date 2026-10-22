@@ -1057,7 +1057,7 @@ a:focus-visible {
   <footer>
     <div class="container footer-inner">
       <div class="footer-links">
-        <a href="https://github.com/myprojectpages" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/boiler-byte" target="_blank" rel="noopener">GitHub</a>
       </div>
       <div class="footer-credits">
         <span>© 2026 der Boiler · mit <span style="color: #0cb34c;">☮</span> &amp; Teein</span>
@@ -1079,12 +1079,10 @@ a:focus-visible {
         tool: { label: 'Tools', symbol: '🔧', color: 'cyan' },
         // music: { label: 'Music', color: 'violet' },
         misc: { label: 'Misc', symbol: '🧩', color: 'green' },
-        // orange: { label: 'Orange' },   // z.B. Games / Action
-        // cyan:   { label: 'Cyan'   },   // z.B. Tools / Utilities
         // violet: { label: 'Violet' },   // z.B. Experiments / Art
-        // green:  { label: 'Green'  },   // NEU: Libraries / Frameworks
-        // pink:   { label: 'Pink'   },   // NEU: Featured / Specials
-        // gold:   { label: 'Gold'   },   // NEU: Education / Docs
+        // green:  { label: 'Green'  },   // Libraries / Frameworks
+        // pink:   { label: 'Pink'   },   // Featured / Specials
+        // gold:   { label: 'Gold'   },   // Education / Docs
       };
 
       // Status-Mapping für optionale Badges
@@ -1994,6 +1992,12 @@ a:focus-visible {
         setupViewSwitch();
         setupGridDnd();
         setupFocusObserver();
+
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            setupFocusObserver();
+          }
+        });
 
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
           document.querySelectorAll('.card').forEach(c => c.classList.add('visible'));
