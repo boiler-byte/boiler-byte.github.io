@@ -424,7 +424,9 @@
       lastX: 0,
       lastY: 0,
       downX: 0,
-      downY: 0
+      downY: 0,
+      snapX: null,   // Ziel-X für Snap (null = kein Snap aktiv)
+      snapY: null,   // Ziel-Y für Snap
     };
 
     let CARD_W = 320;
@@ -452,6 +454,11 @@
       STEP_X = CARD_W + GAP_X;
       STEP_Y = CARD_H + GAP_Y;
       buildPool();
+
+      // Nach Größenänderung: Snap-Ziel neu berechnen, falls nicht am Ziel
+      state.snapX = null;
+      state.snapY = null;
+      computeSnapTarget();
     }
 
     function escapeHtml(str) {
@@ -606,16 +613,53 @@
       }
     }
 
+    // --- Snap-Logik ------------------------------------------------------
+    function computeSnapTarget() {
+      // Nächstgelegene Rasterposition zur aktuellen Position bestimmen.
+      // Eine Karte sitzt exakt mittig, wenn state.x = -worldCol * STEP_X
+      // (analog für y). Also runden wir auf die nächste ganze Spalte/Zeile.
+      const targetWorldCol = Math.round(-state.x / STEP_X);
+      const targetWorldRow = Math.round(-state.y / STEP_Y);
+
+      state.snapX = -targetWorldCol * STEP_X;
+      state.snapY = -targetWorldRow * STEP_Y;
+    }
+
     function animate() {
       if (!state.dragging) {
-        state.x += state.vx;
-        state.y += state.vy;
+        // Snap aktiv? → sanft zur Zielposition gleiten
+        if (state.snapX !== null && state.snapY !== null) {
+          const dx = state.snapX - state.x;
+          const dy = state.snapY - state.y;
 
-        state.vx *= 0.92;
-        state.vy *= 0.92;
+          state.x += dx * 0.18;
+          state.y += dy * 0.18;
 
-        if (Math.abs(state.vx) < 0.01) state.vx = 0;
-        if (Math.abs(state.vy) < 0.01) state.vy = 0;
+          // Nah genug → exakt einrasten
+          if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
+            state.x = state.snapX;
+            state.y = state.snapY;
+            state.snapX = null;
+            state.snapY = null;
+            state.vx = 0;
+            state.vy = 0;
+          }
+        } else {
+          // Normale Trägheit
+          state.x += state.vx;
+          state.y += state.vy;
+
+          state.vx *= 0.92;
+          state.vy *= 0.92;
+
+          if (Math.abs(state.vx) < 0.01) state.vx = 0;
+          if (Math.abs(state.vy) < 0.01) state.vy = 0;
+
+          // Bewegung (fast) zum Stillstand → Snap einleiten
+          if (state.vx === 0 && state.vy === 0) {
+            computeSnapTarget();
+          }
+        }
       }
 
       update();
@@ -634,6 +678,10 @@
       state.downY = e.clientY;
       state.vx = 0;
       state.vy = 0;
+
+      // Laufenden Snap abbrechen, damit der Nutzer frei greifen kann
+      state.snapX = null;
+      state.snapY = null;
     }
 
     function pointerMove(e) {
@@ -661,9 +709,18 @@
     }
 
     function pointerUp(e) {
-      state.dragging = false;
-      document.body.classList.remove("dragging");
-      scene.releasePointerCapture?.(e.pointerId);
+      if (state.dragging) {
+        state.dragging = false;
+        document.body.classList.remove("dragging");
+        scene.releasePointerCapture?.(e.pointerId);
+
+        // Wenn kaum Bewegung → direkt snappen, sonst Trägheit wirken lassen
+        if (Math.abs(state.vx) < 1 && Math.abs(state.vy) < 1) {
+          state.vx = 0;
+          state.vy = 0;
+          computeSnapTarget();
+        }
+      }
     }
 
     scene.addEventListener("pointerdown", pointerDown);
@@ -683,6 +740,10 @@
 
     window.addEventListener("wheel", (e) => {
       e.preventDefault();
+
+      // Snap abbrechen, falls aktiv
+      state.snapX = null;
+      state.snapY = null;
 
       const dx = e.deltaX || (e.shiftKey ? e.deltaY : 0);
       const dy = e.shiftKey ? 0 : e.deltaY;
