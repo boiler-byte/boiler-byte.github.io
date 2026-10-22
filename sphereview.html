@@ -627,15 +627,14 @@
 
     function animate() {
       if (!state.dragging) {
-        // Snap aktiv? → sanft zur Zielposition gleiten
         if (state.snapX !== null && state.snapY !== null) {
           const dx = state.snapX - state.x;
           const dy = state.snapY - state.y;
 
-          state.x += dx * 0.18;
-          state.y += dy * 0.18;
+          // Strafferes Easing – schnelleres Einrasten
+          state.x += dx * 0.22;
+          state.y += dy * 0.22;
 
-          // Nah genug → exakt einrasten
           if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
             state.x = state.snapX;
             state.y = state.snapY;
@@ -645,17 +644,17 @@
             state.vy = 0;
           }
         } else {
-          // Normale Trägheit
           state.x += state.vx;
           state.y += state.vy;
 
           state.vx *= 0.92;
           state.vy *= 0.92;
 
-          if (Math.abs(state.vx) < 0.01) state.vx = 0;
-          if (Math.abs(state.vy) < 0.01) state.vy = 0;
+          // Früher snappen: Schwelle deutlich höher als 0.01
+          if (Math.abs(state.vx) < 0.8) state.vx = 0;
+          if (Math.abs(state.vy) < 0.8) state.vy = 0;
 
-          // Bewegung (fast) zum Stillstand → Snap einleiten
+          // Sobald eine Achse steht → Snap einleiten
           if (state.vx === 0 && state.vy === 0) {
             computeSnapTarget();
           }
