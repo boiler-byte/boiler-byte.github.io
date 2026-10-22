@@ -219,7 +219,7 @@ const originrepos = [
 },
 {
     label: "Sphären Ansicht",
-    img: 'img/sphereview.png',
+    img: 'img/sphereview.webp',
     description: 'Alle Projekte als unendliche Sphäre',
     url: 'sphereview.html',
     type: 'misc',
