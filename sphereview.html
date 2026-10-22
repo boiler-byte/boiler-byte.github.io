@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spherical Infinite Card Grid</title>
+  <style>
+    :root {
+      --bg: #0c0d10;
+      --card-w: 320px;
+      --card-h: 460px;
+      --gap-x: 34px;
+      --gap-y: 34px;
+
+      /* Neon-Farben aus types */
+      --neon-orange: 240, 165, 52;
+      --neon-cyan: 80, 200, 232;
+      --neon-green: 145, 200, 75;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 45%, #1b1e26 0%, #111319 35%, #090a0d 75%);
+      color: #fff;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      user-select: none;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    body.dragging { cursor: grabbing; }
+
+    .scene {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      perspective: 1200px;
+      perspective-origin: 50% 50%;
+    }
+
+    .vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 20;
+      background:
+        radial-gradient(circle at center,
+          transparent 0%,
+          transparent 42%,
+          rgba(0,0,0,.15) 68%,
+          rgba(0,0,0,.62) 100%);
+    }
+
+    .hud {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 30;
+      pointer-events: none;
+    }
+
+    .hud h1 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+
+    .hud p {
+      margin: 0;
+      color: rgba(255,255,255,.55);
+      font-size: 13px;
+    }
+
+    .grid {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+    }
+
+    /* Karte = Link */
+    .card {
+      position: absolute;
+      display: block;
+      width: var(--card-w);
+      height: var(--card-h);
+      border-radius: 24px;
+      overflow: hidden;
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
+      will-change: transform, opacity, filter, box-shadow;
+      background: #14161c;
+      text-decoration: none;
+      color: inherit;
+      border: 1px solid rgba(255,255,255,.08);
+      display: flex;
+      flex-direction: column;
+
+      /* Neon-Farbe pro Karte (Default) */
+      --neon: var(--neon-green);
+      --glow: 0;
+
+      box-shadow:
+        0 22px 60px rgba(0,0,0,.45),
+        0 0 calc(var(--glow) * 26px) rgba(var(--neon), calc(var(--glow) * 0.55)),
+        0 0 calc(var(--glow) * 70px) rgba(var(--neon), calc(var(--glow) * 0.28)),
+        inset 0 0 0 1px rgba(255,255,255,.08),
+        inset 0 0 calc(var(--glow) * 22px) rgba(var(--neon), calc(var(--glow) * 0.25));
+    }
+
+    .card:focus-visible {
+      outline: 2px solid rgba(var(--neon), .9);
+      outline-offset: 4px;
+    }
+
+    /* Typ -> Neon-Farbe */
+    .card.t-game { --neon: var(--neon-orange); }
+    .card.t-tool { --neon: var(--neon-cyan); }
+    .card.t-misc { --neon: var(--neon-green); }
+
+    /* Bildbereich */
+    .card .thumb {
+      position: relative;
+      width: 100%;
+      height: 52%;
+      flex: 0 0 52%;
+      overflow: hidden;
+      background: linear-gradient(135deg, #22252e, #14161c);
+    }
+
+    .card .thumb img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      pointer-events: none;
+    }
+
+    .card .thumb::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(20,22,28,.95) 0%, rgba(20,22,28,0) 55%);
+      pointer-events: none;
+    }
+
+    /* Neon-Kante auf dem Bild */
+    .card .thumb::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      border-radius: 24px 24px 0 0;
+      box-shadow: inset 0 0 calc(var(--glow) * 30px) rgba(var(--neon), calc(var(--glow) * 0.45));
+    }
+
+    /* Status-Badge auf dem Bild */
+    .badge-status {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 3;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: #fff;
+      background: rgba(0,0,0,.55);
+      border: 1px solid rgba(255,255,255,.18);
+      backdrop-filter: blur(6px);
+    }
+
+    .badge-status .sym { font-size: 12px; }
+
+    /* Typ-Badge oben rechts */
+    .badge-type {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 3;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: #0b0c10;
+      box-shadow: 0 0 calc(var(--glow) * 16px) rgba(var(--neon), calc(var(--glow) * 0.8));
+    }
+
+    .badge-type.orange { background: #f0a534; }
+    .badge-type.cyan   { background: #50c8e8; }
+    .badge-type.green  { background: #91c84b; }
+
+    /* Inhalt */
+    .card .content {
+      position: relative;
+      z-index: 2;
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      padding: 18px 20px 20px;
+      min-height: 0;
+    }
+
+    .card .title {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.12;
+      font-weight: 760;
+      letter-spacing: -.01em;
+    }
+
+    .card .desc {
+      margin: 8px 0 0;
+      font-size: 13px;
+      line-height: 1.45;
+      color: rgba(255,255,255,.62);
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+    }
+
+    .card .footer {
+      margin-top: auto;
+      padding-top: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .card .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .card .tag {
+      font-size: 10.5px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.55);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 999px;
+      padding: 3px 8px;
+    }
+
+    .card .year {
+      font-size: 11px;
+      color: rgba(255,255,255,.4);
+      white-space: nowrap;
+    }
+
+    .hint {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
+      color: rgba(255,255,255,.45);
+      font-size: 12px;
+      letter-spacing: .04em;
+      pointer-events: none;
+    }
+
+    @media (max-width: 700px) {
+      :root {
+        --card-w: 250px;
+        --card-h: 380px;
+        --gap-x: 24px;
+        --gap-y: 24px;
+      }
+
+      .card .title { font-size: 18px; }
+      .card .desc  { font-size: 12px; -webkit-line-clamp: 2; }
+    }
+  </style>
+</head>
+<body>
+  <div class="scene" id="scene">
+    <div class="grid" id="grid"></div>
+    <div class="vignette"></div>
+
+    <div class="hud">
+      <h1><a style="z-index:999;color:#7b7c80" href="index.html">der Boiler Room</a></h1>
+      <p></p>
+    </div>
+
+    <!-- <div class="hint">Infinite wrapping · spherical transform</div> -->
+  </div>
+
+  <script>
+    const grid = document.getElementById("grid");
+    const scene = document.getElementById("scene");
+
+    const STATUS = {
+      beta:  { label: 'Beta',  symbol: '🧪' },
+      alpha: { label: 'Alpha', symbol: '🧪🧪🧪' }
+    };
+
+    const types = {
+      game: { label: 'Games', color: 'orange' },
+      tool: { label: 'Tools', color: 'cyan' },
+      misc: { label: 'Misc',  color: 'green' }
+    };
+
+    const items = [
+      {
+        label: "Android Vollbild",
+        img: 'img/pwa.png',
+        description: 'Alle Apps können als PWA (Progressive-Web-App) über das Browser-Menü installiert und im Vollbild auf Android-Geräten genutzt werden.',
+        type: 'misc',
+        year: 2026,
+        tags: ['Information', 'Installation'],
+        featured: 'tall',
+      },
+      {
+        label: "Sudoku",
+        img: 'img/sudoku.png',
+        status: 'beta',
+        description: 'Ein simples Sudoku.',
+        type: 'game',
+        url: 'https://myprojectpages.github.io/Sudoku/',
+        year: 2026,
+        tags: ['Mobile', 'Riddle']
+      },
+      {
+        label: "Wetter",
+        img: 'img/wetter.png',
+        status: 'beta',
+        description: 'Geklonte Wetter App mit öffentlicher API.',
+        type: 'tool',
+        url: 'https://myprojectpages.github.io/Wetter/',
+        year: 2026,
+        tags: ['API', 'Geo-Location']
+      },
+      {
+        label: "Buchstaben",
+        img: 'img/buchstaben.jpg',
+        description: 'Lernspiel für Kinder von 3 bis 5 Jahren.',
+        type: 'game',
+        url: 'https://myprojectpages.github.io/Buchstaben/',
+        year: 2026,
+        tags: ['Lernspiel', 'Kinder'],
+        featured: 'wide'
+      },
+      {
+        label: "Dame",
+        img: 'img/dame.png',
+        description: 'Dame für 2 Spieler oder gegen den Computer.',
+        type: 'game',
+        url: 'https://myprojectpages.github.io/Dame/',
+        year: 2026,
+        tags: ['2-Spieler', 'Brettspiel', 'Mobil'],
+      },
+      {
+        label: "Snake",
+        img: 'img/snake.png',
+        status: 'beta',
+        description: 'Snake, wie man es liebt. Mit Tastatursteuerung (WASD, Pfeile) smarter Touchsteuerung durch Tippen auf dem Spielfeld und an den Ecken. Oder durch Wisch-Gesten auf dem gesamten Bildschirm.',
+        type: 'game',
+        url: 'https://myprojectpages.github.io/Snake/',
+        year: 2026,
+        tags: ['Mobile', 'Classic', 'Nokia']
+      },
+      {
+        label: "Clipwerk",
+        img: 'img/clipwerk.png',
+        status: 'alpha',
+        description: 'Einfache Videobearbeitung.',
+        type: 'tool',
+        url: 'https://myprojectpages.github.io/Clipwerk/',
+        year: 2026,
+        tags: ['Lokal', 'Mobil']
+      },
+      {
+        label: "Synthesizer",
+        img: 'img/synthesizer.jpg',
+        description: 'Einfacher Synthesizer für unterwegs.',
+        type: 'tool',
+        url: 'https://myprojectpages.github.io/Synthesizer/',
+        year: 2026,
+        tags: ['Mobile', 'Keyboard']
+      },
+      {
+        label: "Textanalyse",
+        img: 'img/textanalyse.png',
+        status: 'beta',
+        description: 'Zählen von Wörtern, Sätzen, Häufigkeiten uvm.',
+        type: 'tool',
+        url: 'https://myprojectpages.github.io/Textanalyse',
+        year: 2026,
+        tags: ['Texte', 'Keywords']
+      }
+    ];
+
+    const state = {
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      dragging: false,
+      moved: false,
+      lastX: 0,
+      lastY: 0,
+      downX: 0,
+      downY: 0
+    };
+
+    let CARD_W = 320;
+    let CARD_H = 460;
+    let GAP_X = 34;
+    let GAP_Y = 34;
+    let STEP_X = CARD_W + GAP_X;
+    let STEP_Y = CARD_H + GAP_Y;
+
+    const cards = [];
+    const BUFFER = 2;
+
+    const RAD = 180 / Math.PI;
+    const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+
+    function cssPx(name) {
+      return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));
+    }
+
+    function syncSizes() {
+      CARD_W = cssPx("--card-w");
+      CARD_H = cssPx("--card-h");
+      GAP_X = cssPx("--gap-x");
+      GAP_Y = cssPx("--gap-y");
+      STEP_X = CARD_W + GAP_X;
+      STEP_Y = CARD_H + GAP_Y;
+      buildPool();
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function renderCardContent(el, item) {
+      const st = item.status ? STATUS[item.status] : null;
+      const ty = types[item.type] || { label: item.type || '', color: 'green' };
+
+      // Link oder Platzhalter
+      if (item.url) {
+        el.href = item.url;
+        el.target = '_blank';
+        el.rel = 'noopener';
+        el.setAttribute('role', 'link');
+        el.setAttribute('aria-label', item.label || '');
+      } else {
+        el.removeAttribute('href');
+        el.removeAttribute('target');
+        el.removeAttribute('rel');
+        el.setAttribute('role', 'article');
+      }
+
+      // Typ-Klasse für Neon-Farbe
+      el.className = `card t-${item.type || 'misc'}`;
+
+      const statusHtml = st
+        ? `<span class="badge-status"><span class="sym">${st.symbol}</span>${escapeHtml(st.label)}</span>`
+        : '';
+
+      const typeHtml = `<span class="badge-type ${ty.color}">${escapeHtml(ty.label)}</span>`;
+
+      const tagsHtml = (item.tags || [])
+        .map(t => `<span class="tag">${escapeHtml(t)}</span>`)
+        .join('');
+
+      const imgSrc = item.img || '';
+
+      el.innerHTML = `
+        <div class="thumb">
+          ${statusHtml}
+          ${typeHtml}
+          <img src="${escapeHtml(imgSrc)}" alt="" loading="lazy" draggable="false" />
+        </div>
+        <div class="content">
+          <h3 class="title">${escapeHtml(item.label || '')}</h3>
+          <p class="desc">${escapeHtml(item.description || '')}</p>
+          <div class="footer">
+            <div class="tags">${tagsHtml}</div>
+            <span class="year">${item.year || ''}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function buildPool() {
+      grid.innerHTML = "";
+      cards.length = 0;
+
+      const cols = Math.ceil(innerWidth / STEP_X) + BUFFER * 2 + 2;
+      const rows = Math.ceil(innerHeight / STEP_Y) + BUFFER * 2 + 2;
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const card = document.createElement("a");
+          card.className = "card t-misc";
+          grid.appendChild(card);
+          cards.push({ el: card, r, c, index: -1 });
+        }
+      }
+    }
+
+    function mod(n, m) {
+      return ((n % m) + m) % m;
+    }
+
+    function update() {
+      const cx = innerWidth / 2;
+      const cy = innerHeight / 2;
+
+      const R = Math.max(Math.hypot(cx, cy), 1);
+
+      // Abgeschwächter Sphären-Effekt
+      const DEPTH = R * 0.34;
+
+      const baseCol = Math.floor(-state.x / STEP_X) - BUFFER;
+      const baseRow = Math.floor(-state.y / STEP_Y) - BUFFER;
+
+      const poolCols = Math.ceil(innerWidth / STEP_X) + BUFFER * 2 + 2;
+
+      for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
+
+        const localCol = i % poolCols;
+        const localRow = Math.floor(i / poolCols);
+
+        const worldCol = baseCol + localCol;
+        const worldRow = baseRow + localRow;
+
+        const x = worldCol * STEP_X + state.x + cx - CARD_W / 2;
+        const y = worldRow * STEP_Y + state.y + cy - CARD_H / 2;
+
+        const cardCx = x + CARD_W / 2;
+        const cardCy = y + CARD_H / 2;
+
+        const nx = (cardCx - cx) / R;
+        const ny = (cardCy - cy) / R;
+        const tr = Math.hypot(nx, ny);
+        const t = Math.min(tr, 1);
+
+        const z = -(1 - Math.sqrt(1 - t * t)) * DEPTH;
+
+        const rotateY = Math.asin(clamp(nx, -1, 1)) * RAD * 0.32;
+        const rotateX = -Math.asin(clamp(ny, -1, 1)) * RAD * 0.32;
+
+        const scale = 1 - t * 0.04;
+
+        const itemIndex = mod(worldRow * 7 + worldCol, items.length);
+        const item = items[itemIndex];
+
+        if (card.index !== itemIndex) {
+          card.index = itemIndex;
+          renderCardContent(card.el, item);
+        }
+
+        // --- Glow: mittigste Karte deutlich heller, Nachbarn klar schwächer ---
+        // Steile Kurve (Exponent 3.4) + Boost, damit die zentrale Karte
+        // sichtbar strahlt, während Nachbarn schon stark abfallen.
+        const glowBase = Math.pow(1 - t, 3.4);
+        // Zusätzlicher Spot-Boost: nur ganz nahe der Mitte (t < 0.12)
+        const spotBoost = t < 0.12 ? (1 - t / 0.12) * 0.7 : 0;
+        const glow = clamp(glowBase * 1.6 + spotBoost, 0, 2.3);
+
+        card.el.style.setProperty('--glow', glow.toFixed(3));
+
+        card.el.style.transform = `
+          translate3d(${x}px, ${y}px, ${z}px)
+          rotateX(${rotateX}deg)
+          rotateY(${rotateY}deg)
+          scale(${scale})
+        `;
+
+        // Karten in der Mitte voll sichtbar, am Rand sanft ausblenden
+        const fade = clamp((1.22 - tr) * 1.6, 0, 1);
+        card.el.style.opacity = fade;
+        card.el.style.filter = `saturate(${0.82 + (1 - t) * 0.3}) brightness(${0.9 + (1 - t) * 0.15})`;
+      }
+    }
+
+    function animate() {
+      if (!state.dragging) {
+        state.x += state.vx;
+        state.y += state.vy;
+
+        state.vx *= 0.92;
+        state.vy *= 0.92;
+
+        if (Math.abs(state.vx) < 0.01) state.vx = 0;
+        if (Math.abs(state.vy) < 0.01) state.vy = 0;
+      }
+
+      update();
+      requestAnimationFrame(animate);
+    }
+
+    // --- Drag / Klick-Logik ---------------------------------------------
+    const DRAG_THRESHOLD = 6; // Pixel
+
+    function pointerDown(e) {
+      state.dragging = true;
+      state.moved = false;
+      state.lastX = e.clientX;
+      state.lastY = e.clientY;
+      state.downX = e.clientX;
+      state.downY = e.clientY;
+      state.vx = 0;
+      state.vy = 0;
+    }
+
+    function pointerMove(e) {
+      if (!state.dragging) return;
+
+      const dx = e.clientX - state.lastX;
+      const dy = e.clientY - state.lastY;
+
+      state.x += dx;
+      state.y += dy;
+
+      state.vx = dx * 0.75;
+      state.vy = dy * 0.75;
+
+      state.lastX = e.clientX;
+      state.lastY = e.clientY;
+
+      // Schwelle überschritten → ab jetzt echter Drag
+      if (!state.moved &&
+          Math.hypot(e.clientX - state.downX, e.clientY - state.downY) > DRAG_THRESHOLD) {
+        state.moved = true;
+        document.body.classList.add("dragging");
+        scene.setPointerCapture?.(e.pointerId);
+      }
+    }
+
+    function pointerUp(e) {
+      state.dragging = false;
+      document.body.classList.remove("dragging");
+      scene.releasePointerCapture?.(e.pointerId);
+    }
+
+    scene.addEventListener("pointerdown", pointerDown);
+    scene.addEventListener("pointermove", pointerMove);
+    scene.addEventListener("pointerup", pointerUp);
+    scene.addEventListener("pointercancel", pointerUp);
+
+    // Navigation NUR blockieren, wenn tatsächlich gezogen wurde.
+    grid.addEventListener("click", (e) => {
+      if (state.moved) {
+        e.preventDefault();
+        e.stopPropagation();
+        state.moved = false;
+      }
+    }, true);
+    // ---------------------------------------------------------------------
+
+    window.addEventListener("wheel", (e) => {
+      e.preventDefault();
+
+      const dx = e.deltaX || (e.shiftKey ? e.deltaY : 0);
+      const dy = e.shiftKey ? 0 : e.deltaY;
+
+      state.x -= dx;
+      state.y -= dy;
+
+      state.vx = -dx * 0.15;
+      state.vy = -dy * 0.15;
+    }, { passive: false });
+
+    window.addEventListener("resize", syncSizes);
+
+    syncSizes();
+    animate();
+  </script>
+</body>
+</html>

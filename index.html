@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Snake">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta charset="UTF-8">
+<script src="repos.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Boilers Room · Repo Übersicht</title>
 <style>
@@ -1077,8 +1078,8 @@ a:focus-visible {
       const types = {
         game: { label: 'Games', symbol: '🕹️', color: 'orange' },
         tool: { label: 'Tools', symbol: '🔧', color: 'cyan' },
-        // music: { label: 'Music', color: 'violet' },
         misc: { label: 'Misc', symbol: '🧩', color: 'green' },
+        // music: { label: 'Music', color: 'violet' },
         // violet: { label: 'Violet' },   // z.B. Experiments / Art
         // green:  { label: 'Green'  },   // Libraries / Frameworks
         // pink:   { label: 'Pink'   },   // Featured / Specials
@@ -1096,34 +1097,15 @@ a:focus-visible {
       // ======================================================
       // Optionales "icon" (Emoji/Symbol) für kompakte Ansichten.
       // Optionales "status" ("beta" | "alpha") für Badge.
-      const repos = [
+      const repos = originrepos ?? [
         {
             label: "Android Vollbild",
             img: 'img/pwa.png',
-            description: 'Alle Apps können als PWA (Progressive-Web-App) über das Browser-Menü installiert und im Vollbild auf Android-Geräten genutzt werden. Auch "der Boiler Room" kann installiert werden und ist dann der App-Launcher. Wenn Sie ernsthaft eine oder mehrere Tools für Ihre Zwecke verwenden, werden sich zwangsweise mit der Zeit persönliche Daten anhäufen. Achten Sie darauf, in dem Browser möglichst keine oder nur vertrauenswürdige Plugins zu verwenden. Augen auf! :-)',
+            description: 'Alle Apps können als PWA (Progressive-Web-App) über das Browser-Menü installiert und im Vollbild auf Android-Geräten genutzt werden.',
             type: 'misc',
             year: 2026,
             tags: ['Information', 'Installation'],
             featured: 'tall', //wide,tall
-        },
-        {
-            label: "Doomsday",
-            img: 'https://boiler-byte.github.io/Doomsday/doomsday.webp',
-            description: 'Eine Avengers Fan Fiction, die uns braucht.',
-            type: 'misc',
-            url: 'https://boiler-byte.github.io/Doomsday/',
-            year: 2026,
-            tags: ['Geschichte', 'Satire', 'Marvel', 'X-Men', 'Wolverine', 'Captain America', 'Zombie', 'Loki' ]
-        },
-        {
-            label: "Memory",
-            img: 'img/memory.webp',
-            status: 'beta',
-            description: 'Das gute, alte Memory mit Custom Themes.',
-            type: 'game',
-            url: 'https://boiler-byte.github.io/Memory/',
-            year: 2026,
-            tags: ['Gedächtnistraining', 'Mobil']
         },
         {
             label: "Sudoku",
@@ -1131,7 +1113,7 @@ a:focus-visible {
             status: 'beta',
             description: 'Ein simples Sudoku.',
             type: 'game',
-            url: 'https://boiler-byte.github.io/Sudoku/',
+            url: 'https://myprojectpages.github.io/Sudoku/',
             year: 2026,
             tags: ['Mobile', 'Riddle']
         },
@@ -1141,7 +1123,7 @@ a:focus-visible {
             status: 'beta',
             description: 'Geklonte Wetter App mit öffentlicher API.',
             type: 'tool',
-            url: 'https://boiler-byte.github.io/Wetter/',
+            url: 'https://myprojectpages.github.io/Wetter/',
             year: 2026,
             tags: ['API', 'Geo-Location']
         },
@@ -1150,57 +1132,17 @@ a:focus-visible {
             img: 'img/buchstaben.jpg',
             description: 'Lernspiel für Kinder von 3 bis 5 Jahren.',
             type: 'game',
-            url: 'https://boiler-byte.github.io/Buchstaben/',
+            url: 'https://myprojectpages.github.io/Buchstaben/',
             year: 2026,
             tags: ['Lernspiel', 'Kinder'],
             featured: 'wide'
-        },
-        {
-            label: "Typeshooter",
-            img: 'img/typeshooter.png',
-            status: 'beta',
-            description: 'Schieß die tödlichen Wörter ab.',
-            type: 'game',
-            url: 'https://boiler-byte.github.io/Typeshooter/',
-            year: 2026,
-            tags: ['Speed Typing', 'High-Score']
-        },
-        {
-            label: "Bildstapel-Verarbeitung",
-            img: 'img/bildstapelverarbeitung.png',
-            description: 'Auflösungen, Rotation, Zuschneiden, Freistellen, Zerlegen, SVG Vektorkonvertierung. Damit lässt sich in einem Rutsch aus einem Bild mit mehreren Icons eine Sammlung an passgenau zugeschnittenen SVG-Icons erstellen. Import-Formate: jpg, png, webp. Output-Formate: jpg, png, webp, svg.',
-            type: 'tool',
-            url: 'https://boiler-byte.github.io/Bildstapelverarbeitung/',
-            year: 2026,
-            tags: ['Bildbearbeitung', 'Thumbmaker', 'crop', 'resize', 'color to alpha', 'Farbe zu Alpha'],
-            featured: true,
-        },
-        {
-            label: "Authenticator",
-            img: 'img/authenticator.png',
-            status: 'beta',
-            description: 'Lokale Schlüssel, AES verschlüssel mit Import/Export.',
-            type: 'tool',
-            url: 'https://boiler-byte.github.io/Authenticator/',
-            year: 2026,
-            tags: ['Lokal', 'Sensible Daten']
-        },
-        {
-            label: "SVG-Studio",
-            img: 'img/svgstudio.png',
-            description: 'SVG Dateien bearbeiten.',
-            status: 'alpha',
-            type: 'tool',
-            url: 'https://boiler-byte.github.io/svgstudio/',
-            year: 2026,
-            tags: ['svg', 'Optimierung', 'Zuschneiden', 'crop'],
         },
         {
             label: "Dame",
             img: 'img/dame.png',
             description: 'Dame für 2 Spieler oder gegen den Computer.',
             type: 'game',
-            url: 'https://boiler-byte.github.io/Dame/',
+            url: 'https://myprojectpages.github.io/Dame/',
             year: 2026,
             tags: ['2-Spieler', 'Brettspiel', 'Mobil'],
         },
@@ -1210,49 +1152,9 @@ a:focus-visible {
             status: 'beta',
             description: 'Snake, wie man es liebt. Mit Tastatursteuerung (WASD, Pfeile) smarter Touchsteuerung durch Tippen auf dem Spielfeld und an den Ecken. Oder durch Wisch-Gesten auf dem gesamten Bildschirm.',
             type: 'game',
-            url: 'https://boiler-byte.github.io/Snake/',
+            url: 'https://myprojectpages.github.io/Snake/',
             year: 2026,
             tags: ['Mobile', 'Classic', 'Nokia']
-        },
-        {
-            label: "Countdowns",
-            img: 'img/countdown.png',
-            description: 'Countdowns mit Bildern (aus der Zwischenablage), Wiederholungen, Vorlagen, smarter Sortierung.',
-            type: 'tool',
-            url: 'https://boiler-byte.github.io/Countdown/',
-            year: 2026,
-            tags: ['Sonstiges']
-        },
-        {
-            label: "Timestamp",
-            img: 'img/timestamp.png',
-            description: 'Ultimatives Unix-Timestamp Tool.',
-            type: 'tool',
-            url: 'https://boiler-byte.github.io/Timestamp/',
-            year: 2026,
-            tags: ['Unix Timestamp', 'Konverter'],
-        },
-        {
-            label: "PrettyCode",
-            img: 'img/prettycode.png',
-            status: 'beta',
-            description: 'Code Formatierung, Minifying, Syntax-Highlighting, Fehleranzeige für HTML, CSS, JavaScript (auch gemischt), MySQL, Python ,PHP, JSON.',
-            type: 'tool',
-            url: 'https://boiler-byte.github.io/prettycode/',
-            year: 2026,
-            tags: ['Lokal', 'Effizient']
-        },
-
-        
-        {
-            label: "QRCode",
-            img: 'img/qrcode.png',
-            status: 'alpha',
-            description: 'QR Codes erstellen, scannen und verwalten.',
-            type: 'tool',
-            url: 'https://boiler-byte.github.io/QRCode/',
-            year: 2026,
-            tags: ['Lokal', 'Sensible Daten']
         },
         {
             label: "Clipwerk",
@@ -1260,58 +1162,18 @@ a:focus-visible {
             status: 'alpha',
             description: 'Einfache Videobearbeitung.',
             type: 'tool',
-            url: 'https://boiler-byte.github.io/Clipwerk/',
+            url: 'https://myprojectpages.github.io/Clipwerk/',
             year: 2026,
             tags: ['Lokal', 'Mobil']
         },
-        {
-            label: "Haushalts-Durchblick",
-            img: 'img/haushaltsdurchblick.png',
-            status: 'alpha',
-            description: 'Überblick über das, was reinkommt, rausgeht und bleibt.',
-            type: 'tool',
-            url: 'https://boiler-byte.github.io/Haushaltsdurchblick/',
-            year: 2026,
-            tags: ['Lokal', 'Sensible Daten']
-        },
-
-        
         {
             label: "Synthesizer",
             img: 'img/synthesizer.jpg',
             description: 'Einfacher Synthesizer für unterwegs.',
             type: 'tool',
-            url: 'https://boiler-byte.github.io/Synthesizer/',
+            url: 'https://myprojectpages.github.io/Synthesizer/',
             year: 2026,
             tags: ['Mobile', 'Keyboard']
-        },
-        {
-            label: "Drums",
-            img: 'img/drums.jpg',
-            description: 'Einfaches HTML-Schlagzeug für unterwegs.',
-            type: 'tool',
-            url: 'https://boiler-byte.github.io/Drums/',
-            year: 2026,
-            tags: ['Mobile', 'Drumpad']
-        },
-        {
-            label: "Dateiumbenenner",
-            img: 'img/dateiumbenenner.png',
-            status: 'beta',
-            description: 'Ultimatives Tool um mehrere Dateien oder Verzeichnisse umzubenennen.',
-            type: 'tool',
-            url: 'https://github.com/boiler-byte/Dateiumbenenner',
-            year: 2026,
-            tags: ['Dateisystem', 'Lebenshelfer']
-        },
-        {
-            label: "Weihnachtsfeier",
-            img: 'img/weihnachtsfeier.jpg',
-            description: 'Bericht einer Weihnachtsfeier aus der Sicht von Reik.',
-            type: 'misc',
-            url: 'https://boiler-byte.github.io/Weihnachtsfeier',
-            year: 2026,
-            tags: ['How High', 'Peace']
         },
         {
             label: "Textanalyse",
@@ -1319,7 +1181,7 @@ a:focus-visible {
             status: 'beta',
             description: 'Zählen von Wörtern, Sätzen, Häufigkeiten uvm.',
             type: 'tool',
-            url: 'https://boiler-byte.github.io/Textanalyse',
+            url: 'https://myprojectpages.github.io/Textanalyse',
             year: 2026,
             tags: ['Texte', 'Keywords']
         },
