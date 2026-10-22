@@ -1,24 +1,5 @@
 const originrepos = [
 {
-    label: "Android Vollbild",
-    img: 'img/pwa.png',
-    description: 'Alle Apps können als PWA (Progressive-Web-App) über das Browser-Menü installiert und im Vollbild auf Android-Geräten genutzt werden. Auch "der Boiler Room" kann installiert werden und ist dann der App-Launcher. Wenn Sie ernsthaft eine oder mehrere Tools für Ihre Zwecke verwenden, werden sich zwangsweise mit der Zeit persönliche Daten anhäufen. Achten Sie darauf, in dem Browser möglichst keine oder nur vertrauenswürdige Plugins zu verwenden. Augen auf! :-)',
-    type: 'misc',
-    year: 2026,
-    tags: ['Information', 'Installation'],
-    featured: 'tall', //wide,tall
-},
-{
-    label: "Sphären Ansicht",
-    img: 'img/sphereview.png',
-    description: 'Alle Projekte als unendliche Sphäre',
-    url: 'sphereview.html',
-    type: 'misc',
-    year: 2026,
-    tags: ['Information', 'Installation'],
-    // featured: 'tall', //wide,tall
-},
-{
     label: "Doomsday",
     img: 'https://boiler-byte.github.io/Doomsday/doomsday.webp',
     description: 'Eine Avengers Fan Fiction, die uns braucht.',
@@ -68,14 +49,15 @@ const originrepos = [
     featured: 'wide'
 },
 {
-    label: "Typeshooter",
-    img: 'img/typeshooter.png',
+    label: "Authenticator",
+    img: 'img/authenticator.png',
     status: 'beta',
-    description: 'Schieß die tödlichen Wörter ab.',
-    type: 'game',
-    url: 'https://boiler-byte.github.io/Typeshooter/',
+    description: 'Lokale Schlüssel, AES verschlüssel mit Import/Export.',
+    type: 'tool',
+    url: 'https://boiler-byte.github.io/Authenticator/',
     year: 2026,
-    tags: ['Speed Typing', 'High-Score']
+    tags: ['Lokal', 'Sensible Daten'],
+    featured: 'wide'
 },
 {
     label: "Bildstapel-Verarbeitung",
@@ -88,14 +70,14 @@ const originrepos = [
     featured: true,
 },
 {
-    label: "Authenticator",
-    img: 'img/authenticator.png',
+    label: "Typeshooter",
+    img: 'img/typeshooter.png',
     status: 'beta',
-    description: 'Lokale Schlüssel, AES verschlüssel mit Import/Export.',
-    type: 'tool',
-    url: 'https://boiler-byte.github.io/Authenticator/',
+    description: 'Schieß die tödlichen Wörter ab.',
+    type: 'game',
+    url: 'https://boiler-byte.github.io/Typeshooter/',
     year: 2026,
-    tags: ['Lokal', 'Sensible Daten']
+    tags: ['Speed Typing', 'High-Score'],
 },
 {
     label: "SVG-Studio",
@@ -234,5 +216,24 @@ const originrepos = [
     url: 'https://boiler-byte.github.io/Textanalyse',
     year: 2026,
     tags: ['Texte', 'Keywords']
+},
+{
+    label: "Sphären Ansicht",
+    img: 'img/sphereview.png',
+    description: 'Alle Projekte als unendliche Sphäre',
+    url: 'sphereview.html',
+    type: 'misc',
+    year: 2026,
+    tags: ['Information', 'Installation'],
+    // featured: 'tall', //wide,tall
+},
+{
+    label: "Android Vollbild",
+    img: 'img/pwa.png',
+    description: 'Alle Apps können als PWA (Progressive-Web-App) über das Browser-Menü installiert und im Vollbild auf Android-Geräten genutzt werden. Auch "der Boiler Room" kann installiert werden und ist dann der App-Launcher. Wenn Sie ernsthaft eine oder mehrere Tools für Ihre Zwecke verwenden, werden sich zwangsweise mit der Zeit persönliche Daten anhäufen. Achten Sie darauf, in dem Browser möglichst keine oder nur vertrauenswürdige Plugins zu verwenden. Augen auf! :-)',
+    type: 'misc',
+    year: 2026,
+    tags: ['Information', 'Installation'],
+    featured: 'tall', //wide,tall
 },
 ];
