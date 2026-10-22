@@ -218,6 +218,15 @@ const originrepos = [
     tags: ['Texte', 'Keywords']
 },
 {
+    label: "Android Vollbild",
+    img: 'img/pwa.png',
+    description: 'Alle Apps können als PWA (Progressive-Web-App) über das Browser-Menü installiert und im Vollbild auf Android-Geräten genutzt werden. Auch "der Boiler Room" kann installiert werden und ist dann der App-Launcher. Wenn Sie ernsthaft eine oder mehrere Tools für Ihre Zwecke verwenden, werden sich zwangsweise mit der Zeit persönliche Daten anhäufen. Achten Sie darauf, in dem Browser möglichst keine oder nur vertrauenswürdige Plugins zu verwenden. Augen auf! :-)',
+    type: 'misc',
+    year: 2026,
+    tags: ['Information', 'Installation'],
+    featured: 'tall', //wide,tall
+},
+{
     label: "Sphären Ansicht",
     img: 'img/sphereview.webp',
     description: 'Alle Projekte als unendliche Sphäre',
@@ -228,12 +237,13 @@ const originrepos = [
     // featured: 'tall', //wide,tall
 },
 {
-    label: "Android Vollbild",
-    img: 'img/pwa.png',
-    description: 'Alle Apps können als PWA (Progressive-Web-App) über das Browser-Menü installiert und im Vollbild auf Android-Geräten genutzt werden. Auch "der Boiler Room" kann installiert werden und ist dann der App-Launcher. Wenn Sie ernsthaft eine oder mehrere Tools für Ihre Zwecke verwenden, werden sich zwangsweise mit der Zeit persönliche Daten anhäufen. Achten Sie darauf, in dem Browser möglichst keine oder nur vertrauenswürdige Plugins zu verwenden. Augen auf! :-)',
+    label: "Kuschelhase T-800",
+    img: 'img/kuschelhase-t800.webp',
+    description: 'Blaubeere & der Kuschelhase: Mission Gute Nacht',
+    url: 'kuschelhase-t800.html',
     type: 'misc',
     year: 2026,
-    tags: ['Information', 'Installation'],
-    featured: 'tall', //wide,tall
+    tags: ['Gute Nacht', 'Geschichte'],
+    // featured: 'tall', //wide,tall
 },
 ];

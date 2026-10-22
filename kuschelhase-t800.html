@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blaubeere & der Kuschelhase: Mission Gute Nacht</title>
+  <style>
+    /* ---------- GEDÄMPFTER HINTERGRUND & GRUNDSTIMMUNG ---------- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: radial-gradient(circle at 20% 30%, #0b0e1a, #010101 90%);
+      font-family: 'Segoe UI', 'Quicksand', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem 1.2rem;
+      color: #e6e9f0;
+      line-height: 1.6;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Sternenstaub / kleine leuchtende Punkte im Hintergrund */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: 
+        radial-gradient(2px 2px at 15% 25%, rgba(180, 220, 255, 0.6), transparent),
+        radial-gradient(1px 1px at 78% 42%, rgba(255, 240, 180, 0.5), transparent),
+        radial-gradient(2px 2px at 43% 71%, rgba(200, 230, 255, 0.4), transparent),
+        radial-gradient(1px 1px at 89% 18%, rgba(255, 200, 200, 0.5), transparent),
+        radial-gradient(2px 2px at 33% 89%, rgba(170, 200, 255, 0.5), transparent),
+        radial-gradient(1px 1px at 62% 12%, rgba(255, 255, 210, 0.6), transparent),
+        radial-gradient(3px 3px at 7% 62%, rgba(150, 190, 255, 0.3), transparent),
+        radial-gradient(1px 1px at 94% 77%, rgba(255, 220, 200, 0.5), transparent);
+      background-repeat: no-repeat;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Dezenter Dunkel-Schleier über allem, für gedimmte Stimmung */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.25);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ---------- HAUPT CONTAINER (story card) ---------- */
+    .story-wrapper {
+      position: relative;
+      z-index: 10;
+      max-width: 800px;
+      width: 100%;
+      background: rgba(10, 14, 22, 0.78);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(110, 160, 255, 0.25);
+      border-radius: 48px 48px 32px 32px;
+      box-shadow: 
+        0 25px 40px -12px rgba(0, 0, 0, 0.9),
+        0 0 0 1px rgba(150, 200, 255, 0.1) inset,
+        0 0 30px rgba(70, 130, 220, 0.3);
+      padding: 2.5rem 2rem;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .story-wrapper:hover {
+      box-shadow: 
+        0 30px 55px -10px #000,
+        0 0 0 1px rgba(170, 210, 255, 0.25) inset,
+        0 0 45px rgba(100, 160, 255, 0.4);
+    }
+
+    /* ---------- TITEL & HEADER ---------- */
+    .title-section {
+      text-align: center;
+      margin-bottom: 2.2rem;
+      position: relative;
+    }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #c0dbff, #8bb3ff, #b8d0ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 15px rgba(100, 170, 255, 0.6), 0 0 30px rgba(60, 120, 255, 0.3);
+      margin-bottom: 0.4rem;
+      line-height: 1.2;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.8));
+    }
+
+    .subhead {
+      font-size: 1.1rem;
+      color: #b8c7e0;
+      font-style: italic;
+      text-shadow: 0 2px 5px black;
+      margin-bottom: 0.8rem;
+      letter-spacing: 1px;
+      font-weight: 300;
+      border-bottom: 1px dashed rgba(120, 170, 255, 0.4);
+      display: inline-block;
+      padding-bottom: 10px;
+    }
+
+    /* kleine Terminator-Deko */
+    .terminator-glow {
+      display: inline-block;
+      font-size: 0.9rem;
+      background: rgba(30, 60, 120, 0.6);
+      padding: 0.2rem 1rem;
+      border-radius: 40px;
+      border: 1px solid #4f8aff;
+      color: #b0d0ff;
+      box-shadow: 0 0 12px #2f6aff;
+      backdrop-filter: blur(2px);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+
+    /* ---------- TEXT-STIL (wie ein Buch, aber aufregend) ---------- */
+    .story-content {
+      font-size: 1.2rem;
+      color: #d9e2f5;
+      text-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
+    }
+
+    .story-content p {
+      margin-bottom: 1.3rem;
+      font-weight: 400;
+      line-height: 1.7;
+      position: relative;
+      padding-left: 0.5rem;
+    }
+
+    /* Erste Zeile (Die Nacht war dunkel) besonders hervorheben */
+    .story-content p:first-of-type {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #ccdefa;
+      letter-spacing: 0.5px;
+      border-left: 4px solid #4d7dff;
+      padding-left: 1.2rem;
+      background: linear-gradient(90deg, rgba(70, 120, 255, 0.15), transparent);
+      border-radius: 0 20px 20px 0;
+      text-shadow: 0 0 10px #3d6eff;
+      margin-bottom: 1.8rem;
+    }
+
+    /* ---------- BESONDERE EFFEKTE / HERVORHEBUNGEN ---------- */
+    .blitz {
+      font-weight: 900;
+      color: #fff9d7;
+      text-shadow: 0 0 10px #6ab0ff, 0 0 25px #3f8eff, 0 0 40px #1a4dff;
+      letter-spacing: 2px;
+      /* animation: flicker 3s infinite alternate; */
+      display: inline-block;
+      background: rgba(30, 80, 200, 0.2);
+      padding: 0 0.2rem;
+    }
+
+    @keyframes flicker {
+      0% { opacity: 1; text-shadow: 0 0 10px #8bb3ff, 0 0 30px #3f6eff; }
+      80% { opacity: 1; text-shadow: 0 0 15px #aac9ff, 0 0 45px #2a5eff; }
+      100% { opacity: 1; text-shadow: 0 0 20px #b8d4ff, 0 0 60px #2a5eff; }
+    }
+
+    .plums {
+      font-weight: 800;
+      color: #c7b8ff;
+      text-shadow: 0 0 12px #a08aff, 0 0 25px #5f3eff;
+      font-size: 1.3rem;
+    }
+
+    /* Kuschelhase T-800 – spezieller Stil */
+    .t800 {
+      background: rgba(20, 40, 80, 0.8);
+      color: #b0d0ff;
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      padding: 0.1rem 0.5rem;
+      border-radius: 10px;
+      border: 1px solid #3b7dff;
+      box-shadow: 0 0 12px #2d6eff;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-size: 0.95rem;
+      display: inline-block;
+    }
+
+    .t1000 {
+      background: rgba(80, 30, 60, 0.7);
+      color: #ffbbdd;
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      padding: 0.1rem 0.5rem;
+      border-radius: 10px;
+      border: 1px solid #e064a0;
+      box-shadow: 0 0 12px #c04080;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-size: 0.95rem;
+      display: inline-block;
+    }
+
+    .fluester {
+      font-style: italic;
+      color: #b0c8ff;
+      text-shadow: 0 0 10px #3f6eff;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+
+    .fluester::before {
+      content: '🔊 ';
+      font-style: normal;
+      filter: drop-shadow(0 0 5px #88bbff);
+    }
+
+    /* kleiner Lichtstrahl / Taschenlampe als Deko */
+    .light-beam {
+      display: inline-block;
+      background: radial-gradient(circle, #fff9c4, #ffd966);
+      color: #1a1a1a;
+      font-weight: 800;
+      padding: 0.1rem 0.6rem;
+      border-radius: 30px;
+      box-shadow: 0 0 20px #ffd966, 0 0 40px #ffb347;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+      border: 1px solid #ffeeaa;
+    }
+
+    /* der "ZACK!" Effekt */
+    .zack {
+      display: inline-block;
+      font-weight: 900;
+      font-size: 1.4rem;
+      color: #ffec9e;
+      text-shadow: 0 0 15px #ffbb33, 0 0 35px #ff8800, 0 0 60px #ffaa00;
+      letter-spacing: 2px;
+      /* animation: zackPulse 0.8s infinite alternate; */
+    }
+
+    @keyframes zackPulse {
+      from { transform: scale(1); opacity: 1; }
+      to { transform: scale(1.05); opacity: 0.95; text-shadow: 0 0 25px #ffdd44, 0 0 50px #ff8800; }
+    }
+
+    /* Ende-Zeile */
+    .ende {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: 8px;
+      color: #bed9ff;
+      text-shadow: 0 0 20px #3f7fff, 0 0 50px #1a3f9f;
+      margin-top: 2rem;
+      padding-top: 0.8rem;
+      border-top: 2px solid rgba(100, 160, 255, 0.3);
+    }
+
+    /* ---------- RESPONSIVE ---------- */
+    @media (max-width: 600px) {
+      .story-wrapper {
+        padding: 1.8rem 1.2rem;
+        border-radius: 32px;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+        letter-spacing: 1px;
+      }
+
+      .subhead {
+        font-size: 0.9rem;
+      }
+
+      .story-content {
+        font-size: 1rem;
+      }
+
+      .story-content p:first-of-type {
+        font-size: 1.2rem;
+      }
+
+      .ende {
+        font-size: 1.5rem;
+        letter-spacing: 5px;
+      }
+
+      .t800, .t1000 {
+        font-size: 0.8rem;
+      }
+    }
+
+    /* kleine Scroll-Besonderheit */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #080c14;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2d4f8a;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #3b6eff;
+    }
+  </style>
+</head>
+<body>
+  <div class="story-wrapper">
+    <div class="title-section">
+      <h1>Blaubeere und der Kuschelhase</h1>
+      <div class="subhead">Mission Gute Nacht</div>
+      <div class="terminator-glow">⏳ T-800 Schutzmodus ⏳</div>
+      <img src="img/kuschelhase-t800.webp" style="width:80%;margin-top:-4rem;margin-bottom:-7rem">
+    </div>
+
+    <div class="story-content">
+      <p>Die Nacht war dunkel. Zu dunkel.</p>
+
+      <p>Blaubeere lag in ihrem Bett, die Augen weit aufgerissen, als ein leises Knirschen vom Fensterbrett ertönte. Plötzlich – <span class="blitz">BLITZ!</span> – ein grelles, blaues Licht, und etwas Landete mit einem dumpfen <span class="plums">PLUMS</span> auf dem Teppich.</p>
+
+      <p>Es war kein normales Spielzeug. Es war… <span class="t800">der Kuschelhase T-800</span>.</p>
+
+      <p>Sein Fell war zerzaust, ein Ohr hing halb ab, aber in seinen kleinen Knopfaugen brannte ein unerbittlicher Entschluss. <span class="fluester">"Ich bin ein Schutz-Hase. Programmiert, um dich bis zum Einschlafen zu beschützen."</span></p>
+
+      <p>Blaubeere starrte. <span class="fluester">"Wer hat dich geschickt?"</span></p>
+
+      <p><span class="fluester">"Dein zukünftiges Ich. In 20 Jahren wirst du Wissenschaftlerin sein. Und du hast mich zurückgeschickt, weil…"</span> Er drehte sich abrupt um. <span class="fluester">"Achtung. Sie sind schon hier."</span></p>
+
+      <p>Durch die Tür schlich sich etwas. Langsam. Unaufhaltsam. <span class="t1000">Der Schlaflose Kissen-Mann – T-1000.</span> Ein flüssiger, formwandelnder Feind, der Kinder mit endlosem Gekuschel wach hielt.</p>
+
+      <p><span class="fluester">"Schnell!"</span>, knurrte der Kuschelhase und warf Blaubeere eine Taschenlampe zu. <span class="fluester">"Seine einzige Schwäche – Licht!"</span></p>
+
+      <p>Ein epischer Kampf begann! Der Kuschelhase sprinte über das Bett, warf Stofftiere wie Granaten, während der Kissen-Mann sich in Decken wand, um sie zu umschlingen. Blaubeere aktivierte die Taschenlampe – <span class="zack">ZACK!</span> – das Licht traf den Kissen-Mann, der mit einem <span class="fluester">"Niiiiiiiiiiiiicht schlaaaaaaafen…"</span> in Rauch aufging.</p>
+
+      <p>Stille.</p>
+
+      <p>Der Kuschelhase nickte zufrieden. <span class="fluester">"Mission erfüllt. Jetzt kannst du sicher träumen."</span> Und als Blaubeere die Augen schloss, flüsterte er noch: <span class="fluester">"Bis zum nächsten Abend. Ich werde da sein."</span></p>
+
+      <div class="ende">ENDE</div>
+    </div>
+  </div>
+
+  <!-- dezenter Hinweis auf die Vorlage (nur Deko) – versteckt, aber stilecht -->
+  <div style="position: fixed; bottom: 8px; right: 12px; z-index: 20; font-size: 0.6rem; color: #3b5f8a; letter-spacing: 2px; background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 20px; backdrop-filter: blur(4px); opacity: 0.7; border: 1px solid #2f4f7a;">T-800 · GUTE-NACHT-MODUS</div>
+</body>
+</html>
