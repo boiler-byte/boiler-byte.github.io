@@ -1,14 +1,5 @@
 const originrepos = [
 {
-    label: "Doomsday",
-    img: 'https://boiler-byte.github.io/Doomsday/doomsday.webp',
-    description: 'Eine Avengers Fan Fiction, die uns braucht.',
-    type: 'misc',
-    url: 'https://boiler-byte.github.io/Doomsday/',
-    year: 2026,
-    tags: ['Geschichte', 'Satire', 'Marvel', 'X-Men', 'Wolverine', 'Captain America', 'Zombie', 'Loki', 'Gambit', 'Blade' ]
-},
-{
     label: "Memory",
     img: 'img/memory.webp',
     status: 'beta',
@@ -37,6 +28,16 @@ const originrepos = [
     url: 'https://boiler-byte.github.io/Wetter/',
     year: 2026,
     tags: ['API', 'Geo-Location']
+},
+{
+    label: "Snake",
+    img: 'img/snake.png',
+    status: 'beta',
+    description: 'Snake, wie man es liebt. Mit Tastatursteuerung (WASD, Pfeile) smarter Touchsteuerung durch Tippen auf dem Spielfeld und an den Ecken. Oder durch Wisch-Gesten auf dem gesamten Bildschirm.',
+    type: 'game',
+    url: 'https://boiler-byte.github.io/Snake/',
+    year: 2026,
+    tags: ['Mobile', 'Classic', 'Nokia']
 },
 {
     label: "Buchstaben",
@@ -99,16 +100,6 @@ const originrepos = [
     tags: ['2-Spieler', 'Brettspiel', 'Mobil'],
 },
 {
-    label: "Snake",
-    img: 'img/snake.png',
-    status: 'beta',
-    description: 'Snake, wie man es liebt. Mit Tastatursteuerung (WASD, Pfeile) smarter Touchsteuerung durch Tippen auf dem Spielfeld und an den Ecken. Oder durch Wisch-Gesten auf dem gesamten Bildschirm.',
-    type: 'game',
-    url: 'https://boiler-byte.github.io/Snake/',
-    year: 2026,
-    tags: ['Mobile', 'Classic', 'Nokia']
-},
-{
     label: "Countdowns",
     img: 'img/countdown.png',
     description: 'Countdowns mit Bildern (aus der Zwischenablage), Wiederholungen, Vorlagen, smarter Sortierung.',
@@ -168,6 +159,15 @@ const originrepos = [
     year: 2026,
     tags: ['Lokal', 'Sensible Daten']
 },
+{
+    label: "Doomsday",
+    img: 'https://boiler-byte.github.io/Doomsday/doomsday.webp',
+    description: 'Eine Avengers Fan Fiction, die uns braucht.',
+    type: 'misc',
+    url: 'https://boiler-byte.github.io/Doomsday/',
+    year: 2026,
+    tags: ['Geschichte', 'Satire', 'Marvel', 'X-Men', 'Wolverine', 'Captain America', 'Zombie', 'Loki', 'Gambit', 'Blade' ]
+},
 
 
 {
@@ -199,13 +199,14 @@ const originrepos = [
     tags: ['Dateisystem', 'Lebenshelfer']
 },
 {
-    label: "Weihnachtsfeier",
-    img: 'img/weihnachtsfeier.jpg',
-    description: 'Bericht einer Weihnachtsfeier aus der Sicht von Reik.',
+    label: "Kuschelhase T-800",
+    img: 'img/kuschelhase-t800.webp',
+    description: 'Blaubeere & der Kuschelhase: Mission Gute Nacht',
+    url: 'kuschelhase-t800.html',
     type: 'misc',
-    url: 'https://boiler-byte.github.io/Weihnachtsfeier',
     year: 2026,
-    tags: ['How High', 'Peace']
+    tags: ['Gute Nacht', 'Geschichte'],
+    // featured: 'tall', //wide,tall
 },
 {
     label: "Textanalyse",
@@ -237,13 +238,12 @@ const originrepos = [
     // featured: 'tall', //wide,tall
 },
 {
-    label: "Kuschelhase T-800",
-    img: 'img/kuschelhase-t800.webp',
-    description: 'Blaubeere & der Kuschelhase: Mission Gute Nacht',
-    url: 'kuschelhase-t800.html',
+    label: "Weihnachtsfeier",
+    img: 'img/weihnachtsfeier.jpg',
+    description: 'Bericht einer Weihnachtsfeier aus der Sicht von Reik.',
     type: 'misc',
+    url: 'https://boiler-byte.github.io/Weihnachtsfeier',
     year: 2026,
-    tags: ['Gute Nacht', 'Geschichte'],
-    // featured: 'tall', //wide,tall
+    tags: ['How High', 'Peace']
 },
 ];
