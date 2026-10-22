@@ -113,6 +113,8 @@
       font-weight: 300;
       border-bottom: 1px dashed rgba(120, 170, 255, 0.4);
       display: inline-block;
+      z-index: 1;
+      position: inherit;
       padding-bottom: 10px;
     }
 
@@ -217,32 +219,81 @@
       display: inline-block;
     }
 
-    .fluester {
+    /* ---------- SPRECHBLASEN MIT CHARAKTER-ICONS ---------- */
+    .speech {
       font-style: italic;
-      color: #b0c8ff;
-      text-shadow: 0 0 10px #3f6eff;
+      color: #c8d8ff;
       font-weight: 400;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
+      padding-left: 0.2rem;
     }
 
-    .fluester::before {
-      content: '🔊 ';
-      font-style: normal;
-      filter: drop-shadow(0 0 5px #88bbff);
+    /* Icon-Stil: rund, farbig, mit Glow */
+    .char-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.7em;
+      height: 1.7em;
+      font-size: 0.95em;
+      border-radius: 50%;
+      margin-right: 0.35em;
+      vertical-align: middle;
+      background: rgba(20, 30, 55, 0.9);
+      border: 1.5px solid;
+      line-height: 1;
+      box-shadow: 0 0 8px currentColor;
+      transition: transform 0.2s;
+      position: relative;
+      top: -0.1em;
     }
 
-    /* kleiner Lichtstrahl / Taschenlampe als Deko */
-    .light-beam {
-      display: inline-block;
-      background: radial-gradient(circle, #fff9c4, #ffd966);
-      color: #1a1a1a;
-      font-weight: 800;
-      padding: 0.1rem 0.6rem;
-      border-radius: 30px;
-      box-shadow: 0 0 20px #ffd966, 0 0 40px #ffb347;
-      text-transform: uppercase;
-      font-size: 0.9rem;
-      border: 1px solid #ffeeaa;
+    .char-icon:hover {
+      transform: scale(1.15);
+    }
+
+    /* Hase T-800: kräftiges Blau, Terminator-Look */
+    .icon-hase {
+      color: #7fb5ff;
+      border-color: #3b7dff;
+      background: rgba(15, 35, 70, 0.95);
+      box-shadow: 0 0 12px #2d6eff, 0 0 4px #7fb5ff inset;
+    }
+
+    /* Blaubeere: violette Beere */
+    .icon-blaubeere {
+      color: #b48aff;
+      border-color: #8f5aff;
+      background: rgba(35, 15, 60, 0.95);
+      box-shadow: 0 0 12px #7f3fff, 0 0 4px #c9aaff inset;
+    }
+
+    /* Kissen-Mann T-1000: pink/rot, flüssig */
+    .icon-kissen {
+      color: #ff8fc0;
+      border-color: #e05590;
+      background: rgba(55, 15, 35, 0.95);
+      box-shadow: 0 0 12px #c04080, 0 0 4px #ffaad4 inset;
+    }
+    .char-icon.icon-kissen {
+        border: 0;
+        box-shadow: 0 0 0 transparent;
+        font-size: 2rem;
+        background: transparent;
+        display: inline-block;
+        margin: -0.8rem;
+    }
+
+    /* Sprechblasen-Text leicht hervorheben */
+    .speech-text {
+      font-style: italic;
+      color: #d0e0ff;
+      text-shadow: 0 0 8px rgba(100, 160, 255, 0.5);
+      padding: 0.05rem 0.3rem;
+      border-radius: 12px;
+      background: rgba(40, 60, 100, 0.25);
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
     }
 
     /* der "ZACK!" Effekt */
@@ -272,6 +323,29 @@
       margin-top: 2rem;
       padding-top: 0.8rem;
       border-top: 2px solid rgba(100, 160, 255, 0.3);
+    }
+
+    /* kleine Legende unter dem Titel */
+    .character-legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 0.8rem;
+      font-size: 0.8rem;
+      color: #9eb5dd;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .legend-item .char-icon {
+      width: 1.3em;
+      height: 1.3em;
+      font-size: 0.9em;
     }
 
     /* ---------- RESPONSIVE ---------- */
@@ -306,6 +380,17 @@
       .t800, .t1000 {
         font-size: 0.8rem;
       }
+
+      .char-icon {
+        width: 1.5em;
+        height: 1.5em;
+        font-size: 0.85em;
+      }
+
+      .character-legend {
+        gap: 0.8rem;
+        font-size: 0.7rem;
+      }
     }
 
     /* kleine Scroll-Besonderheit */
@@ -328,7 +413,23 @@
       <h1>Blaubeere und der Kuschelhase</h1>
       <div class="subhead">Mission Gute Nacht</div>
       <div class="terminator-glow">⏳ T-800 Schutzmodus ⏳</div>
-      <img src="img/kuschelhase-t800.webp" style="width:80%;margin-top:-4rem;margin-bottom:-7rem">
+      <img src="img/kuschelhase-t800.webp" style="width:80%;margin-top:-4rem;margin-bottom:-8rem">
+
+      <!-- kleine Charakter-Legende mit den Icons -->
+      <div class="character-legend" style="display: none;">
+        <div class="legend-item">
+          <span class="char-icon icon-blaubeere">🫐</span>
+          <span>Blaubeere</span>
+        </div>
+        <div class="legend-item">
+          <span class="char-icon icon-hase">🐰</span>
+          <span>Kuschelhase T-800</span>
+        </div>
+        <div class="legend-item">
+          <span class="char-icon icon-kissen">🛏️</span>
+          <span>Kissen-Mann T-1000</span>
+        </div>
+      </div>
     </div>
 
     <div class="story-content">
@@ -338,21 +439,40 @@
 
       <p>Es war kein normales Spielzeug. Es war… <span class="t800">der Kuschelhase T-800</span>.</p>
 
-      <p>Sein Fell war zerzaust, ein Ohr hing halb ab, aber in seinen kleinen Knopfaugen brannte ein unerbittlicher Entschluss. <span class="fluester">"Ich bin ein Schutz-Hase. Programmiert, um dich bis zum Einschlafen zu beschützen."</span></p>
+      <p>Sein Fell war zerzaust, ein Ohr hing halb ab, aber in seinen kleinen Knopfaugen brannte ein unerbittlicher Entschluss. 
+        <span class="speech"><span class="char-icon icon-hase">🐰</span><span class="speech-text">„Ich bin ein Schutz-Hase. Programmiert, um dich bis zum Einschlafen zu beschützen."</span></span>
+      </p>
 
-      <p>Blaubeere starrte. <span class="fluester">"Wer hat dich geschickt?"</span></p>
+      <p>Blaubeere starrte. 
+        <span class="speech"><span class="char-icon icon-blaubeere">🫐</span><span class="speech-text">„Wer hat dich geschickt?"</span></span>
+      </p>
 
-      <p><span class="fluester">"Dein zukünftiges Ich. In 20 Jahren wirst du Wissenschaftlerin sein. Und du hast mich zurückgeschickt, weil…"</span> Er drehte sich abrupt um. <span class="fluester">"Achtung. Sie sind schon hier."</span></p>
+      <p>
+        <span class="speech"><span class="char-icon icon-hase">🐰</span><span class="speech-text">„Dein zukünftiges Ich. In 20 Jahren wirst du Wissenschaftlerin sein. Und du hast mich zurückgeschickt, weil…"</span></span>
+        Er drehte sich abrupt um. 
+        <span class="speech"><span class="char-icon icon-hase">🐰</span><span class="speech-text">„Achtung. Sie sind schon hier."</span></span>
+      </p>
 
       <p>Durch die Tür schlich sich etwas. Langsam. Unaufhaltsam. <span class="t1000">Der Schlaflose Kissen-Mann – T-1000.</span> Ein flüssiger, formwandelnder Feind, der Kinder mit endlosem Gekuschel wach hielt.</p>
 
-      <p><span class="fluester">"Schnell!"</span>, knurrte der Kuschelhase und warf Blaubeere eine Taschenlampe zu. <span class="fluester">"Seine einzige Schwäche – Licht!"</span></p>
+      <p>
+        <span class="speech"><span class="char-icon icon-hase">🐰</span><span class="speech-text">„Schnell!"</span></span>
+        , knurrte der Kuschelhase und warf Blaubeere eine Taschenlampe zu. 
+        <span class="speech"><span class="char-icon icon-hase">🐰</span><span class="speech-text">„Seine einzige Schwäche – Licht!"</span></span>
+      </p>
 
-      <p>Ein epischer Kampf begann! Der Kuschelhase sprinte über das Bett, warf Stofftiere wie Granaten, während der Kissen-Mann sich in Decken wand, um sie zu umschlingen. Blaubeere aktivierte die Taschenlampe – <span class="zack">ZACK!</span> – das Licht traf den Kissen-Mann, der mit einem <span class="fluester">"Niiiiiiiiiiiiicht schlaaaaaaafen…"</span> in Rauch aufging.</p>
+      <p>Ein epischer Kampf begann! Der Kuschelhase sprinte über das Bett, warf Stofftiere wie Granaten, während der Kissen-Mann sich in Decken wand, um sie zu umschlingen. Blaubeere aktivierte die Taschenlampe – <span class="zack">ZACK!</span> – das Licht traf den Kissen-Mann, der mit einem 
+        <span class="speech"><span class="char-icon icon-kissen">🛏️</span><span class="speech-text">„Niiiiiiiiiiiiicht schlaaaaaaafen…"</span></span> 
+        in Rauch aufging.
+      </p>
 
       <p>Stille.</p>
 
-      <p>Der Kuschelhase nickte zufrieden. <span class="fluester">"Mission erfüllt. Jetzt kannst du sicher träumen."</span> Und als Blaubeere die Augen schloss, flüsterte er noch: <span class="fluester">"Bis zum nächsten Abend. Ich werde da sein."</span></p>
+      <p>Der Kuschelhase nickte zufrieden. 
+        <span class="speech"><span class="char-icon icon-hase">🐰</span><span class="speech-text">„Mission erfüllt. Jetzt kannst du sicher träumen."</span></span>
+        Und als Blaubeere die Augen schloss, flüsterte er noch: 
+        <span class="speech"><span class="char-icon icon-hase">🐰</span><span class="speech-text">„Bis zum nächsten Abend. Ich werde da sein."</span></span>
+      </p>
 
       <div class="ende">ENDE</div>
     </div>
