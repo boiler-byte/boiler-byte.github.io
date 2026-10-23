@@ -199,13 +199,13 @@ const originrepos = [
     tags: ['Dateisystem', 'Lebenshelfer']
 },
 {
-    label: "Kuschelhase T-800",
-    img: 'img/kuschelhase-t800.webp',
+    label: "Blaubeere & T-800",
+    img: 'img/blaubeere.webp',
     description: 'Blaubeere & der Kuschelhase: Mission Gute Nacht',
     url: 'kuschelhase-t800.html',
     type: 'misc',
     year: 2026,
-    tags: ['Gute Nacht', 'Geschichte'],
+    tags: ['Gute Nacht', 'Geschichte', 'Terminator', 'Kissen-Mann'],
     // featured: 'tall', //wide,tall
 },
 {
