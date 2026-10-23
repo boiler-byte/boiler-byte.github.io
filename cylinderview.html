@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Infinite Repeating App Grid – Cylinder Curvature, Neon & Ambient Light</title>
+<script src="repos.js"></script>
+<style>
+:root { color-scheme: dark; --bg:#0b1020; --card:#171f33; --line:#33405a; --text:#e9eef8; --muted:#9eabc2; --gap:22px; --card-w:335px; --card-h:332px; }
+* { box-sizing:border-box; }
+html,body { height:100%; margin:0; overflow:hidden; font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Arial,sans-serif; background:var(--bg); color:var(--text); }
+#viewport { position:fixed; inset:0; overflow:hidden; cursor:grab; touch-action:none; user-select:none; background-image: radial-gradient(#35415c 0.85px,transparent 0.85px); background-size:28px 28px; perspective:1100px; perspective-origin:50% 50%; }
+#viewport.dragging { cursor:grabbing; }
+/* Ein einziges Ambient-Layer mit drei wiederverwendbaren Lichtquellen.
+   Die Lichtquellen liegen hinter den Cards und blockieren keine Eingaben. */
+#ambient { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0; isolation:isolate; }
+.ambient-glow { position:absolute; width:min(110vmax, 1350px); height:min(110vmax, 1350px); left:50%; top:50%; border-radius:50%; transform:translate(-50%,-50%); opacity:0; will-change:opacity; mix-blend-mode:screen; }
+.ambient-glow.game { background:radial-gradient(circle, rgb(255 144 44 / .29) 0%, rgb(255 144 44 / .16) 18%, rgb(255 144 44 / .055) 38%, transparent 66%); }
+.ambient-glow.tool { background:radial-gradient(circle, rgb(39 221 255 / .29) 0%, rgb(39 221 255 / .16) 18%, rgb(39 221 255 / .055) 38%, transparent 66%); }
+.ambient-glow.misc { background:radial-gradient(circle, rgb(65 255 126 / .29) 0%, rgb(65 255 126 / .16) 18%, rgb(65 255 126 / .055) 38%, transparent 66%); }
+#layer { z-index:1; }
+#layer { position:absolute; inset:0; pointer-events:none; transform-style:preserve-3d; }
+.card { position:absolute; width:var(--card-w); height:var(--card-h); overflow:hidden; border-radius:17px; border:1px solid var(--line); background:var(--card); box-shadow:0 12px 30px #0003; contain:layout paint style; pointer-events:auto; display:flex; flex-direction:column; backface-visibility:hidden; text-decoration:none; color:inherit; -webkit-user-drag:none; user-drag:none; }
+/* Pro Card dynamisch nach Abstand zur Bildschirmmitte: --glow von 0 bis 1. */
+.card {
+  --neon-rgb: 82 238 144;
+  --glow: 0;
+  border-color: rgb(var(--neon-rgb) / calc(.12 + var(--glow) * .85));
+  box-shadow:
+    0 12px 30px #0005,
+    0 0 calc(7px + var(--glow) * 10px) rgb(var(--neon-rgb) / calc(var(--glow) * .85)),
+    0 0 calc(20px + var(--glow) * 32px) rgb(var(--neon-rgb) / calc(var(--glow) * .53)),
+    0 0 calc(42px + var(--glow) * 46px) rgb(var(--neon-rgb) / calc(var(--glow) * .30)),
+    inset 0 0 calc(var(--glow) * 18px) rgb(var(--neon-rgb) / calc(var(--glow) * .10));
+}
+.card::after {
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  border:1px solid rgb(var(--neon-rgb) / calc(var(--glow) * .95));
+  box-shadow: inset 0 0 calc(var(--glow) * 17px) rgb(var(--neon-rgb) / calc(var(--glow) * .13));
+}
+/* Bildbereich: obere Hälfte */
+.card-media {
+  flex:0 0 50%;
+  position:relative;
+  overflow:hidden;
+  background:#27324d;
+}
+.card-media img {
+  width:100%; height:100%; object-fit:cover; display:block;
+  -webkit-user-drag:none; user-drag:none;
+  pointer-events:none;
+}
+/* Fallback-Initiale füllt den Medienbereich */
+.card-media .icon-placeholder {
+  position:absolute; inset:0;
+  display:grid; place-items:center;
+  font-size:52px; font-weight:750; color:#e5ecff;
+  background:#27324d;
+}
+/* Altes Card-Icon im Header entfernen */
+.card-icon { display:none; }
+.card-header { display:flex; gap:11px; align-items:center; padding:12px 16px; border-bottom:1px solid #ffffff10; min-height:0; }
+.header-text { min-width:0; flex:1; }
+.card h2 { margin:0 0 5px; font-size:15px; line-height:1.2; font-weight:680; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.meta { display:flex; gap:6px; align-items:center; }
+.badge { font-size:10px; line-height:1; font-weight:750; text-transform:uppercase; letter-spacing:.06em; padding:5px 7px; border-radius:6px; background:#28374f; color:#b9c8e8; }
+.badge.alpha { color:#f6c57f; background:#4f381f; }
+.badge.beta { color:#8cc7f9; background:#1d3a58; }
+.type { font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:#9eb1cc; }
+.card-body { padding:12px 16px; display:flex; flex:1; flex-direction:column; }
+.description { color:var(--muted); font-size:13px; line-height:1.6; margin:0; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.card-foot { margin-top:auto; font-size:11px; color:#7f92b1; padding-top:10px; }
+/* Hover-Effekt für verlinkte Cards */
+.card[href]:hover { filter:brightness(1.08); }
+/* Der Cursor bleibt der Greif-Cursor des Viewports – auch über Links */
+.card[href] { cursor: inherit; }
+#viewport.dragging .card[href] { cursor: grabbing; }
+.topbar { position:fixed; z-index:10; top:18px; left:18px; right:18px; display:flex; justify-content:space-between; align-items:start; gap:16px; pointer-events:none; }
+.brand,.tips { border:1px solid #37445e; background:#111a2de8; box-shadow:0 8px 28px #0005; backdrop-filter:blur(12px); border-radius:14px; padding:12px 16px; }
+.brand strong { font-size:14px; letter-spacing:.02em; display:block; }
+.brand small,.tips { color:#a5b5cc; font-size:12px; line-height:1.5; }
+.brand small { display:block; margin-top:4px; }
+.tips { text-align:right; }
+ .curvature { position:fixed; z-index:12; left:50%; bottom:62px; transform:translateX(-50%); width:min(440px,calc(100vw - 32px)); display:flex; flex-direction:column; gap:9px; padding:13px 16px; border:1px solid #42516b; border-radius:15px; background:#111a2df0; box-shadow:0 10px 30px #0006; backdrop-filter:blur(14px); user-select:none; }
+.curvature-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:13px; font-weight:650; }
+.curvature-output { font-size:12px; color:#a7d8ff; font-variant-numeric:tabular-nums; }
+.curvature input { width:100%; accent-color:#77bbff; cursor:pointer; }
+.curvature-labels { display:flex; justify-content:space-between; font-size:11px; color:#9eabc2; }
+.curvature-labels span:nth-child(2) { color:#e9eef8; }
+.bottom { position:fixed; z-index:10; bottom:18px; left:50%; transform:translateX(-50%); padding:9px 14px; border-radius:30px; border:1px solid #384761; color:#b8c8dd; background:#111a2de8; font-size:12px; pointer-events:none; text-align:center; white-space:nowrap; }
+@media(max-width:620px){ .topbar{top:12px;left:12px;right:12px}.tips{display:none}.curvature{bottom:54px}.bottom{bottom:12px;font-size:11px;white-space:normal;width:max-content;max-width:calc(100vw - 24px)} }
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+.curvature, #stats, .tips {
+  display: none;
+}
+</style>
+</head>
+<body>
+<div id="viewport" aria-label="Unendlich wiederholtes App-Raster"><div id="ambient" aria-hidden="true"><div class="ambient-glow game"></div><div class="ambient-glow tool"></div><div class="ambient-glow misc"></div></div><div id="layer"></div></div>
+<header class="topbar"><div class="brand"><strong>∞ der Boiler Room</strong><small>Dieselben Apps wiederholen sich endlos in jede Richtung.</small></div><div class="tips">Ziehen: frei bewegen<br>Mausrad: sanftes Ausrollen · Shift: horizontal<br>Trackpad: beide Achsen · Center-Snap<br>Neon & Ambient Light: Orange = Game · Cyan = Tool · Grün = Misc</div></header>
+<section class="curvature" aria-label="Wölbung einstellen">
+  <div class="curvature-heading"><label for="curve">Zylinder-Wölbung</label><output id="curveValue" class="curvature-output" for="curve">Flach · 0 %</output></div>
+  <input type="range" id="curve" min="-100" max="100" step="1" value="0" aria-label="Wölbung: negative Werte nach hinten, positive Werte zum Betrachter">
+  <div class="curvature-labels"><span>Außenwölbung</span><span>Flach</span><span>Innenwölbung</span></div>
+</section>
+<div class="bottom" id="stats">Endloses Raster · nur sichtbare Cards im DOM</div>
+<script>
+'use strict';
+// =====================================================================
+// DEINE DATEN: Ersetze dieses Array durch deine bis zu 100 Apps.
+// img darf ein relativer Pfad, eine URL oder ein leerer String sein.
+// status: 'alpha' | 'beta' | ''
+// type: z.B. 'game', 'tool', 'misc' (beliebiger String)
+// =====================================================================
+const apps = originrepos ?? [
+  {label:'Pixel Quest',status:'beta',description:'Ein kleines Abenteuer in einer farbenfrohen Pixelwelt.',img:'',type:'game',url:'pixelquest.html'},
+  {label:'Task Flow',status:'',description:'Aufgaben und Projekte in einer zentralen Übersicht organisieren.',img:'',type:'tool',url:'taskflow'},
+  {label:'Sound Lab',status:'alpha',description:'Experimentiere mit Klängen, Rhythmen und Synthesizern.',img:'',type:'misc',url:'https://myprojects.github.io/soundlab'},
+  {label:'Orbit Runner',status:'beta',description:'Ein schnelles Arcade-Spiel mit ständig neuen Herausforderungen.',img:'',type:'game',url:''},
+  {label:'Color Studio',status:'',description:'Erstelle und verwalte Farbpaletten für deine Designs.',img:'',type:'tool',url:''},
+  {label:'Note Nest',status:'beta',description:'Einfacher Platz für Ideen, schnelle Notizen und Entwürfe.',img:'',type:'tool',url:''},
+  {label:'Maze World',status:'alpha',description:'Finde Wege durch immer komplexere Labyrinthe.',img:'',type:'game',url:''},
+  {label:'Weather View',status:'',description:'Eine kompakte Darstellung von Wetter und Vorhersagen.',img:'',type:'misc',url:''},
+  {label:'Code Pad',status:'beta',description:'Kleine Code-Snippets sammeln, verwalten und wiederfinden.',img:'',type:'tool',url:''},
+  {label:'Space Tactics',status:'alpha',description:'Rundenbasierte Strategiespiele in einer fernen Galaxie.',img:'',type:'game',url:''},
+  {label:'Focus Timer',status:'',description:'Konzentriertes Arbeiten mit frei einstellbaren Intervallen.',img:'',type:'tool',url:''},
+  {label:'Idea Board',status:'beta',description:'Visuelles Board für spontane Konzepte und Sammlungen.',img:'',type:'misc',url:''},
+];
+
+const viewport = document.getElementById('viewport');
+const layer = document.getElementById('layer');
+const ambientLights = Object.fromEntries(['game','tool','misc'].map(type => [type, document.querySelector('.ambient-glow.' + type)]));
+const stats = document.getElementById('stats');
+const curveInput = document.getElementById('curve');
+const curveValue = document.getElementById('curveValue');
+let curvature = 1; // -1 = Zylinderaußenseite, +1 = Zylinderinnenseite
+const GAP = 22;
+const CARD_W = 335;
+const CARD_H = 332;
+const STEP_X = CARD_W + GAP;
+const STEP_Y = CARD_H + GAP;
+const OVERSCAN = 1;
+// Breite der Leuchtzone rund um die Bildschirmmitte.
+// Kleiner: stärker fokussierter Halo. Größer: mehr Cards leuchten.
+const GLOW_RADIUS_FACTOR = 0.82;
+// Stärke des Neonlichts in der exakten Bildschirmmitte.
+const GLOW_INTENSITY = 1;
+// Umgebungslicht: 0 = aus; 1 = Standard; bis ca. 1.8 stärker.
+const AMBIENT_INTENSITY = 1;
+// Wie breit die Farben um die Mitte ineinander übergehen.
+const AMBIENT_SPREAD = 1.05;
+const TYPE_NEON_RGB = {
+  game: '255 144 44',  // Orange
+  tool: '39 221 255',  // Cyan
+  misc: '65 255 126'   // Grün
+};
+// Die Inhalte wiederholen sich als periodische 2D-Kachel.
+// ROW_STRIDE ist bewusst ungerade gewählt, damit benachbarte Zeilen
+// eine andere Reihenfolge als die Zeile darüber zeigen.
+const ROW_STRIDE = 7;
+let panX = 0, panY = 0;
+let scheduled = false;
+const mounted = new Map();
+let dragging = false, lastX = 0, lastY = 0, lastMoveTime = 0;
+// Geschwindigkeiten in Pixel pro 60-Hz-Frame. Abbremsen geschieht
+// zeitbasiert, damit es bei 60/120/144 Hz vergleichbar aussieht.
+let velocityX = 0, velocityY = 0;
+let motionFrame = 0, previousFrameTime = 0;
+const FRICTION = 0.91; // Kleiner = schnelleres Abbremsen
+const STOP_SPEED = 0.12;
+const MAX_SPEED = 68;
+const WHEEL_IMPULSE = 0.27;
+// Snap: 460 ms mit sanfter Ease-out-Bewegung nach Ende der Trägheit.
+const SNAP_DURATION = 460;
+let snapFrame = 0;
+let snap = null;
+let wheelIdleTimer = 0;
+let lastWheelTime = 0;
+// Drag-Erkennung:
+// - pointerDownX/Y: Ausgangsposition beim Drücken
+// - movedDistance: kumulierte Distanz – dadurch zählt auch
+//   "langsames Anschleichen" zuverlässig als Drag.
+// - dragMoved: true, sobald die Schwelle überschritten wurde.
+// - activePointerId: nur der allererste Pointer darf Capture erhalten.
+let dragStartX = 0, dragStartY = 0;
+let movedDistance = 0;
+let dragMoved = false;
+let activePointerId = null;
+const DRAG_THRESHOLD = 6; // px
+// Verhindert den nächsten native click, wenn gezogen wurde.
+// Wird direkt im Card-Click-Handler ausgewertet.
+let suppressNextClick = false;
+
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;
+}
+function cancelSnap() {
+  if (snapFrame) cancelAnimationFrame(snapFrame);
+  snapFrame = 0;
+  snap = null;
+}
+function beginSnap() {
+  if (dragging || !apps.length || velocityX || velocityY) return;
+  cancelSnap();
+  const centerX = viewport.clientWidth / 2;
+  const centerY = viewport.clientHeight / 2;
+  const col = Math.round((centerX - panX - CARD_W / 2) / STEP_X);
+  const row = Math.round((centerY - panY - CARD_H / 2) / STEP_Y);
+  const targetX = centerX - (col * STEP_X + CARD_W / 2);
+  const targetY = centerY - (row * STEP_Y + CARD_H / 2);
+  const fromX = panX, fromY = panY;
+  if (Math.abs(targetX - fromX) < 0.2 && Math.abs(targetY - fromY) < 0.2) {
+    panX = targetX; panY = targetY; requestRender(); return;
+  }
+  snap = { fromX, fromY, targetX, targetY, start: 0 };
+  function step(time) {
+    if (!snap) return;
+    if (!snap.start) snap.start = time;
+    const t = Math.min(1, (time - snap.start) / SNAP_DURATION);
+    const eased = easeInOutCubic(t);
+    panX = snap.fromX + (snap.targetX - snap.fromX) * eased;
+    panY = snap.fromY + (snap.targetY - snap.fromY) * eased;
+    requestRender();
+    if (t < 1) snapFrame = requestAnimationFrame(step);
+    else { snapFrame = 0; snap = null; }
+  }
+  snapFrame = requestAnimationFrame(step);
+}
+function maybeSnap() {
+  const remaining = 130 - (performance.now() - lastWheelTime);
+  if (remaining > 0) {
+    clearTimeout(wheelIdleTimer);
+    wheelIdleTimer = setTimeout(maybeSnap, remaining);
+  } else beginSnap();
+}
+function clampSpeed(v) { return Math.max(-MAX_SPEED, Math.min(MAX_SPEED, v)); }
+function animateMotion(timestamp) {
+  motionFrame = 0;
+  const dt = previousFrameTime ? Math.min(timestamp - previousFrameTime, 40) : 16.67;
+  previousFrameTime = timestamp;
+  if (dragging) return;
+  const frames = dt / 16.67;
+  const decay = Math.pow(FRICTION, frames);
+  const factor = (1 - decay) / (1 - FRICTION);
+  panX += velocityX * factor;
+  panY += velocityY * factor;
+  velocityX *= decay;
+  velocityY *= decay;
+  if (Math.abs(velocityX) < STOP_SPEED) velocityX = 0;
+  if (Math.abs(velocityY) < STOP_SPEED) velocityY = 0;
+  requestRender();
+  if (velocityX || velocityY) motionFrame = requestAnimationFrame(animateMotion);
+  else { previousFrameTime = 0; maybeSnap(); }
+}
+function startMotion() {
+  if (!motionFrame && !dragging && (velocityX || velocityY)) {
+    previousFrameTime = 0;
+    motionFrame = requestAnimationFrame(animateMotion);
+  }
+}
+
+function mod(n, m) { return ((n % m) + m) % m; }
+function escapeHTML(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function cardIndex(col, row) {
+  return mod(mod(col, apps.length) + mod(row, apps.length) * ROW_STRIDE, apps.length);
+}
+function makeCard(app, index) {
+  const hasUrl = typeof app.url === 'string' && app.url.trim() !== '';
+  const el = document.createElement(hasUrl ? 'a' : 'article');
+  el.className = 'card';
+  if (hasUrl) {
+    el.href = app.url;
+    el.draggable = false;
+    const isExternal = /^https?:\/\//i.test(app.url);
+    if (isExternal) { el.target = '_blank'; el.rel = 'noopener noreferrer'; }
+  }
+
+  const type = String(app.type || 'misc').toLowerCase();
+  el.style.setProperty('--neon-rgb', TYPE_NEON_RGB[type] || TYPE_NEON_RGB.misc);
+
+  const status = String(app.status || '').toLowerCase();
+  const statusHTML = status
+    ? `<span class="badge ${status === 'alpha' || status === 'beta' ? status : ''}">${escapeHTML(status)}</span>`
+    : '';
+  const initials = String(app.label || '?').trim().charAt(0).toUpperCase();
+
+  const media = app.img
+    ? `<div class="card-media"><img alt="" loading="lazy" draggable="false"></div>`
+    : `<div class="card-media"><div class="icon-placeholder" aria-hidden="true">${escapeHTML(initials)}</div></div>`;
+
+  el.innerHTML = `${media}<div class="card-header"><div class="header-text"><h2>${escapeHTML(app.label)}</h2><div class="meta">${statusHTML}<span class="type">${escapeHTML(app.type)}</span></div></div></div><div class="card-body"><p class="description">${escapeHTML(app.description)}</p><div class="card-foot">App ${index + 1} von ${apps.length}</div></div>`;
+
+  if (app.img) {
+    const img = el.querySelector('img');
+    img.src = app.img;
+    img.onerror = () => {
+      const fallback = document.createElement('div');
+      fallback.className = 'icon-placeholder';
+      fallback.setAttribute('aria-hidden', 'true');
+      fallback.textContent = initials;
+      img.replaceWith(fallback);
+    };
+  }
+  return el;
+}
+function cardGlow(x, y, viewWidth, viewHeight) {
+  const dx = x + CARD_W / 2 - viewWidth / 2;
+  const dy = y + CARD_H / 2 - viewHeight / 2;
+  const distance = Math.hypot(dx, dy);
+  const radius = Math.max(300, Math.min(viewWidth, viewHeight) * GLOW_RADIUS_FACTOR);
+  const t = Math.max(0, 1 - distance / radius);
+  return (t * t * (3 - 2 * t) * GLOW_INTENSITY).toFixed(3);
+}
+function updateAmbient(viewWidth, viewHeight) {
+  const cx = viewWidth / 2, cy = viewHeight / 2;
+  const approxCol = (cx - panX - CARD_W / 2) / STEP_X;
+  const approxRow = (cy - panY - CARD_H / 2) / STEP_Y;
+  const col = Math.round(approxCol), row = Math.round(approxRow);
+  const sigma = Math.max(STEP_X, STEP_Y) * AMBIENT_SPREAD;
+  const weights = {game:0, tool:0, misc:0};
+  let total = 0;
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const c = col + dx, r = row + dy;
+      const px = c * STEP_X + panX + CARD_W / 2 - cx;
+      const py = r * STEP_Y + panY + CARD_H / 2 - cy;
+      const weight = Math.exp(-(px*px + py*py) / (2 * sigma*sigma));
+      const type = String(apps[cardIndex(c,r)].type || 'misc').toLowerCase();
+      weights[Object.hasOwn(weights,type) ? type : 'misc'] += weight;
+      total += weight;
+    }
+  }
+  for (const type of ['game','tool','misc']) {
+    ambientLights[type].style.opacity = (Math.min(1, weights[type] / Math.max(total,0.001) * AMBIENT_INTENSITY)).toFixed(3);
+  }
+}
+function cardTransform(x, y, viewWidth, viewHeight) {
+  if (curvature === 0) return `translate3d(${Math.round(x)}px,${Math.round(y)}px,0)`;
+  const dx = x + CARD_W / 2 - viewWidth / 2;
+  const strength = Math.abs(curvature);
+  const radius = Math.max(430, viewWidth * 0.82);
+  const theta = Math.max(-1.25, Math.min(1.25, (dx / radius) * strength));
+  const depth = Math.sign(curvature) * Math.min(340, radius * (1 - Math.cos(theta)));
+  const angleY = -Math.sign(curvature) * theta * (180 / Math.PI);
+  return `translate3d(${Math.round(x)}px,${Math.round(y)}px,${depth.toFixed(1)}px) rotateY(${angleY.toFixed(2)}deg)`;
+}
+curveInput.addEventListener('input', () => {
+  curvature = Number(curveInput.value) / 100;
+  const v = Number(curveInput.value);
+  curveValue.textContent = v === 0 ? 'Flach · 0 %' : `${v < 0 ? 'Außen' : 'Innen'} · ${Math.abs(v)} %`;
+  requestRender();
+});
+function render() {
+  scheduled = false;
+  if (!apps.length) { layer.replaceChildren(); mounted.clear(); stats.textContent = 'Bitte mindestens eine App im Array definieren.'; return; }
+  const w = viewport.clientWidth, h = viewport.clientHeight;
+  if (!snap) {
+    panX = mod(panX, STEP_X * apps.length);
+    panY = mod(panY, STEP_Y * apps.length);
+  }
+  const minCol = Math.floor(-panX / STEP_X) - OVERSCAN;
+  const maxCol = Math.ceil((w - panX) / STEP_X) + OVERSCAN;
+  const minRow = Math.floor(-panY / STEP_Y) - OVERSCAN;
+  const maxRow = Math.ceil((h - panY) / STEP_Y) + OVERSCAN;
+  updateAmbient(w, h);
+  const visible = new Set();
+  for (let row = minRow; row <= maxRow; row++) {
+    for (let col = minCol; col <= maxCol; col++) {
+      const key = col + ',' + row;
+      visible.add(key);
+      let el = mounted.get(key);
+      if (!el) {
+        const index = cardIndex(col, row);
+        el = makeCard(apps[index], index);
+        mounted.set(key, el);
+        layer.appendChild(el);
+      }
+      const x = col * STEP_X + panX;
+      const y = row * STEP_Y + panY;
+      el.style.transform = cardTransform(x, y, w, h);
+      el.style.setProperty('--glow', cardGlow(x, y, w, h));
+    }
+  }
+  for (const [key, el] of mounted) {
+    if (!visible.has(key)) { el.remove(); mounted.delete(key); }
+  }
+  stats.textContent = `${apps.length} verschiedene Apps · ${mounted.size} gerenderte Cards · unendlich in X und Y`;
+}
+function requestRender() {
+  if (!scheduled) { scheduled = true; requestAnimationFrame(render); }
+}
+viewport.addEventListener('wheel', e => {
+  e.preventDefault();
+  cancelSnap();
+  lastWheelTime = performance.now();
+  clearTimeout(wheelIdleTimer);
+  const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? viewport.clientHeight : 1;
+  let dx = e.deltaX * unit, dy = e.deltaY * unit;
+  if (e.shiftKey && Math.abs(dx) < Math.abs(dy)) { dx = dy; dy = 0; }
+  velocityX = clampSpeed(velocityX - dx * WHEEL_IMPULSE);
+  velocityY = clampSpeed(velocityY - dy * WHEEL_IMPULSE);
+  startMotion();
+}, {passive:false});
+
+// ---------------------------------------------------------------
+// Pointer-Handling
+// Wichtig: Pointer-Capture wird erst bei tatsächlicher Bewegung
+// aktiviert. Sonst würde der Browser den späteren click vom Link
+// auf den viewport umleiten – und der Link wäre nicht mehr klickbar.
+// ---------------------------------------------------------------
+viewport.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  if (activePointerId !== null) return; // bereits ein Pointer aktiv
+  cancelSnap();
+  clearTimeout(wheelIdleTimer);
+  if (motionFrame) { cancelAnimationFrame(motionFrame); motionFrame = 0; }
+  previousFrameTime = 0;
+  velocityX = velocityY = 0;
+  dragging = true;
+  dragMoved = false;
+  suppressNextClick = false;
+  movedDistance = 0;
+  activePointerId = e.pointerId;
+  dragStartX = e.clientX; dragStartY = e.clientY;
+  lastX = e.clientX; lastY = e.clientY;
+  lastMoveTime = performance.now();
+  viewport.classList.add('dragging');
+  // Capture erst NACH der Bewegung setzen (siehe pointermove).
+});
+
+viewport.addEventListener('pointermove', e => {
+  if (!dragging || e.pointerId !== activePointerId) return;
+  const now = performance.now();
+  const dt = Math.max(now - lastMoveTime, 1);
+  const dx = e.clientX - lastX, dy = e.clientY - lastY;
+  panX += dx; panY += dy;
+
+  const blend = 0.48;
+  velocityX = clampSpeed(velocityX * (1 - blend) + (dx * 16.67 / dt) * blend);
+  velocityY = clampSpeed(velocityY * (1 - blend) + (dy * 16.67 / dt) * blend);
+  lastX = e.clientX; lastY = e.clientY; lastMoveTime = now;
+
+  // Kumulierte Distanz statt Momentandistanz. Dadurch zählt auch
+  // langsames, gleichmäßiges Ziehen zuverlässig als Drag.
+  movedDistance += Math.hypot(dx, dy);
+  if (!dragMoved && movedDistance > DRAG_THRESHOLD) {
+    dragMoved = true;
+    // Jetzt erst Pointer-Capture: ab hier gehört der Zeiger uns,
+    // und der native click wird am Ende sicher unterdrückt.
+    try { viewport.setPointerCapture(e.pointerId); } catch (_) {}
+  }
+  requestRender();
+});
+
+function stopDragging(e) {
+  if (!dragging || (e && e.pointerId !== activePointerId)) return;
+  dragging = false;
+  activePointerId = null;
+  viewport.classList.remove('dragging');
+
+  // Natives click-Suppress nur setzen, wenn wirklich gezogen wurde.
+  // Wenn der Nutzer nur geklickt hat, bleibt der Link voll klickbar.
+  suppressNextClick = dragMoved;
+
+  try { viewport.releasePointerCapture(e ? e.pointerId : undefined); } catch (_) {}
+
+  if (performance.now() - lastMoveTime > 90) velocityX = velocityY = 0;
+  if (velocityX || velocityY) startMotion();
+  else maybeSnap();
+}
+
+viewport.addEventListener('pointerup', stopDragging);
+viewport.addEventListener('pointercancel', e => { velocityX = velocityY = 0; stopDragging(e); });
+
+// Klick auf einer verlinkten Card: nur unterdrücken, wenn gezogen wurde.
+// Der Handler ist *nicht* im Capture-Modus, damit andere Empfänger
+// (der Link selbst) im Normalfall sauber funktionieren.
+layer.addEventListener('click', e => {
+  if (suppressNextClick) {
+    e.preventDefault();
+    e.stopPropagation();
+    suppressNextClick = false;
+    return;
+  }
+  // Wenn der Klick auf eine Card gefallen ist, nach dem Aufräumen
+  // suppressNextClick zurücksetzen (falls ein späterer Klick kommt).
+  // Kein preventDefault – der Link darf navigieren.
+});
+
+// Natives Drag-and-Drop (Link-Schatten) und Textauswahl beim Ziehen unterbinden.
+layer.addEventListener('dragstart', e => e.preventDefault());
+viewport.addEventListener('dragstart', e => e.preventDefault());
+viewport.addEventListener('selectstart', e => e.preventDefault());
+
+window.addEventListener('resize', () => { cancelSnap(); requestRender(); if (!dragging && !velocityX && !velocityY) beginSnap(); });
+panX = 48; panY = 100;
+requestRender();
+</script>
+</body>
+</html>

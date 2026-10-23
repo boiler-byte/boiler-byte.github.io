@@ -228,13 +228,13 @@ const originrepos = [
     featured: 'tall', //wide,tall
 },
 {
-    label: "Sphären Ansicht",
-    img: 'img/sphereview.webp',
+    label: "Zylinder Ansicht",
+    img: 'img/cylinderview.webp',
     description: 'Alle Projekte als unendliche Sphäre',
-    url: 'sphereview.html',
+    url: 'cylinderview.html',
     type: 'misc',
     year: 2026,
-    tags: ['Information', 'Installation'],
+    tags: ['App Launcher', 'Experiment'],
     // featured: 'tall', //wide,tall
 },
 {
