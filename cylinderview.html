@@ -75,7 +75,7 @@ html,body { height:100%; margin:0; overflow:hidden; font-family:Inter,ui-sans-se
 /* Der Cursor bleibt der Greif-Cursor des Viewports – auch über Links */
 .card[href] { cursor: inherit; }
 #viewport.dragging .card[href] { cursor: grabbing; }
-.topbar { position:fixed; z-index:10; top:18px; left:18px; right:18px; display:flex; justify-content:space-between; align-items:start; gap:16px; pointer-events:none; }
+.topbar { position:fixed; z-index:10; top:0px; left:0px; right:0px; display:flex; justify-content:space-between; align-items:start; gap:16px; pointer-events:none; }
 .brand,.tips { border:1px solid #37445e; background:#111a2de8; box-shadow:0 8px 28px #0005; backdrop-filter:blur(12px); border-radius:14px; padding:12px 16px; }
 .brand strong { font-size:14px; letter-spacing:.02em; display:block; }
 .brand small,.tips { color:#a5b5cc; font-size:12px; line-height:1.5; }
@@ -91,7 +91,7 @@ html,body { height:100%; margin:0; overflow:hidden; font-family:Inter,ui-sans-se
 @media(max-width:620px){ .topbar{top:12px;left:12px;right:12px}.tips{display:none}.curvature{bottom:54px}.bottom{bottom:12px;font-size:11px;white-space:normal;width:max-content;max-width:calc(100vw - 24px)} }
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 
-.curvature, #stats, .tips {
+.curvature, #stats, .tips, .brand small {
   display: none;
 }
 </style>
