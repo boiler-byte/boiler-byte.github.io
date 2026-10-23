@@ -44,6 +44,7 @@
       background-repeat: no-repeat;
       pointer-events: none;
       z-index: 0;
+      transition: opacity 0.4s ease;
     }
 
     /* Dezenter Dunkel-Schleier über allem, für gedimmte Stimmung */
@@ -54,6 +55,7 @@
       background: rgba(0, 0, 0, 0.25);
       pointer-events: none;
       z-index: 1;
+      transition: opacity 0.4s ease;
     }
 
     /* ---------- HAUPT CONTAINER (story card) ---------- */
@@ -169,16 +171,16 @@
       color: #fff9d7;
       text-shadow: 0 0 10px #6ab0ff, 0 0 25px #3f8eff, 0 0 40px #1a4dff;
       letter-spacing: 2px;
-      /* animation: flicker 3s infinite alternate; */
+      animation: flicker 3s infinite alternate;
       display: inline-block;
       background: rgba(30, 80, 200, 0.2);
       padding: 0 0.2rem;
     }
 
     @keyframes flicker {
-      0% { opacity: 1; text-shadow: 0 0 10px #8bb3ff, 0 0 30px #3f6eff; }
+      0% { opacity: 0.1; text-shadow: 0 0 10px #8bb3ff, 0 0 30px #3f6eff; }
       80% { opacity: 1; text-shadow: 0 0 15px #aac9ff, 0 0 45px #2a5eff; }
-      100% { opacity: 1; text-shadow: 0 0 20px #b8d4ff, 0 0 60px #2a5eff; }
+      100% { opacity: 0.5; text-shadow: 0 0 20px #b8d4ff, 0 0 60px #2a5eff; }
     }
 
     .plums {
@@ -304,7 +306,7 @@
       color: #ffec9e;
       text-shadow: 0 0 15px #ffbb33, 0 0 35px #ff8800, 0 0 60px #ffaa00;
       letter-spacing: 2px;
-      /* animation: zackPulse 0.8s infinite alternate; */
+      animation: zackPulse 0.8s infinite alternate;
     }
 
     @keyframes zackPulse {
@@ -346,6 +348,107 @@
       width: 1.3em;
       height: 1.3em;
       font-size: 0.9em;
+    }
+
+    /* ---------- LESEMODUS BUTTON (unten links) ---------- */
+    .reading-mode-btn {
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      z-index: 30;
+      font-size: 0.7rem;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #b0d0ff;
+      background: rgba(10, 20, 40, 0.85);
+      padding: 8px 14px;
+      border-radius: 20px;
+      border: 1px solid #3b6eff;
+      box-shadow: 0 0 12px rgba(60, 120, 255, 0.5);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      user-select: none;
+    }
+
+    .reading-mode-btn:hover {
+      background: rgba(30, 60, 120, 0.9);
+      box-shadow: 0 0 20px rgba(100, 160, 255, 0.8);
+      border-color: #6a9aff;
+    }
+
+    .reading-mode-btn:focus-visible {
+      outline: 2px solid #8bb3ff;
+      outline-offset: 2px;
+    }
+
+    .reading-mode-btn.active {
+      background: rgba(30, 60, 120, 0.9);
+      color: #fff;
+      border-color: #8bb3ff;
+      box-shadow: 0 0 20px rgba(140, 180, 255, 0.9);
+    }
+
+    /* ---------- LESEMODUS: ALLE ANIMATIONEN & GLOWS AUS ---------- */
+    body.reading-mode *,
+    body.reading-mode *::before,
+    body.reading-mode *::after {
+      animation: none !important;
+      transition: none !important;
+      text-shadow: none !important;
+      box-shadow: none !important;
+      filter: none !important;
+    }
+
+    /* Hintergrund-Effekte im Lesemodus stark reduzieren */
+    body.reading-mode::before {
+      opacity: 0.15;
+    }
+
+    body.reading-mode::after {
+      opacity: 0.1;
+    }
+
+    /* Story-Card im Lesemodus: ruhiger, schlichter */
+    body.reading-mode .story-wrapper {
+      background: rgba(8, 10, 16, 0.92);
+      border-color: rgba(110, 160, 255, 0.15);
+    }
+
+    /* Hervorhebungen im Lesemodus: nur Farbe/Kontrast, kein Glow */
+    body.reading-mode .blitz,
+    body.reading-mode .plums,
+    body.reading-mode .zack {
+      color: #e6e9f0;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 0 0.25rem;
+      border-radius: 4px;
+    }
+
+    body.reading-mode .t800,
+    body.reading-mode .t1000 {
+      /* color: #e6e9f0;
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.2); */
+    }
+
+    body.reading-mode .speech-text {
+      color: #e6e9f0;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    body.reading-mode .ende {
+      color: #e6e9f0;
+    }
+
+    /* Title-Gradient im Lesemodus: einfarbig, gut lesbar */
+    body.reading-mode h1 {
+      background: none;
+      -webkit-background-clip: unset;
+      background-clip: unset;
+      color: #d9e2f5;
     }
 
     /* ---------- RESPONSIVE ---------- */
@@ -391,6 +494,11 @@
         gap: 0.8rem;
         font-size: 0.7rem;
       }
+
+      .reading-mode-btn {
+        font-size: 0.6rem;
+        padding: 6px 10px;
+      }
     }
 
     /* kleine Scroll-Besonderheit */
@@ -405,6 +513,11 @@
       border-radius: 8px;
       box-shadow: 0 0 10px #3b6eff;
     }
+
+    img {
+      display: block;
+      margin: auto;
+    }
   </style>
 </head>
 <body>
@@ -413,7 +526,7 @@
       <h1>Blaubeere und der Kuschelhase</h1>
       <div class="subhead">Mission Gute Nacht</div>
       <div class="terminator-glow">⏳ T-800 Schutzmodus ⏳</div>
-      <img src="img/kuschelhase-t800.webp" style="width:80%;margin-top:-4rem;margin-bottom:-8rem">
+      <img src="img/blaubeere.webp" style="width:80%;margin-top:-4rem;margin-bottom:-8rem">
 
       <!-- kleine Charakter-Legende mit den Icons -->
       <div class="character-legend" style="display: none;">
@@ -439,6 +552,9 @@
 
       <p>Es war kein normales Spielzeug. Es war… <span class="t800">der Kuschelhase T-800</span>.</p>
 
+      
+      <img src="img/kuschelhase-t801.webp" style="width:80%;margin-top:-4rem;margin-bottom:-1rem">
+
       <p>Sein Fell war zerzaust, ein Ohr hing halb ab, aber in seinen kleinen Knopfaugen brannte ein unerbittlicher Entschluss. 
         <span class="speech"><span class="char-icon icon-hase">🐰</span><span class="speech-text">„Ich bin ein Schutz-Hase. Programmiert, um dich bis zum Einschlafen zu beschützen."</span></span>
       </p>
@@ -453,13 +569,16 @@
         <span class="speech"><span class="char-icon icon-hase">🐰</span><span class="speech-text">„Achtung. Sie sind schon hier."</span></span>
       </p>
 
-      <p>Durch die Tür schlich sich etwas. Langsam. Unaufhaltsam. <span class="t1000">Der Schlaflose Kissen-Mann – T-1000.</span> Ein flüssiger, formwandelnder Feind, der Kinder mit endlosem Gekuschel wach hielt.</p>
+      <p>Durch die Tür schlich sich etwas. Langsam. Unaufhaltsam. <span class="t1000">Der Schlaflose Kissen-Mann.</span> Ein flüssiger, formwandelnder Feind, der Kinder mit endlosem Gekuschel wach hielt.</p>
 
       <p>
         <span class="speech"><span class="char-icon icon-hase">🐰</span><span class="speech-text">„Schnell!"</span></span>
         , knurrte der Kuschelhase und warf Blaubeere eine Taschenlampe zu. 
         <span class="speech"><span class="char-icon icon-hase">🐰</span><span class="speech-text">„Seine einzige Schwäche – Licht!"</span></span>
       </p>
+
+      
+      <img src="img/kissenmann.webp" style="width:80%;margin-top:-3rem;margin-bottom:-2rem">
 
       <p>Ein epischer Kampf begann! Der Kuschelhase sprinte über das Bett, warf Stofftiere wie Granaten, während der Kissen-Mann sich in Decken wand, um sie zu umschlingen. Blaubeere aktivierte die Taschenlampe – <span class="zack">ZACK!</span> – das Licht traf den Kissen-Mann, der mit einem 
         <span class="speech"><span class="char-icon icon-kissen">🛏️</span><span class="speech-text">„Niiiiiiiiiiiiicht schlaaaaaaafen…"</span></span> 
@@ -478,7 +597,23 @@
     </div>
   </div>
 
-  <!-- dezenter Hinweis auf die Vorlage (nur Deko) – versteckt, aber stilecht -->
-  <div style="position: fixed; bottom: 8px; right: 12px; z-index: 20; font-size: 0.6rem; color: #3b5f8a; letter-spacing: 2px; background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 20px; backdrop-filter: blur(4px); opacity: 0.7; border: 1px solid #2f4f7a;">T-800 · GUTE-NACHT-MODUS</div>
+  <!-- Lese-Modus Button (unten links) -->
+  <button id="readingModeBtn" class="reading-mode-btn" type="button" aria-pressed="false">
+    📖 Lese-Modus
+  </button>
+
+  <script>
+    (function () {
+      const btn = document.getElementById('readingModeBtn');
+      const body = document.body;
+
+      btn.addEventListener('click', function () {
+        const isActive = body.classList.toggle('reading-mode');
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        btn.textContent = isActive ? '✨ Effekt-Modus' : '📖 Lese-Modus';
+      });
+    })();
+  </script>
 </body>
 </html>
