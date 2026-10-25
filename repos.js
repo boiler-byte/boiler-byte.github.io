@@ -2,8 +2,7 @@ const originrepos = [
 {
     label: "Memory",
     img: 'img/memory.webp',
-    status: 'beta',
-    description: 'Das gute, alte Memory mit Custom Themes.',
+    description: 'Das gute, alte Memory mit Custom Themes und komfortabler Verwaltung.',
     type: 'game',
     url: 'https://boiler-byte.github.io/Memory/',
     year: 2026,
@@ -32,7 +31,6 @@ const originrepos = [
 {
     label: "Snake",
     img: 'img/snake.png',
-    status: 'beta',
     description: 'Snake, wie man es liebt. Mit Tastatursteuerung (WASD, Pfeile) smarter Touchsteuerung durch Tippen auf dem Spielfeld und an den Ecken. Oder durch Wisch-Gesten auf dem gesamten Bildschirm.',
     type: 'game',
     url: 'https://boiler-byte.github.io/Snake/',
@@ -79,16 +77,6 @@ const originrepos = [
     url: 'https://boiler-byte.github.io/Typeshooter/',
     year: 2026,
     tags: ['Speed Typing', 'High-Score'],
-},
-{
-    label: "SVG-Studio",
-    img: 'img/svgstudio.png',
-    description: 'SVG Dateien bearbeiten.',
-    status: 'alpha',
-    type: 'tool',
-    url: 'https://boiler-byte.github.io/svgstudio/',
-    year: 2026,
-    tags: ['svg', 'Optimierung', 'Zuschneiden', 'crop'],
 },
 {
     label: "Dame",
@@ -169,6 +157,27 @@ const originrepos = [
     tags: ['Geschichte', 'Satire', 'Marvel', 'X-Men', 'Wolverine', 'Captain America', 'Zombie', 'Loki', 'Gambit', 'Blade' ]
 },
 
+{
+    label: "HTML-Editor",
+    img: 'img/htmleditor.png',
+    description: 'HTML bearbeiten, mobil.',
+    status: 'beta',
+    type: 'tool',
+    url: 'https://boiler-byte.github.io/htmleditor/',
+    year: 2026,
+    tags: ['HTML', 'JavaScript', 'JS', 'CSS'],
+},
+{
+    label: "Schiffe versenken",
+    img: 'img/battleship.jpg',
+    description: 'Mit optionalen Regeln wie Blitz, Salve, Extra Schuss, Minen, für 2 Spieler oder gegen den Computer.',
+    status: 'beta',
+    type: 'tool',
+    url: 'https://boiler-byte.github.io/Battleship/',
+    year: 2026,
+    tags: ['HTML', 'JavaScript', 'JS', 'CSS'],
+},
+
 
 {
     label: "Synthesizer",
@@ -245,5 +254,15 @@ const originrepos = [
     url: 'https://boiler-byte.github.io/Weihnachtsfeier',
     year: 2026,
     tags: ['How High', 'Peace']
+},
+{
+    label: "SVG-Studio",
+    img: 'img/svgstudio.png',
+    description: 'SVG Dateien bearbeiten.',
+    status: 'alpha',
+    type: 'tool',
+    url: 'https://boiler-byte.github.io/svgstudio/',
+    year: 2026,
+    tags: ['svg', 'Optimierung', 'Zuschneiden', 'crop'],
 },
 ];
