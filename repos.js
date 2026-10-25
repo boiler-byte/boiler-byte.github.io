@@ -172,10 +172,10 @@ const originrepos = [
     img: 'img/battleship.jpg',
     description: 'Mit optionalen Regeln wie Blitz, Salve, Extra Schuss, Minen, für 2 Spieler oder gegen den Computer.',
     status: 'beta',
-    type: 'tool',
+    type: 'game',
     url: 'https://boiler-byte.github.io/Battleship/',
     year: 2026,
-    tags: ['HTML', 'JavaScript', 'JS', 'CSS'],
+    tags: ['Battleship', '2 Player'],
 },
 
 
