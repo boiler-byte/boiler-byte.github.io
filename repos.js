@@ -29,6 +29,16 @@ const originrepos = [
     tags: ['API', 'Geo-Location']
 },
 {
+    label: "Pong",
+    img: 'img/pong.png',
+    description: 'Pong. Zu zweit. An einem Handy.',
+    type: 'game',
+    status: 'beta',
+    url: 'https://boiler-byte.github.io/Pong/',
+    year: 2026,
+    tags: ['Mobile', 'Classic', 'Atari']
+},
+{
     label: "Snake",
     img: 'img/snake.png',
     description: 'Snake, wie man es liebt. Mit Tastatursteuerung (WASD, Pfeile) smarter Touchsteuerung durch Tippen auf dem Spielfeld und an den Ecken. Oder durch Wisch-Gesten auf dem gesamten Bildschirm.',
@@ -104,6 +114,16 @@ const originrepos = [
     url: 'https://boiler-byte.github.io/Timestamp/',
     year: 2026,
     tags: ['Unix Timestamp', 'Konverter'],
+},
+{
+    label: "Kassenbon Scanner",
+    img: 'img/kassenbonscanner.webp',
+    description: 'Erfasst die Positionen von Kassenbons per Kamera oder Bild.',
+    type: 'tool',
+    status: 'beta',
+    url: 'https://boiler-byte.github.io/Kassenbonscanner/',
+    year: 2026,
+    tags: ['OCR', 'Bildverbesserung'],
 },
 {
     label: "PrettyCode",
@@ -246,15 +266,15 @@ const originrepos = [
     tags: ['App Launcher', 'Experiment'],
     // featured: 'tall', //wide,tall
 },
-{
-    label: "Weihnachtsfeier",
-    img: 'img/weihnachtsfeier.jpg',
-    description: 'Bericht einer Weihnachtsfeier aus der Sicht von Reik.',
-    type: 'misc',
-    url: 'https://boiler-byte.github.io/Weihnachtsfeier',
-    year: 2026,
-    tags: ['How High', 'Peace']
-},
+// {
+//     label: "Weihnachtsfeier",
+//     img: 'img/weihnachtsfeier.jpg',
+//     description: 'Bericht einer Weihnachtsfeier aus der Sicht von Reik.',
+//     type: 'misc',
+//     url: 'https://boiler-byte.github.io/Weihnachtsfeier',
+//     year: 2026,
+//     tags: ['How High', 'Peace']
+// },
 {
     label: "SVG-Studio",
     img: 'img/svgstudio.png',
