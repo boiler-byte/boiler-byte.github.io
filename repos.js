@@ -248,7 +248,7 @@ const originrepos = [
 },
 {
     label: "Der Weiße Kuschel",
-    img: 'img/der-weisse-kuschel-post.webp',
+    img: 'img/der-weisse-kuschel-poster.webp',
     description: 'Blaubeere & der Kuschelhase: Der Weiße Kuschel',
     url: 'der-weisse-kuschel.html',
     type: 'misc',
