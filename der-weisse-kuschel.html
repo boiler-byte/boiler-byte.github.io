@@ -527,6 +527,34 @@ body.mode-read .mode-toggle{
 }
 
 /* ============================================================
+   WELLENBEWEGUNG DURCH DEN TEXT (Effekt-Modus)
+   ============================================================ */
+.wave-word{
+  display: inline-block;
+  white-space: nowrap;      /* NEU: kein Umbruch innerhalb eines Wortes */
+  transform-origin: 50% 80%;
+}
+
+/* Im Lese-Modus keine Wellen – Text bleibt ruhig */
+body.mode-read .wave-word{
+  display: inline;
+  white-space: normal;
+}
+
+/* ============================================================
+   WELLENBEWEGUNG DURCH DEN TEXT (Effekt-Modus, pro Buchstabe)
+   ============================================================ */
+.wave-char{
+  display: inline-block;
+  transform-origin: 50% 100%;
+}
+
+/* Im Lese-Modus keine Wellen – Text bleibt ruhig */
+body.mode-read .wave-char{
+  display: inline;
+}
+
+/* ============================================================
    RESPONSIV
    ============================================================ */
 @media (max-width: 600px){
@@ -724,7 +752,7 @@ body.mode-read .mode-toggle{
 /* ---------- Luftblasen erzeugen ---------- */
 (function () {
   const layer = document.getElementById('bubbles');
-  const COUNT = 26;
+  const COUNT = 16;
 
   for (let i = 0; i < COUNT; i++) {
     const b = document.createElement('span');
@@ -740,6 +768,133 @@ body.mode-read .mode-toggle{
 
     layer.appendChild(b);
   }
+})();
+
+/* ---------- Wellenbewegung durch den Text (pro Buchstabe, wortweise gekapselt) ---------- */
+(function () {
+  const story = document.querySelector('.story');
+  if (!story || typeof Element.prototype.animate !== 'function') return;
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const chars = [];
+
+  /* Gradienten-/Glow-Elemente nicht umbrechen */
+  const SKIP = '.accent, .kicker, .goodnight, .daadam';
+
+  /* --- 1) Wörter kapseln, Buchstaben innen verpacken --- */
+  story.querySelectorAll('p, h1').forEach(root => {
+    if (root.matches(SKIP) || root.closest(SKIP)) return;
+
+    const isLead = root.classList.contains('lead');
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (!node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        if (node.parentElement && node.parentElement.closest(SKIP)) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+
+    const textNodes = [];
+    while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+    let isFirstNode = true;
+
+    textNodes.forEach(node => {
+      const text = node.nodeValue;
+      let start = 0;
+
+      // Drop-Cap im Lead-Absatz erhalten: erstes Wort bleibt unverpackt
+      if (isLead && isFirstNode) {
+        const m = text.match(/^\s*\S+/);
+        if (m) start = m[0].length;
+      }
+      isFirstNode = false;
+
+      const frag = document.createDocumentFragment();
+
+      // Anfang unverpackt lassen
+      if (start > 0) frag.appendChild(document.createTextNode(text.slice(0, start)));
+
+      // Rest wortweise verpacken: Wort = wave-word, Buchstaben = wave-char
+      const rest = text.slice(start);
+      // Regex: Wort (alles außer Whitespace) ODER Whitespace
+      const tokens = rest.match(/\S+|\s+/g) || [];
+
+      for (const token of tokens) {
+        if (/^\s+$/.test(token)) {
+          // Whitespace bleibt als Textknoten -> hier darf umbrochen werden
+          frag.appendChild(document.createTextNode(token));
+        } else {
+          const word = document.createElement('span');
+          word.className = 'wave-word';
+          for (const ch of token) {
+            const span = document.createElement('span');
+            span.className = 'wave-char';
+            span.textContent = ch;
+            word.appendChild(span);
+            chars.push(span);
+          }
+          frag.appendChild(word);
+        }
+      }
+
+      node.parentNode.replaceChild(frag, node);
+    });
+  });
+
+  /* --- 2) Welle auslösen (unverändert) --- */
+  const SPEED     = 2.2;
+  const MAX_DELAY = 8200;
+  const DURATION  = 1200;
+  const PEAK_Y    = -20;
+  const PEAK_S    = 1.06;
+
+  function runWave() {
+    const vh = window.innerHeight || 800;
+    const items = [];
+
+    for (const el of chars) {
+      const r = el.getBoundingClientRect();
+      if (!r.width && !r.height) continue;
+      if (r.bottom < -120 || r.top > vh + 120) continue;
+      items.push({ el, key: r.top * 0.75 + r.left });
+    }
+    if (!items.length) return;
+
+    items.sort((a, b) => a.key - b.key);
+    const base = items[0].key;
+
+    items.forEach(({ el, key }) => {
+      const delay = Math.min((key - base) * SPEED, MAX_DELAY);
+      el.animate(
+        [
+          { transform: 'translateY(0) scale(1)' },
+          { transform: `translateY(${PEAK_Y}px) scale(${PEAK_S})`, offset: 0.45 },
+          { transform: 'translateY(0) scale(1)' }
+        ],
+        { duration: DURATION, delay, easing: 'ease-in-out' }
+      );
+    });
+  }
+
+  let timer = null;
+
+  function schedule(isFirst) {
+    clearTimeout(timer);
+    const wait = isFirst ? 2000 : 7000 + Math.random() * 8000;
+
+    timer = setTimeout(() => {
+      if (!reduceMotion.matches && document.body.classList.contains('mode-effect')) {
+        runWave();
+      }
+      schedule(false);
+    }, wait);
+  }
+
+  schedule(true);
 })();
 </script>
 </body>
