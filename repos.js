@@ -29,6 +29,27 @@ const originrepos = [
     tags: ['API', 'Geo-Location']
 },
 {
+    label: "Kassenbon Scanner",
+    img: 'img/kassenbonscanner.webp',
+    description: 'Erfasst die Positionen von Kassenbons per Kamera oder Bild.',
+    type: 'tool',
+    status: 'beta',
+    url: 'https://boiler-byte.github.io/Kassenbonscanner/',
+    year: 2026,
+    tags: ['OCR', 'Bildverbesserung'],
+},
+{
+    label: "HTML-Editor",
+    img: 'img/htmleditor.png',
+    description: 'Editor, der "Vibe Coding" auf der Couch am Smartphone bequem macht, mit direkt darauf zugeschnittenen Funktionen wie Teilen, Ersetzen, Vorschau, Debugging, Verlauf.',
+    status: 'beta',
+    type: 'tool',
+    url: 'https://boiler-byte.github.io/htmleditor/',
+    year: 2026,
+    tags: ['HTML App', 'Vibe Coding', 'JavaScript', 'JS', 'CSS', 'Syntax Highlighting', 'Automatische Formatierung'],
+    featured: 'wide',
+},
+{
     label: "Pong",
     img: 'img/pong.png',
     description: 'Pong. Zu zweit. An einem Handy.',
@@ -48,14 +69,22 @@ const originrepos = [
     tags: ['Mobile', 'Classic', 'Nokia']
 },
 {
+    label: "Dame",
+    img: 'img/dame.png',
+    description: 'Dame für 2 Spieler oder gegen den Computer.',
+    type: 'game',
+    url: 'https://boiler-byte.github.io/Dame/',
+    year: 2026,
+    tags: ['2-Spieler', 'Brettspiel', 'Mobil'],
+},
+{
     label: "Buchstaben",
     img: 'img/buchstaben.jpg',
     description: 'Lernspiel für Kinder von 3 bis 5 Jahren.',
     type: 'game',
     url: 'https://boiler-byte.github.io/Buchstaben/',
     year: 2026,
-    tags: ['Lernspiel', 'Kinder'],
-    featured: 'wide'
+    tags: ['Lernspiel', 'Kinder']
 },
 {
     label: "Authenticator",
@@ -89,15 +118,6 @@ const originrepos = [
     tags: ['Speed Typing', 'High-Score'],
 },
 {
-    label: "Dame",
-    img: 'img/dame.png',
-    description: 'Dame für 2 Spieler oder gegen den Computer.',
-    type: 'game',
-    url: 'https://boiler-byte.github.io/Dame/',
-    year: 2026,
-    tags: ['2-Spieler', 'Brettspiel', 'Mobil'],
-},
-{
     label: "Countdowns",
     img: 'img/countdown.png',
     description: 'Countdowns mit Bildern (aus der Zwischenablage), Wiederholungen, Vorlagen, smarter Sortierung.',
@@ -114,16 +134,6 @@ const originrepos = [
     url: 'https://boiler-byte.github.io/Timestamp/',
     year: 2026,
     tags: ['Unix Timestamp', 'Konverter'],
-},
-{
-    label: "Kassenbon Scanner",
-    img: 'img/kassenbonscanner.webp',
-    description: 'Erfasst die Positionen von Kassenbons per Kamera oder Bild.',
-    type: 'tool',
-    status: 'beta',
-    url: 'https://boiler-byte.github.io/Kassenbonscanner/',
-    year: 2026,
-    tags: ['OCR', 'Bildverbesserung'],
 },
 {
     label: "PrettyCode",
@@ -177,16 +187,6 @@ const originrepos = [
     tags: ['Geschichte', 'Satire', 'Marvel', 'X-Men', 'Wolverine', 'Captain America', 'Zombie', 'Loki', 'Gambit', 'Blade' ]
 },
 
-{
-    label: "HTML-Editor",
-    img: 'img/htmleditor.png',
-    description: 'HTML bearbeiten, mobil.',
-    status: 'beta',
-    type: 'tool',
-    url: 'https://boiler-byte.github.io/htmleditor/',
-    year: 2026,
-    tags: ['HTML', 'JavaScript', 'JS', 'CSS'],
-},
 {
     label: "Schiffe versenken",
     img: 'img/battleship.jpg',
