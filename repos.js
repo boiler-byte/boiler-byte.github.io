@@ -87,6 +87,15 @@ const originrepos = [
     tags: ['Lernspiel', 'Kinder']
 },
 {
+    label: "Puzzle",
+    img: 'img/puzzle.svg',
+    description: 'Puzzle-Spiel mit eigenen Bildern.',
+    type: 'game',
+    url: 'https://boiler-byte.github.io/Puzzle/',
+    year: 2026,
+    tags: ['Geduld', 'Logik']
+},
+{
     label: "Authenticator",
     img: 'img/authenticator.png',
     status: 'beta',
