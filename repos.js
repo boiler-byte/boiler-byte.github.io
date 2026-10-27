@@ -247,6 +247,16 @@ const originrepos = [
     // featured: 'tall', //wide,tall
 },
 {
+    label: "Der Weiße Kuschel",
+    img: 'img/der-weisse-kuschel-post.webp',
+    description: 'Blaubeere & der Kuschelhase: Der Weiße Kuschel',
+    url: 'der-weisse-kuschel.html',
+    type: 'misc',
+    year: 2026,
+    tags: ['Gute Nacht', 'Geschichte', 'Der Weiße Hai' ],
+    // featured: 'tall', //wide,tall
+},
+{
     label: "Textanalyse",
     img: 'img/textanalyse.png',
     status: 'beta',
