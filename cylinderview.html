@@ -81,6 +81,25 @@ html,body { height:100%; margin:0; overflow:hidden; font-family:Inter,ui-sans-se
 .brand small,.tips { color:#a5b5cc; font-size:12px; line-height:1.5; }
 .brand small { display:block; margin-top:4px; }
 .tips { text-align:right; }
+/* Rechts oben: Play-Button + (ausgeblendeter) Hinweistext */
+.top-right { display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
+.ss-button {
+  pointer-events:auto;
+  cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center;
+  width:40px; height:40px; padding:0;
+  border-radius:50%;
+  border:1px solid #37445e;
+  background:#111a2de8;
+  color:#c6d4ea;
+  box-shadow:0 8px 28px #0005;
+  backdrop-filter:blur(12px);
+  -webkit-user-drag:none; user-select:none;
+  transition:background .15s ease, color .15s ease, transform .08s ease;
+}
+.ss-button:hover { background:#1c2942; color:#ffffff; }
+.ss-button:active { transform:scale(.93); }
+.ss-button svg { display:block; margin-left:1px; }
  .curvature { position:fixed; z-index:12; left:50%; bottom:62px; transform:translateX(-50%); width:min(440px,calc(100vw - 32px)); display:flex; flex-direction:column; gap:9px; padding:13px 16px; border:1px solid #42516b; border-radius:15px; background:#111a2df0; box-shadow:0 10px 30px #0006; backdrop-filter:blur(14px); user-select:none; }
 .curvature-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:13px; font-weight:650; }
 .curvature-output { font-size:12px; color:#a7d8ff; font-variant-numeric:tabular-nums; }
@@ -94,11 +113,28 @@ html,body { height:100%; margin:0; overflow:hidden; font-family:Inter,ui-sans-se
 .curvature, #stats, .tips, .brand small {
   display: none;
 }
+
+/* Screensaver: Chrome blendet weich aus */
+.topbar { transition: opacity 1.2s ease; }
+body.screensaver .topbar { opacity: 0; }
+/* Während des Screensavers soll der Play-Button keine Klicks abfangen,
+   damit jeder Klick zuverlässig nur den Screensaver beendet. */
+body.screensaver .ss-button { pointer-events: none; }
 </style>
 </head>
 <body>
 <div id="viewport" aria-label="Unendlich wiederholtes App-Raster"><div id="ambient" aria-hidden="true"><div class="ambient-glow game"></div><div class="ambient-glow tool"></div><div class="ambient-glow misc"></div></div><div id="layer"></div></div>
-<header class="topbar"><div class="brand"><strong>∞ der Boiler Room</strong><small>Dieselben Apps wiederholen sich endlos in jede Richtung.</small></div><div class="tips">Ziehen: frei bewegen<br>Mausrad: sanftes Ausrollen · Shift: horizontal<br>Trackpad: beide Achsen · Center-Snap<br>Neon & Ambient Light: Orange = Game · Cyan = Tool · Grün = Misc</div></header>
+<header class="topbar">
+  <div class="brand">
+    <strong>∞ der Boiler Room</strong>
+    <button id="startScreensaver" class="ss-button" type="button" title="Bildschirmschoner starten" aria-label="Bildschirmschoner starten">
+      <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+    </button>
+  </div>
+  <div class="top-right">
+    <div class="tips">Ziehen: frei bewegen<br>Mausrad: sanftes Ausrollen · Shift: horizontal<br>Trackpad: beide Achsen · Center-Snap<br>Neon & Ambient Light: Orange = Game · Cyan = Tool · Grün = Misc</div>
+  </div>
+</header>
 <section class="curvature" aria-label="Wölbung einstellen">
   <div class="curvature-heading"><label for="curve">Zylinder-Wölbung</label><output id="curveValue" class="curvature-output" for="curve">Flach · 0 %</output></div>
   <input type="range" id="curve" min="-100" max="100" step="1" value="0" aria-label="Wölbung: negative Werte nach hinten, positive Werte zum Betrachter">
@@ -483,9 +519,11 @@ layer.addEventListener('click', e => {
     suppressNextClick = false;
     return;
   }
-  // Wenn der Klick auf eine Card gefallen ist, nach dem Aufräumen
-  // suppressNextClick zurücksetzen (falls ein späterer Klick kommt).
-  // Kein preventDefault – der Link darf navigieren.
+  // Klick, der den Screensaver beendet hat, nicht weiterreichen
+  if (performance.now() - ssEndedAt < 400) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
 });
 
 // Natives Drag-and-Drop (Link-Schatten) und Textauswahl beim Ziehen unterbinden.
@@ -495,6 +533,147 @@ viewport.addEventListener('selectstart', e => e.preventDefault());
 
 window.addEventListener('resize', () => { cancelSnap(); requestRender(); if (!dragging && !velocityX && !velocityY) beginSnap(); });
 panX = 48; panY = 100;
+
+// ===== Screensaver / Idle-Modus =====
+const IDLE_TIMEOUT      = 20000;
+const SS_ZOOM_MIN       = 1.0;
+const SS_ZOOM_MAX       = 1.5;
+const prefersReducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let screensaverActive   = false;
+let idleTimer           = 0;
+let ssFrame             = 0;
+let ssVelX = 0, ssVelY = 0;
+let ssTargetVelX = 0, ssTargetVelY = 0;
+let ssTargetZoom        = 1;
+let ssTargetCurvature   = 1;
+let zoom                = 1;          // aktuelle Zoom-Stufe
+let preSsCurvature      = 1;          // Wölbung vor dem Screensaver
+let ssNextChangeTime    = 0;
+let ssEndedAt           = 0;          // Zeitstempel für Klick-Suppression
+
+function applyZoom() {
+  layer.style.transform = zoom === 1 ? '' : `scale(${zoom})`;
+}
+
+function resetIdleTimer() {
+  clearTimeout(idleTimer);
+  if (prefersReducedMotion) return;
+  idleTimer = setTimeout(startScreensaver, IDLE_TIMEOUT);
+}
+
+function randomDirection() {
+  const angle = Math.random() * Math.PI * 2;
+  const speed = 1.2 + Math.random() * 2.2;  // px / Frame
+  ssTargetVelX = Math.cos(angle) * speed;
+  ssTargetVelY = Math.sin(angle) * speed;
+}
+
+function startScreensaver() {
+  if (screensaverActive || dragging) { resetIdleTimer(); return; }
+  screensaverActive = true;
+  clearTimeout(idleTimer);
+  document.body.classList.add('screensaver');
+
+  cancelSnap();
+  velocityX = velocityY = 0;
+  if (motionFrame) { cancelAnimationFrame(motionFrame); motionFrame = 0; }
+  previousFrameTime = 0;
+
+  preSsCurvature = curvature;
+
+  // Startzustand: sanft aus dem Stand beschleunigen
+  ssVelX = ssVelY = 0;
+  randomDirection();
+  ssTargetZoom      = SS_ZOOM_MIN + Math.random() * (SS_ZOOM_MAX - SS_ZOOM_MIN);
+  ssTargetCurvature = (Math.random() * 2 - 1) * 0.8;
+  ssNextChangeTime  = performance.now() + 2000 + Math.random() * 3000;
+
+  ssFrame = requestAnimationFrame(screensaverStep);
+}
+
+function screensaverStep() {
+  if (!screensaverActive) { ssFrame = 0; return; }
+
+  const now = performance.now();
+
+  // Richtung weich in Zielgeschwindigkeit überblenden
+  ssVelX += (ssTargetVelX - ssVelX) * 0.03;
+  ssVelY += (ssTargetVelY - ssVelY) * 0.03;
+  panX += ssVelX;
+  panY += ssVelY;
+
+  // Zoom & Wölbung weich nachführen
+  zoom      += (ssTargetZoom      - zoom)      * 0.025;
+  curvature += (ssTargetCurvature - curvature) * 0.015;
+
+  // Gelegentliche Änderungen
+  if (now > ssNextChangeTime) {
+    const roll = Math.random();
+    if (roll < 0.45) {
+      randomDirection();                                    // Richtung
+      ssNextChangeTime = now + 2000 + Math.random() * 5000;
+    } else if (roll < 0.75) {
+      ssTargetCurvature = (Math.random() * 2 - 1) * 0.8;    // Wölbung
+      ssNextChangeTime  = now + 3000 + Math.random() * 5000;
+    } else {
+      ssTargetZoom      = SS_ZOOM_MIN + Math.random() * (SS_ZOOM_MAX - SS_ZOOM_MIN);
+      ssNextChangeTime  = now + 4000 + Math.random() * 5000;
+    }
+  }
+
+  applyZoom();
+  requestRender();
+  ssFrame = requestAnimationFrame(screensaverStep);
+}
+
+function endScreensaver() {
+  if (!screensaverActive) return;
+  screensaverActive = false;
+  document.body.classList.remove('screensaver');
+  if (ssFrame) { cancelAnimationFrame(ssFrame); ssFrame = 0; }
+  ssEndedAt = performance.now();
+
+  // Zoom & Wölbung in ~250 ms zurückführen, ohne Interaktion zu blockieren
+  const restore = () => {
+    if (screensaverActive) return;
+    zoom      += (1 - zoom)                    * 0.2;
+    curvature += (preSsCurvature - curvature) * 0.2;
+    const zDone = Math.abs(zoom - 1) < 0.005;
+    const cDone = Math.abs(curvature - preSsCurvature) < 0.005;
+    if (zDone) zoom = 1;
+    if (cDone) curvature = preSsCurvature;
+    applyZoom();
+    requestRender();
+    if (!zDone || !cDone) requestAnimationFrame(restore);
+  };
+  requestAnimationFrame(restore);
+}
+
+function onUserActivity() {
+  if (screensaverActive) endScreensaver();
+  resetIdleTimer();
+}
+
+// Jede relevante Eingabe beendet den Screensaver und startet den Idle-Timer neu.
+// 'click' ist zusätzlich enthalten, damit ein beliebiger Klick den
+// Screensaver zuverlässig beendet.
+[ 'wheel', 'keydown', 'touchstart', 'click']
+  .forEach(evt => window.addEventListener(evt, onUserActivity, { capture: true, passive: true }));
+
+// Play-Button oben rechts: startet den Screensaver sofort.
+const startScreensaverBtn = document.getElementById('startScreensaver');
+if (startScreensaverBtn) {
+  startScreensaverBtn.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!screensaverActive) startScreensaver();
+  });
+}
+
+// Idle-Timer initial starten
+resetIdleTimer();
+
 requestRender();
 </script>
 </body>
