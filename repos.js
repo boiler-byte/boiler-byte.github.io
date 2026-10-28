@@ -155,7 +155,36 @@ const originrepos = [
     tags: ['Lokal', 'Effizient']
 },
 
-
+{
+    label: "Haltestellen",
+    img: 'img/haltestellen.png',
+    status: 'alpha',
+    description: 'Ist mein Zug püntklicht?',
+    type: 'tool',
+    url: 'https://boiler-byte.github.io/Haltestellen/',
+    year: 2026,
+    tags: ['API', 'ÖPNV']
+},
+{
+    label: "mindfagg",
+    img: 'img/mindfagg.png',
+    status: 'alpha',
+    description: 'Mindmap Markdown',
+    type: 'tool',
+    url: 'https://boiler-byte.github.io/mindfagg/',
+    year: 2026,
+    tags: ['Notizen', 'Aufgaben']
+},
+{
+    label: "Diashow",
+    img: 'img/diashow.png',
+    status: 'alpha',
+    description: 'Ein Diashow-Tool',
+    type: 'tool',
+    url: 'https://boiler-byte.github.io/Diashow/',
+    year: 2026,
+    tags: ['Bildergalerie', 'Kunst']
+},
 {
     label: "QRCode",
     img: 'img/qrcode.png',
