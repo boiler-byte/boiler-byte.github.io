@@ -29,14 +29,14 @@ const originrepos = [
     tags: ['API', 'Geo-Location']
 },
 {
-    label: "Kassenbon Scanner",
-    img: 'img/kassenbonscanner.webp',
-    description: 'Erfasst die Positionen von Kassenbons per Kamera oder Bild.',
-    type: 'tool',
+    label: "Mindfagg",
+    img: 'img/mindfagg.png',
     status: 'beta',
-    url: 'https://boiler-byte.github.io/Kassenbonscanner/',
+    description: 'Mindmap Markdown: Visualisiere deinen Mindfagg. Markdown, Mindmap, Kanban? Hier ist das ein und das selbe!',
+    type: 'tool',
+    url: 'https://boiler-byte.github.io/mindfagg/',
     year: 2026,
-    tags: ['OCR', 'Bildverbesserung'],
+    tags: ['Notizen', 'Aufgaben']
 },
 {
     label: "HTML-Editor",
@@ -50,14 +50,14 @@ const originrepos = [
     featured: 'wide',
 },
 {
-    label: "Pong",
-    img: 'img/pong.png',
-    description: 'Pong. Zu zweit. An einem Handy.',
-    type: 'game',
-    status: 'beta',
-    url: 'https://boiler-byte.github.io/Pong/',
+    label: "Haltestellen",
+    img: 'img/haltestellen.png',
+    status: 'alpha',
+    description: 'Ist mein Zug püntklicht?',
+    type: 'tool',
+    url: 'https://boiler-byte.github.io/Haltestellen/',
     year: 2026,
-    tags: ['Mobile', 'Classic', 'Atari']
+    tags: ['API', 'ÖPNV']
 },
 {
     label: "Snake",
@@ -76,15 +76,6 @@ const originrepos = [
     url: 'https://boiler-byte.github.io/Dame/',
     year: 2026,
     tags: ['2-Spieler', 'Brettspiel', 'Mobil'],
-},
-{
-    label: "Buchstaben",
-    img: 'img/buchstaben.jpg',
-    description: 'Lernspiel für Kinder von 3 bis 5 Jahren.',
-    type: 'game',
-    url: 'https://boiler-byte.github.io/Buchstaben/',
-    year: 2026,
-    tags: ['Lernspiel', 'Kinder']
 },
 {
     label: "Puzzle",
@@ -117,6 +108,16 @@ const originrepos = [
     featured: true,
 },
 {
+    label: "Pong",
+    img: 'img/pong.png',
+    description: 'Pong. Zu zweit. An einem Handy.',
+    type: 'game',
+    status: 'beta',
+    url: 'https://boiler-byte.github.io/Pong/',
+    year: 2026,
+    tags: ['Mobile', 'Classic', 'Atari']
+},
+{
     label: "Typeshooter",
     img: 'img/typeshooter.png',
     status: 'beta',
@@ -125,6 +126,25 @@ const originrepos = [
     url: 'https://boiler-byte.github.io/Typeshooter/',
     year: 2026,
     tags: ['Speed Typing', 'High-Score'],
+},
+{
+    label: "Buchstaben",
+    img: 'img/buchstaben.jpg',
+    description: 'Lernspiel für Kinder von 3 bis 5 Jahren.',
+    type: 'game',
+    url: 'https://boiler-byte.github.io/Buchstaben/',
+    year: 2026,
+    tags: ['Lernspiel', 'Kinder']
+},
+{
+    label: "Kassenbon Scanner",
+    img: 'img/kassenbonscanner.webp',
+    description: 'Erfasst die Positionen von Kassenbons per Kamera oder Bild.',
+    type: 'tool',
+    status: 'beta',
+    url: 'https://boiler-byte.github.io/Kassenbonscanner/',
+    year: 2026,
+    tags: ['OCR', 'Bildverbesserung'],
 },
 {
     label: "Countdowns",
@@ -153,27 +173,6 @@ const originrepos = [
     url: 'https://boiler-byte.github.io/prettycode/',
     year: 2026,
     tags: ['Lokal', 'Effizient']
-},
-
-{
-    label: "Haltestellen",
-    img: 'img/haltestellen.png',
-    status: 'alpha',
-    description: 'Ist mein Zug püntklicht?',
-    type: 'tool',
-    url: 'https://boiler-byte.github.io/Haltestellen/',
-    year: 2026,
-    tags: ['API', 'ÖPNV']
-},
-{
-    label: "mindfagg",
-    img: 'img/mindfagg.png',
-    status: 'alpha',
-    description: 'Mindmap Markdown',
-    type: 'tool',
-    url: 'https://boiler-byte.github.io/mindfagg/',
-    year: 2026,
-    tags: ['Notizen', 'Aufgaben']
 },
 {
     label: "Diashow",
