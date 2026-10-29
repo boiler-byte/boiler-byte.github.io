@@ -32,7 +32,7 @@ const originrepos = [
     label: "Mindfagg",
     img: 'img/mindfagg.png',
     status: 'beta',
-    description: 'Mindmap Markdown: Visualisiere deinen Mindfagg. Markdown, Mindmap, Kanban? Hier ist das ein und das selbe!',
+    description: 'Visualisiere deinen Mindfagg. Markdown, Mindmap, Kanban? Hier ist das ein und das Selbe!',
     type: 'tool',
     url: 'https://boiler-byte.github.io/mindfagg/',
     year: 2026,
