@@ -21,7 +21,6 @@ const originrepos = [
 {
     label: "Wetter",
     img: 'img/wetter.png',
-    status: 'beta',
     description: 'Geklonte Wetter App mit öffentlicher API.',
     type: 'tool',
     url: 'https://boiler-byte.github.io/Wetter/',
@@ -52,7 +51,7 @@ const originrepos = [
 {
     label: "Haltestellen",
     img: 'img/haltestellen.png',
-    status: 'alpha',
+    status: 'beta',
     description: 'Ist mein Zug püntklicht?',
     type: 'tool',
     url: 'https://boiler-byte.github.io/Haltestellen/',
@@ -89,7 +88,6 @@ const originrepos = [
 {
     label: "Authenticator",
     img: 'img/authenticator.png',
-    status: 'beta',
     description: 'Lokale Schlüssel, AES verschlüssel mit Import/Export.',
     type: 'tool',
     url: 'https://boiler-byte.github.io/Authenticator/',
@@ -177,7 +175,6 @@ const originrepos = [
 {
     label: "Diashow",
     img: 'img/diashow.png',
-    status: 'alpha',
     description: 'Ein Diashow-Tool',
     type: 'tool',
     url: 'https://boiler-byte.github.io/Diashow/',
@@ -187,7 +184,7 @@ const originrepos = [
 {
     label: "QRCode",
     img: 'img/qrcode.png',
-    status: 'alpha',
+    status: 'beta',
     description: 'QR Codes erstellen, scannen und verwalten.',
     type: 'tool',
     url: 'https://boiler-byte.github.io/QRCode/',
@@ -203,6 +200,16 @@ const originrepos = [
     url: 'https://boiler-byte.github.io/Clipwerk/',
     year: 2026,
     tags: ['Lokal', 'Mobil']
+},
+{
+    label: "Comic Reader",
+    img: 'img/comicreader.png',
+    status: 'alpha',
+    description: 'Comics lesen.',
+    type: 'tool',
+    url: 'https://boiler-byte.github.io/comicreader/',
+    year: 2026,
+    tags: ['Lokal', 'zip', 'cbz', 'pdf']
 },
 {
     label: "Haushalts-Durchblick",
