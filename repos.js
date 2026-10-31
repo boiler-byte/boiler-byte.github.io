@@ -106,6 +106,16 @@ const originrepos = [
     featured: true,
 },
 {
+    label: "Local Storage Sync",
+    img: 'img/lss.png',
+    status: 'alpha',
+    description: 'Synchronisation von lokalen HTML Apps zwischen zwei Geräten. Per WebRTC wird der localStorage und indexeddb verglichen und kann synchronisiert werden. Holy mindfagg.',
+    type: 'tool',
+    url: 'https://boiler-byte.github.io/lss/',
+    year: 2026,
+    tags: ['WebRTC', 'Lokal']
+},
+{
     label: "Pong",
     img: 'img/pong.png',
     description: 'Pong. Zu zweit. An einem Handy.',
