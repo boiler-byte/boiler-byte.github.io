@@ -126,6 +126,16 @@ const originrepos = [
     tags: ['WebRTC', 'Lokal']
 },
 {
+    label: "Nachthimmel",
+    img: 'img/nachthimmel.png',
+    status: 'alpha',
+    description: 'Zeigt den Nachthimmel.',
+    type: 'tool',
+    url: 'https://boiler-byte.github.io/Nachthimmel/',
+    year: 2026,
+    tags: ['Sternenbilder', 'Satelliten']
+},
+{
     label: "Pong",
     img: 'img/pong.png',
     description: 'Pong. Zu zweit. An einem Handy.',
