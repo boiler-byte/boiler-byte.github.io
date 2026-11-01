@@ -9,15 +9,6 @@ const originrepos = [
     tags: ['Gedächtnistraining', 'Mobil', 'Looney Tunes', 'Bugs Bunny', 'Die Simpsons', 'Familie Feuerstein']
 },
 {
-    label: "Würfelpoker",
-    img: 'img/wuerfelpoker.png',
-    description: 'Покер на костях - Russisches Würfelpoker.',
-    type: 'game',
-    url: 'https://boiler-byte.github.io/Wuerfelpoker/',
-    year: 2026,
-    tags: ['Würfelspiel', 'Poker']
-},
-{
     label: "Sudoku",
     img: 'img/sudoku.png',
     status: 'beta',
@@ -133,6 +124,15 @@ const originrepos = [
     url: 'https://boiler-byte.github.io/filesync/',
     year: 2026,
     tags: ['WebRTC', 'Lokal']
+},
+{
+    label: "Würfelpoker",
+    img: 'img/wuerfelpoker.png',
+    description: 'Покер на костях - Russisches Würfelpoker.',
+    type: 'game',
+    url: 'https://boiler-byte.github.io/Wuerfelpoker/',
+    year: 2026,
+    tags: ['Würfelspiel', 'Poker']
 },
 {
     label: "Nachthimmel",
