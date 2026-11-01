@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Die Blaubeere und der kleine Planet</title>
+<style>
+/* ============ GRUNDLAGEN ============ */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Nunito', 'Trebuchet MS', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(165deg, #120d2b 0%, #1e1548 30%, #33206b 60%, #4d2b8a 100%);
+  background-attachment: fixed;
+  color: #eee8ff;
+  display: flex;
+  justify-content: center;
+  padding: 48px 18px 140px;
+  overflow-x: hidden;
+  transition: background .9s ease, color .6s ease;
+}
+
+/* ============ LESEMODUS: ruhig & klar ============ */
+body.read-mode {
+  background: linear-gradient(165deg, #fdfaff 0%, #f3ecff 45%, #e9dfff 100%);
+  background-attachment: fixed;
+  color: #2b2145;
+}
+
+/* ============ HIMMEL ============ */
+.sky {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+  transition: opacity .7s ease, visibility .7s ease;
+}
+body.read-mode .sky {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  animation: twinkle var(--dur, 3s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes twinkle {
+  0%, 100% { opacity: .12; transform: scale(.75); }
+  50%      { opacity: 1;   transform: scale(1.3); }
+}
+
+.floater {
+  position: absolute;
+  line-height: 1;
+  will-change: transform;
+  animation: floaty var(--dur, 7s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+  filter: drop-shadow(0 6px 16px rgba(150, 110, 255, .55));
+}
+@keyframes floaty {
+  0%   { transform: translateY(0) rotate(-8deg) scale(1); }
+  50%  { transform: translateY(-30px) rotate(10deg) scale(1.09); }
+  100% { transform: translateY(0) rotate(-8deg) scale(1); }
+}
+
+.shooting {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 12px 3px rgba(255, 255, 255, .9);
+  animation: shoot 1.9s ease-out forwards;
+}
+.shooting::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 130px;
+  height: 2px;
+  border-radius: 2px;
+  transform: translate(-100%, -50%);
+  background: linear-gradient(to left, rgba(255,255,255,.95), rgba(255,255,255,0));
+}
+@keyframes shoot {
+  0%   { transform: translate(0, 0); opacity: 0; }
+  15%  { opacity: 1; }
+  100% { transform: translate(-62vw, 56vh); opacity: 0; }
+}
+
+/* ============ MOND ============ */
+.moon {
+  position: fixed;
+  top: 6vh;
+  right: 7vw;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(circle at 35% 32%, #fffbe8, #ffe9a8 55%, #f5cf6b 100%);
+  box-shadow: 0 0 60px 18px rgba(255, 226, 140, .35), 0 0 140px 50px rgba(255, 200, 90, .15);
+  animation: moonGlow 6s ease-in-out infinite;
+  transition: opacity .7s ease, visibility .7s ease;
+}
+@keyframes moonGlow {
+  0%, 100% { box-shadow: 0 0 55px 15px rgba(255,226,140,.32), 0 0 120px 45px rgba(255,200,90,.13); }
+  50%      { box-shadow: 0 0 82px 26px rgba(255,226,140,.46), 0 0 170px 62px rgba(255,200,90,.20); }
+}
+body.read-mode .moon { opacity: 0; visibility: hidden; }
+
+/* ============ GESCHICHTE ============ */
+.story {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  max-width: 720px;
+  padding: 48px clamp(22px, 5vw, 54px) 56px;
+  border-radius: 34px;
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .14);
+  box-shadow: 0 30px 80px rgba(10, 4, 40, .55), inset 0 1px 0 rgba(255, 255, 255, .18);
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  transition: background .7s ease, border-color .7s ease, box-shadow .7s ease, color .7s ease;
+}
+body.read-mode .story {
+  background: #ffffff;
+  border-color: rgba(150, 120, 220, .18);
+  box-shadow: 0 24px 60px rgba(120, 90, 190, .18);
+  color: #2b2145;
+}
+
+/* --- Titel --- */
+.title-wrap { text-align: center; margin: 0 0 36px; }
+
+.title-emoji {
+  font-size: 2.4rem;
+  display: inline-block;
+  margin-bottom: 6px;
+  animation: bob 3.2s ease-in-out infinite;
+  filter: drop-shadow(0 6px 16px rgba(160, 120, 255, .6));
+}
+@keyframes bob {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50%      { transform: translateY(-10px) rotate(6deg); }
+}
+body.read-mode .title-emoji { animation: none; filter: none; }
+
+h1 {
+  font-family: 'Comic Sans MS', 'Comic Neue', 'Chalkboard SE', 'Trebuchet MS', system-ui, sans-serif;
+  font-size: clamp(1.55rem, 4.6vw, 2.45rem);
+  line-height: 1.25;
+  margin: 0 0 12px;
+  background: linear-gradient(100deg, #ffd66b, #ff9fe0, #8fd6ff, #a9ffd8, #ffd66b);
+  background-size: 320% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 9s linear infinite;
+  filter: drop-shadow(0 4px 20px rgba(180, 130, 255, .45));
+}
+@keyframes shimmer { to { background-position: 320% 0; } }
+
+body.read-mode h1 {
+  background: none;
+  color: #6b4bb8;
+  animation: none;
+  filter: none;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: .82rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  opacity: .6;
+}
+
+/* --- Text --- */
+p {
+  font-size: clamp(1rem, 1.6vw, 1.09rem);
+  line-height: 1.85;
+  margin: 0 0 1.15em;
+  animation: riseIn .8s cubic-bezier(.22, 1, .36, 1) both;
+  animation-delay: calc(var(--i, 0) * .08s);
+}
+p:last-child { margin-bottom: 0; }
+
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.hl {
+  font-style: normal;
+  font-weight: 700;
+  color: #ffd66b;
+  text-shadow: 0 0 18px rgba(255, 214, 107, .45);
+}
+body.read-mode .hl {
+  color: #5b3fa8;
+  text-shadow: none;
+  background: #efe7ff;
+  border-radius: 6px;
+  padding: 0 4px;
+}
+
+/* ============ BUTTON ============ */
+.toggle-wrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 24px;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+  z-index: 60;
+  pointer-events: none;
+}
+
+#toggle {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 34px;
+  border: none;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+  cursor: pointer;
+  color: #241a52;
+  background: linear-gradient(135deg, #ffe08a, #ffb3d9 50%, #a9d8ff);
+  background-size: 200% 200%;
+  box-shadow: 0 12px 34px rgba(255, 170, 220, .45);
+  animation: btnRipple 3.4s ease-in-out infinite, btnShift 9s ease infinite;
+  transition: transform .22s cubic-bezier(.34, 1.56, .64, 1),
+              box-shadow .3s ease, background .6s ease, color .6s ease;
+}
+#toggle:hover  { transform: translateY(-3px) scale(1.045); }
+#toggle:active { transform: translateY(0) scale(.97); }
+
+@keyframes btnRipple {
+  0%, 100% { box-shadow: 0 12px 34px rgba(255,170,220,.42), 0 0 0 0 rgba(255,200,240,.55); }
+  50%      { box-shadow: 0 12px 34px rgba(255,170,220,.55), 0 0 0 16px rgba(255,200,240,0); }
+}
+@keyframes btnShift {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+body.read-mode #toggle {
+  background: linear-gradient(135deg, #b79bff, #8f6bf0);
+  color: #ffffff;
+  animation: none;
+  box-shadow: 0 12px 34px rgba(130, 90, 220, .35);
+}
+
+@media (max-width: 520px) {
+  body { padding: 26px 12px 128px; }
+  .story { border-radius: 26px; padding: 34px 22px 40px; }
+  #toggle { font-size: .95rem; padding: 14px 26px; }
+  .moon { width: 62px; height: 62px; }
+}
+</style>
+</head>
+<body class="effect-mode">
+
+  <!-- Sterne, Planeten, Blumen, Kuschelhase -->
+  <div class="sky" id="sky" aria-hidden="true"></div>
+  <div class="moon" aria-hidden="true"></div>
+
+  <main class="story">
+    <header class="title-wrap">
+      <div class="title-emoji">🫐</div>
+      <h1>Die Blaubeere und der kleine Planet</h1>
+      <p class="subtitle">Eine Gute-Nacht-Geschichte</p>
+    </header>
+
+    <p style="--i:1">Es war schon spät am Abend. Die Blaubeere gähnte leise und beschloss, später schlafen zu gehen. Doch sie konnte einfach nicht einschlafen – aus irgendeinem Grund waren ihre Gedanken noch viel zu wach.</p>
+
+    <p style="--i:2">Plötzlich, aus dem Nichts, schaute sie aus dem Fenster und traute ihren Augen kaum: Ein <span class="hl">Asteroid</span> flog vorbei und landete mit einem leisen „Plumps“ in ihrem Garten! Doch es war kein Asteroid – es war ein winziger kleiner <span class="hl">Planet</span>, der in ihrem Garten gestrandet war.</p>
+
+    <p style="--i:3">Die Bewohner des kleinen Planeten krabbelten heraus und baten die Blaubeere um Hilfe. Das war eine neue Mission für den <span class="hl">Kuschelhasen T-800</span> und die Blaubeere!</p>
+
+    <p style="--i:4">Die Bewohner des kleinen Planeten sahen aus wie wunderschöne Blumen. Manche sahen aus wie Löwenzahn, andere wie Margeriten – und wieder andere wie Orchideen.</p>
+
+    <p style="--i:5">Als die Blaubeere den Kuschelhasen T-800 dazurief, fragte sie: „Wie konntet ihr nur in unserem Garten landen? Was ist passiert?“</p>
+
+    <p style="--i:6">Die Bewohner des kleinen Planeten erzählten: „Wir kommen aus einer fernen Galaxie namens <span class="hl">Pegasus</span>. Wir wollten einen kleinen Ausflug in eure Galaxie machen, um zu sehen, wie die Menschen, Tiere, Pflanzen, Fische und Insekten auf dem Planeten Erde leben. Und wir haben von einem Wal gehört, der so weise und mächtig ist, dass wir ihn unbedingt besuchen wollten! Aber aus irgendeinem Grund hat unsere Steuerung nicht mehr funktioniert – und so mussten wir in deinem Garten notlanden.“</p>
+
+    <p style="--i:7">Sie baten die Blaubeere und den Kuschelhasen um Hilfe. „Alles klar“, sagte der Kuschelhase, „die Mission wird ausgeführt!“ Er hatte nur eine Frage: Sollten die beiden den Bewohnern helfen, zum Wal zu fliegen – oder zurück zu ihrem Planeten?</p>
+
+    <p style="--i:8">Die Bewohner schauten die beiden mit großen, super süßen Augen an und baten um beide Gefallen. Es wäre so wichtig, dass sie sowohl mit dem Wal sprechen, als auch danach mit ihrem Planeten zurück in die Pegasusgalaxie fliegen.</p>
+
+    <p style="--i:9">„Alles klar“, sagten die Blaubeere und der Kuschelhase. „Ich hole mein Werkzeug!“ Und sie reparierten sowohl den Antrieb als auch die Navigationssteuerung.</p>
+
+    <p style="--i:10">In diesem Augenblick geschah ein <span class="hl">Wunder</span>: Alles wurde repariert! Die Bewohner des Planeten konnten zum Buckelwal fliegen. Die Blaubeere und der Kuschelhase schauten ihnen hinterher und riefen: „Bon voyage!“ Und zu sich selbst sagten sie: „Gute Nacht und süße Träume.“</p>
+  </main>
+
+  <div class="toggle-wrap">
+    <button id="toggle" type="button" aria-pressed="false">📖 Lese-Modus</button>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  const sky = document.getElementById('sky');
+  const btn = document.getElementById('toggle');
+  const isSmall = window.innerWidth < 700;
+
+  /* ---------- Sterne ---------- */
+  const starCount = isSmall ? 70 : 150;
+  const starFrag = document.createDocumentFragment();
+
+  for (let i = 0; i < starCount; i++) {
+    const s = document.createElement('span');
+    s.className = 'star';
+    const size = (Math.random() * 2.4 + 1).toFixed(1);
+    s.style.width = size + 'px';
+    s.style.height = size + 'px';
+    s.style.left = (Math.random() * 100).toFixed(2) + '%';
+    s.style.top = (Math.random() * 100).toFixed(2) + '%';
+    s.style.setProperty('--dur', (2 + Math.random() * 3.5).toFixed(2) + 's');
+    s.style.setProperty('--delay', (Math.random() * 5).toFixed(2) + 's');
+    starFrag.appendChild(s);
+  }
+  sky.appendChild(starFrag);
+
+  /* ---------- Schwebende Wesen & Dinge ---------- */
+  const emojis = ['🫐', '🐰', '🪐', '🌼', '🌸', '⭐', '🌷', '✨', '🦋', '🌙', '🍀', '💫'];
+  const floaterCount = isSmall ? 11 : 19;
+
+  for (let i = 0; i < floaterCount; i++) {
+    const f = document.createElement('span');
+    f.className = 'floater';
+    f.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    f.style.left = (Math.random() * 92 + 2).toFixed(2) + '%';
+    f.style.top = (Math.random() * 90 + 2).toFixed(2) + '%';
+    f.style.fontSize = (16 + Math.random() * 34).toFixed(0) + 'px';
+    f.style.opacity = (0.16 + Math.random() * 0.34).toFixed(2);
+    f.style.setProperty('--dur', (5 + Math.random() * 7).toFixed(2) + 's');
+    f.style.setProperty('--delay', (Math.random() * 6).toFixed(2) + 's');
+    sky.appendChild(f);
+  }
+
+  /* ---------- Sternschnuppen ---------- */
+  function spawnShootingStar() {
+    if (document.body.classList.contains('read-mode')) return;
+    const s = document.createElement('span');
+    s.className = 'shooting';
+    s.style.left = (50 + Math.random() * 48).toFixed(1) + '%';
+    s.style.top = (Math.random() * 32).toFixed(1) + '%';
+    sky.appendChild(s);
+    setTimeout(() => s.remove(), 2200);
+  }
+  setInterval(spawnShootingStar, 3900);
+  setTimeout(spawnShootingStar, 1200);
+
+  /* ---------- Modus wechseln ---------- */
+  btn.addEventListener('click', () => {
+    const toRead = !document.body.classList.contains('read-mode');
+
+    document.body.classList.toggle('read-mode', toRead);
+    document.body.classList.toggle('effect-mode', !toRead);
+
+    btn.textContent = toRead ? '✨ Effekt-Modus' : '📖 Lese-Modus';
+    btn.setAttribute('aria-pressed', String(toRead));
+    btn.setAttribute('aria-label',
+      toRead ? 'Zum Effekt-Modus wechseln' : 'Zum Lese-Modus wechseln');
+  });
+})();
+</script>
+</body>
+</html>

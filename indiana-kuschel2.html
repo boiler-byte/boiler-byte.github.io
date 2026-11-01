@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blaubeere, der Kuschelhase und der gestohlene Traumstern</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night:        #060d0a;
+    --jungle:       #0d1f18;
+    --jungle-lite:  #1d4436;
+    --parchment:    #f6efdc;
+    --parchment-2:  #e2d5b6;
+    --ink:          #2b2418;
+    --ink-soft:     #5b5140;
+    --gold:         #e8b84b;
+    --gold-deep:    #a9781f;
+    --gold-light:   #ffe9a8;
+    --robot:        #5fd6a0;
+    --hai:          #8fd3ff;
+    --dream:        #b07bd6;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html{ scroll-behavior: smooth; }
+
+  body{
+    margin:0;
+    padding: 44px 16px 90px;
+    min-height:100vh;
+    font-family:'Lora', Georgia, serif;
+    font-size: clamp(1rem, 0.95rem + 0.3vw, 1.1rem);
+    line-height: 1.8;
+    color:#eae2d2;
+    background:
+      radial-gradient(1200px 620px at 50% -12%, #1b4437 0%, transparent 62%),
+      radial-gradient(900px 520px at 8% 108%, #16302a 0%, transparent 62%),
+      radial-gradient(900px 520px at 92% 102%, #132720 0%, transparent 62%),
+      var(--night);
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- Sternenhimmel ---------- */
+  .stars{
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: .55;
+    background-image:
+      radial-gradient(1.3px 1.3px at 50% 50%, rgba(255,255,255,.95), transparent 100%),
+      radial-gradient(1px 1px at 50% 50%, rgba(200,240,255,.8), transparent 100%),
+      radial-gradient(1.7px 1.7px at 50% 50%, rgba(255,235,180,.7), transparent 100%);
+    background-size: 130px 130px, 87px 87px, 211px 211px;
+    background-position: 0 0, 41px 63px, 137px 23px;
+    animation: twinkle 7s ease-in-out infinite alternate;
+  }
+  @keyframes twinkle{
+    from{ opacity:.32; }
+    to  { opacity:.68; }
+  }
+
+  /* ---------- Die Schriftrolle ---------- */
+  .scroll{
+    position: relative;
+    z-index: 1;
+    max-width: 780px;
+    margin: 0 auto;
+    border-radius: 20px;
+    overflow: hidden;
+    color: var(--ink);
+    background:
+      linear-gradient(180deg, var(--parchment) 0%, #efe5cb 45%, var(--parchment-2) 100%);
+    box-shadow:
+      0 0 0 1px rgba(232,184,75,.55),
+      0 0 0 7px rgba(13,31,24,.55),
+      0 0 0 8px rgba(232,184,75,.25),
+      0 40px 90px -25px #000,
+      0 0 140px -40px rgba(232,184,75,.5);
+  }
+
+  /* Papierstruktur */
+  .scroll::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    opacity:.5;
+    background-image:
+      repeating-linear-gradient(90deg, rgba(120,95,50,.05) 0 1px, transparent 1px 4px),
+      repeating-linear-gradient(0deg,  rgba(120,95,50,.045) 0 1px, transparent 1px 5px);
+    mix-blend-mode: multiply;
+  }
+
+  /* ---------- Cover ---------- */
+  .cover{
+    position: relative;
+    padding: clamp(38px, 7vw, 64px) clamp(20px, 6vw, 52px) clamp(34px, 6vw, 52px);
+    text-align: center;
+    color:#f2e8cf;
+    background:
+      radial-gradient(120% 100% at 50% 0%, var(--jungle-lite) 0%, var(--jungle) 68%, #0a1712 100%);
+    border-bottom: 3px solid rgba(232,184,75,.55);
+    overflow: hidden;
+  }
+
+  /* Tempel-Glyphen im Hintergrund */
+  .cover::before{
+    content:"";
+    position:absolute;
+    inset:-40% -10%;
+    background-image:
+      repeating-linear-gradient(45deg,  rgba(232,184,75,.07) 0 2px, transparent 2px 26px),
+      repeating-linear-gradient(-45deg, rgba(232,184,75,.07) 0 2px, transparent 2px 26px);
+    transform: rotate(0deg);
+    pointer-events:none;
+  }
+
+  /* Fackelschein */
+  .cover::after{
+    content:"";
+    position:absolute;
+    inset: auto -20% -60% -20%;
+    height: 70%;
+    background: radial-gradient(closest-side, rgba(232,184,75,.30), transparent 100%);
+    filter: blur(12px);
+    animation: flicker 3.4s ease-in-out infinite alternate;
+    pointer-events:none;
+  }
+  @keyframes flicker{
+    0%   { opacity:.55; transform: translateY(0) scale(1); }
+    50%  { opacity:.85; transform: translateY(-6px) scale(1.03); }
+    100% { opacity:.62; transform: translateY(2px) scale(.99); }
+  }
+
+  .badge{
+    position: relative;
+    display: inline-block;
+    font-family:'Cinzel', serif;
+    font-size: .72rem;
+    letter-spacing: .32em;
+    text-transform: uppercase;
+    color: var(--gold-light);
+    padding: 7px 18px;
+    border: 1px solid rgba(232,184,75,.55);
+    border-radius: 999px;
+    background: rgba(232,184,75,.10);
+    backdrop-filter: blur(2px);
+  }
+
+  .cover h1{
+    position: relative;
+    margin: 22px 0 10px;
+    font-family:'Cinzel', serif;
+    font-weight: 900;
+    line-height: 1.18;
+    font-size: clamp(1.55rem, 5.2vw, 2.6rem);
+    letter-spacing: .015em;
+    background: linear-gradient(180deg, #fff4cf 0%, var(--gold) 52%, var(--gold-deep) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 2px 0 rgba(0,0,0,.45));
+  }
+
+  .cover h1 .sub{
+    display: block;
+    margin-top: .28em;
+    font-size: .62em;
+    font-weight: 600;
+    letter-spacing: .06em;
+    background: linear-gradient(180deg, #ffeec0, #d9a33a);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .cover .tagline{
+    position: relative;
+    margin: 18px auto 0;
+    max-width: 34ch;
+    font-size: .95rem;
+    font-style: italic;
+    color: #cfe6d6;
+    opacity: .9;
+  }
+
+  .ornament{
+    position: relative;
+    margin: 22px 0 0;
+    font-size: 1rem;
+    letter-spacing: .55em;
+    color: var(--gold);
+    text-shadow: 0 0 14px rgba(232,184,75,.65);
+    animation: glowsoft 4s ease-in-out infinite alternate;
+  }
+  @keyframes glowsoft{
+    from{ text-shadow: 0 0 6px rgba(232,184,75,.35); }
+    to  { text-shadow: 0 0 20px rgba(232,184,75,.85); }
+  }
+
+  /* ---------- Story ---------- */
+  .story{
+    position: relative;
+    padding: clamp(30px, 6vw, 54px) clamp(20px, 6vw, 52px) clamp(26px, 5vw, 44px);
+  }
+
+  .story p{
+    margin: 0 0 1.15em;
+    text-align: justify;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+  }
+
+  .story > p:first-of-type::first-letter{
+    float: left;
+    font-family:'Cinzel', serif;
+    font-weight: 900;
+    font-size: 3.5em;
+    line-height: .82;
+    padding: .07em .13em 0 0;
+    color: var(--gold-deep);
+    text-shadow: 1px 1px 0 rgba(255,255,255,.6);
+  }
+
+  /* ---------- Dialogzeilen ---------- */
+  .line{
+    position: relative;
+    margin: 1.35em 0;
+    padding: 2px 0 2px 18px;
+    border-left: 3px solid var(--gold);
+    text-align: left;
+  }
+
+  .who{
+    display: block;
+    margin-bottom: 2px;
+    font-family:'Cinzel', serif;
+    font-size: .70rem;
+    font-weight: 700;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--gold-deep);
+  }
+
+  .line.kuschelhase{ border-left-color: var(--robot); }
+  .line.kuschelhase .who{ color:#1f8a5e; }
+
+  .line.schnuffels{ border-left-color: var(--hai); }
+  .line.schnuffels .who{ color:#1d6f96; }
+
+  .line.kissenmann{ border-left-color: var(--dream); }
+  .line.kissenmann .who{ color:#7b46a0; }
+
+  /* ---------- Soundeffekte ---------- */
+  .sfx{
+    font-style: italic;
+    letter-spacing: .09em;
+    color: var(--gold-deep);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* ---------- Rätsel-Tafel ---------- */
+  .riddle{
+    position: relative;
+    margin: 2.2em auto;
+    padding: clamp(22px, 5vw, 32px) clamp(18px, 5vw, 34px);
+    max-width: 520px;
+    text-align: center;
+    border-radius: 14px;
+    border: 1px solid rgba(232,184,75,.5);
+    background:
+      radial-gradient(120% 120% at 50% 0%, #2b4136 0%, #16241c 60%, #101a14 100%);
+    color: #e9f2d9;
+    box-shadow:
+      inset 0 0 40px rgba(0,0,0,.75),
+      inset 0 1px 0 rgba(255,255,255,.08),
+      0 16px 34px -18px #000;
+  }
+
+  .riddle::before{
+    content:"☾";
+    position: absolute;
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 34px; height: 34px;
+    display: grid; place-items: center;
+    font-size: 1rem;
+    color: var(--night);
+    background: linear-gradient(180deg, var(--gold-light), var(--gold-deep));
+    border-radius: 50%;
+    box-shadow: 0 0 22px rgba(232,184,75,.7);
+  }
+
+  .riddle .label{
+    display: block;
+    margin-bottom: 12px;
+    font-family:'Cinzel', serif;
+    font-size: .68rem;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .riddle p{
+    margin: 0;
+    font-family:'Cinzel', serif;
+    font-size: clamp(.95rem, 2.6vw, 1.1rem);
+    line-height: 1.7;
+    letter-spacing: .02em;
+    text-align: center;
+    color: #f1ecd6;
+    text-shadow: 0 1px 0 rgba(0,0,0,.6);
+  }
+
+  /* ---------- Der Traumstern ---------- */
+  .traumstern{
+    display: block;
+    margin: 2em auto;
+    width: 54px; height: 54px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #fff9d8, var(--gold) 45%, #b8791a 100%);
+    box-shadow:
+      0 0 22px rgba(232,184,75,.9),
+      0 0 55px rgba(232,184,75,.55),
+      0 0 110px rgba(232,184,75,.3);
+    animation: pulse 3.2s ease-in-out infinite alternate;
+  }
+  @keyframes pulse{
+    from{ transform: scale(1);    box-shadow: 0 0 16px rgba(232,184,75,.7), 0 0 42px rgba(232,184,75,.4); }
+    to  { transform: scale(1.09); box-shadow: 0 0 30px rgba(232,184,75,1),  0 0 80px rgba(232,184,75,.6); }
+  }
+
+  /* ---------- Abschluss ---------- */
+  .night{
+    position: relative;
+    margin: 2.6em -1px 0;
+    padding: clamp(26px, 5vw, 40px) clamp(18px, 5vw, 36px);
+    text-align: center;
+    border-top: 1px solid rgba(232,184,75,.45);
+    background:
+      radial-gradient(120% 130% at 50% 0%, rgba(95,214,160,.16), transparent 68%);
+  }
+
+  .night p{
+    margin: 0 0 .7em;
+    text-align: center;
+  }
+
+  .night .schlafmodus{
+    display: inline-block;
+    margin-top: 10px;
+    padding: 9px 22px;
+    font-family:'Cinzel', serif;
+    font-size: .74rem;
+    letter-spacing: .26em;
+    text-transform: uppercase;
+    color: #0d1f18;
+    background: linear-gradient(180deg, #9df3c6, var(--robot));
+    border-radius: 999px;
+    box-shadow: 0 0 26px rgba(95,214,160,.65);
+  }
+
+  .melody{
+    display: block;
+    margin-top: 24px;
+    font-style: italic;
+    letter-spacing: .18em;
+    color: var(--gold-deep);
+    opacity: .85;
+    animation: fadeAway 5s ease-in-out infinite alternate;
+  }
+  @keyframes fadeAway{
+    from{ opacity:.85; letter-spacing: .18em; }
+    to  { opacity:.35; letter-spacing: .30em; }
+  }
+
+  /* ---------- Trennlinie ---------- */
+  .divider{
+    margin: 2em 0;
+    text-align: center;
+    font-size: .9rem;
+    letter-spacing: .6em;
+    color: var(--gold-deep);
+    opacity: .55;
+  }
+
+  /* ---------- Fußnote ---------- */
+  .colophon{
+    position: relative;
+    z-index: 1;
+    max-width: 780px;
+    margin: 26px auto 0;
+    text-align: center;
+    font-family:'Cinzel', serif;
+    font-size: .68rem;
+    letter-spacing: .26em;
+    text-transform: uppercase;
+    color: rgba(232,184,75,.55);
+  }
+
+  ::selection{
+    background: var(--gold);
+    color: #1a1408;
+  }
+
+  @media (max-width: 520px){
+    body{ padding: 18px 8px 60px; }
+    .scroll{ border-radius: 14px; }
+    .story p{ text-align: left; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation: none !important; transition: none !important; }
+    .stars{ opacity:.45; }
+  }
+
+  @media print{
+    body{ background:#fff; color:#000; padding:0; }
+    .stars, .colophon{ display:none; }
+    .scroll{ box-shadow:none; max-width:100%; }
+    .cover{ background:#f2f2f2; color:#000; }
+    .cover h1{ color:#000; background:none; -webkit-text-fill-color:#000; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" aria-hidden="true"></div>
+
+<main class="scroll">
+
+  <header class="cover">
+    <span class="badge">Gute-Nacht-Geschichte</span>
+
+    <h1>
+      Blaubeere, der Kuschelhase
+      <span class="sub">und der gestohlene Traumstern</span>
+    </h1>
+
+    <p class="tagline">Ein Abenteuer im vergessenen Tempel der leisen Träume</p>
+
+    <p class="ornament" aria-hidden="true">✦ ✧ ✦</p>
+  </header>
+
+  <article class="story">
+
+    <p>Es war eine Nacht, in der die Sterne besonders leise funkelten. Blaubeere lag schon im Bett, der Kuschelhase stand wie immer wachsam neben dem Kissen, und Schnuffels, der weiße Kuschelhai, saß auf dem Bettpfosten.</p>
+
+    <p class="line kuschelhase">
+      <span class="who">Kuschelhase</span>
+      „System meldet: Alle Kinder schlafen bald“, sagte er mit seiner tiefen, sanften Roboterstimme. „Doch irgendetwas stimmt nicht. Die Träume kommen heute nicht.“
+    </p>
+
+    <p>Blaubeere setzte sich auf. <span class="sfx">„Wieder der schlaflose Kissenmann?“</span></p>
+
+    <p class="line kuschelhase">
+      <span class="who">Kuschelhase</span>
+      „Wahrscheinlich. Er hat den Traumstern gestohlen. Ohne ihn können die Kinder nicht richtig träumen. Die Spur führt in den Dschungel, zum vergessenen Tempel der leisen Träume.“
+    </p>
+
+    <p class="line schnuffels">
+      <span class="who">Schnuffels</span>
+      „Schnuffels will mitkommen.“
+    </p>
+
+    <p>Der Kuschelhase öffnete eine kleine Klappe an seinem Bauch. Darin glühte ein grün leuchtender Zeitstein. „Schnellreise aktiviert. Ziel: Dschungel. Ankunft: kurz vor Mitternacht.“</p>
+
+    <p>Und schon wirbelte die Nacht um sie herum. Als Blaubeere die Augen wieder öffnete, standen sie mitten im Dschungel. Über ihnen raschelten riesige Blätter, überall zirpten Insekten, und zwischen den Bäumen lag ein alter Tempel aus grünem Stein.</p>
+
+    <p class="line schnuffels">
+      <span class="who">Schnuffels</span>
+      „Schnuffels fliegt. <span class="sfx">Aaah-eeh-aaah-eeh-aaah!</span>“ Und schon schwang er sich vorwärts, von Liane zu Liane, wie ein weißer, sehr mutiger Kuschelhai das eben tut. „Da unten ist etwas!“
+    </p>
+
+    <p class="line kuschelhase">
+      <span class="who">Kuschelhase</span>
+      „Falle entdeckt. Druckplatten. Bitte nur auf die Steine mit dem Mondzeichen treten.“
+    </p>
+
+    <p>Blaubeere schaute genau hin. „Da! Und da!“</p>
+
+    <p>Sie hüpften von Stein zu Stein. Schnuffels landete auf einem falschen Stein, und sofort schossen kleine Pfeile aus der Wand. Der Kuschelhase stellte sich davor. <span class="sfx">Pling, pling, pling</span> – prallten die Pfeile an seinem flauschigen, aber stabilen Panzer ab.</p>
+
+    <p>„Danke, Kuschelhase“, sagte Blaubeere. „Aufgabe: Beschützen“, antwortete er.</p>
+
+    <div class="riddle">
+      <span class="label">In den Stein geritzt</span>
+      <p>
+        „Ich bin unsichtbar, doch ich trage dich fort.<br>
+        Ich komme im Schlaf an den schönsten Ort.<br>
+        Was bin ich?“
+      </p>
+    </div>
+
+    <p>Blaubeere dachte nach. „Ein Traum?“ Das Tor blieb zu.</p>
+
+    <p class="line schnuffels">
+      <span class="who">Schnuffels</span>
+      „Schnuffels sieht: Mond. Kleiner Mond. Drücken.“
+    </p>
+
+    <p>Und tatsächlich: Neben dem Rätsel war ein kleiner Mond eingemeißelt. Blaubeere drückte darauf. Das Tor öffnete sich knarrend.</p>
+
+    <p>„Schnuffels, du bist manchmal richtig clever“, sagte Blaubeere.</p>
+
+    <p class="line schnuffels">
+      <span class="who">Schnuffels</span>
+      „Schnuffel klug. Und der stärkste.“
+    </p>
+
+    <div class="divider" aria-hidden="true">✦ ✧ ✦</div>
+
+    <p>Im Tempel war es kühl. Überall lagen alte Kissen, die aussahen wie schlafende Steine. In der Mitte stand ein leeres Podest. Darüber schwebte eine dunkle Wolke: der schlaflose Kissenmann.</p>
+
+    <p class="line kissenmann">
+      <span class="who">Kissenmann</span>
+      Er verwandelte sich gerade in eine große, flauschige Bettdecke. „Ihr kommt zu spät! Der Traumstern ist mein! Keine Träume mehr für Kinder! Dann sind alle so wach wie ich!“
+    </p>
+
+    <p>„Das ist gemein“, sagte Blaubeere. „Träume gehören den Kindern.“ Der Kissenmann lachte.</p>
+
+    <p>Da rollte plötzlich ein riesiger Stein aus einem Seitengang auf sie zu. Rumpelnd und brummend kam er näher.</p>
+
+    <p class="line kuschelhase">
+      <span class="who">Kuschelhase</span>
+      „Stein: groß. Fluchtweg: rechts. Ich halte ihn auf.“
+    </p>
+
+    <p>„Nein!“ rief Blaubeere. „Wir schaffen das zusammen.“</p>
+
+    <p class="line schnuffels">
+      <span class="who">Schnuffels</span>
+      Schnuffels schwang sich an einer Liane hoch, packte einen Hebel und zog daran. Eine Steinbrücke senkte sich herab. „Hier! Schnell!“
+    </p>
+
+    <p>Blaubeere, der Kuschelhase und Schnuffels rannten über die Brücke. Der Stein rollte hinter ihnen her. Der Kuschelhase pfiff dabei leise und schief die Indiana-Jones-Melodie. <span class="sfx">„Fiii-fii-fiii-fiiuuu.“</span> Schnuffels pfiff mit, obwohl er nur <span class="sfx">„Fiiiiu!“</span> hinbekam.</p>
+
+    <p>Dann krachte der Stein gegen eine Wand und blieb stecken.</p>
+
+    <p>Der Kissenmann war wütend. Er verwandelte sich in ein Kissen, dann in einen Vorhang, dann in einen kleinen Stein. Doch der Kuschelhase hielt ihn mit seinen flauschigen Armen fest. „Umarmung aktiviert. Kein Entkommen.“</p>
+
+    <span class="traumstern" aria-hidden="true"></span>
+
+    <p>Blaubeere fand den Traumstern in einer Kissenburg versteckt. Er glühte warm und golden. Sie legte ihn zurück auf das Podest. Sofort wurde der Tempel hell.</p>
+
+    <p class="line kissenmann">
+      <span class="who">Kissenmann</span>
+      Der Kissenmann wurde ganz klein und müde. „Ich … ich wollte doch nur auch mal träumen“, murmelte er.
+    </p>
+
+    <p>Blaubeere lächelte. „Dann wünsch dir einen Traum, der dir gut tut und dich stärkt.“</p>
+
+    <p>Der Kissenmann gähnte. Er verwandelte sich in ein weiches, warmes Kopfkissen und schlief ein. Zum ersten Mal seit langer Zeit.</p>
+
+    <p>Der Traumstern funkelte. Über dem Dschungel breitete sich ein leises Leuchten aus, und in der ganzen Welt kuschelten sich die Kinder in ihre Betten. Die Träume kamen zurück.</p>
+
+    <p class="line schnuffels">
+      <span class="who">Schnuffels</span>
+      Schnuffels rieb sich die Augen. „Schnuffels müüüüde …“
+    </p>
+
+    <p class="line kuschelhase">
+      <span class="who">Kuschelhase</span>
+      „Mission erfüllt. Rückkehr ins Bett.“
+    </p>
+
+    <p>Wieder wirbelte die Nacht. Kurz darauf lag Blaubeere in ihrem Bett, der Traumstern funkelte durchs Fenster, und der Kuschelhase stand wachsam neben dem Kissen.</p>
+
+    <p class="line schnuffels">
+      <span class="who">Schnuffels</span>
+      Schnuffels kuschelte sich an Blaubeeres Füße. „Gute Nacht, Blaubeere. Schnuffels passt auf.“
+    </p>
+
+    <p>Blaubeere gähnte. „Gute Nacht, Schnuffels. Gute Nacht, Kuschelhase.“</p>
+
+  </article>
+
+  <section class="night">
+    <p class="line kuschelhase" style="border:0; padding:0; text-align:center;">
+      <span class="who" style="letter-spacing:.3em;">Kuschelhase</span>
+      Der Kuschelhase schaltete sein Nachtlicht ein.
+    </p>
+
+    <span class="schlafmodus">Schlafmodus aktiviert</span>
+
+    <p style="margin-top:24px;">Und leise, ganz leise pfiff er noch einmal die Abenteuermelodie, bis Blaubeere die Augen schloss und von Lianen, Tempeln und einem weißen Kuschel träumte, der mutig durch den Dschungel flog.</p>
+
+    <span class="melody">Fiii-fii-fiii-fiiuuu …</span>
+  </section>
+
+</main>
+
+<p class="colophon">Für mutige Träumer ✦ Gute Nacht</p>
+
+</body>
+</html>

@@ -9,6 +9,15 @@ const originrepos = [
     tags: ['Gedächtnistraining', 'Mobil', 'Looney Tunes', 'Bugs Bunny', 'Die Simpsons', 'Familie Feuerstein']
 },
 {
+    label: "Würfelpoker",
+    img: 'img/memory.webp',
+    description: 'Покер на костях - Russisches Würfelpoker.',
+    type: 'game',
+    url: 'https://boiler-byte.github.io/Wuerfelpoker/',
+    year: 2026,
+    tags: ['Würfelspiel', 'Poker']
+},
+{
     label: "Sudoku",
     img: 'img/sudoku.png',
     status: 'beta',
