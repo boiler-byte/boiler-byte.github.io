@@ -135,15 +135,6 @@ const originrepos = [
     tags: ['Würfelspiel', 'Poker']
 },
 {
-    label: "2048",
-    img: 'img/2048.png',
-    description: 'The Game.',
-    type: 'game',
-    url: 'https://boiler-byte.github.io/2048/',
-    year: 2026,
-    tags: ['Merge Puzzle', 'Logik']
-},
-{
     label: "Nachthimmel",
     img: 'img/nachthimmel.png',
     status: 'alpha',
@@ -152,6 +143,24 @@ const originrepos = [
     url: 'https://boiler-byte.github.io/Nachthimmel/',
     year: 2026,
     tags: ['Sternenbilder', 'Satelliten']
+},
+{
+    label: "Super-Knack",
+    img: 'img/superknack.png',
+    description: 'The Game.',
+    type: 'game',
+    url: 'https://boiler-byte.github.io/Superknack/',
+    year: 2026,
+    tags: ['Kartenspiel', 'Glückspiel']
+},
+{
+    label: "2048",
+    img: 'img/2048.png',
+    description: 'The Game.',
+    type: 'game',
+    url: 'https://boiler-byte.github.io/2048/',
+    year: 2026,
+    tags: ['Merge Puzzle', 'Logik']
 },
 {
     label: "Pong",
