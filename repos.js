@@ -135,6 +135,15 @@ const originrepos = [
     tags: ['Würfelspiel', 'Poker']
 },
 {
+    label: "2048",
+    img: 'img/2048.png',
+    description: 'The Game.',
+    type: 'game',
+    url: 'https://boiler-byte.github.io/2048/',
+    year: 2026,
+    tags: ['Merge Puzzle', 'Logik']
+},
+{
     label: "Nachthimmel",
     img: 'img/nachthimmel.png',
     status: 'alpha',
