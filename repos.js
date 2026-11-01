@@ -10,7 +10,7 @@ const originrepos = [
 },
 {
     label: "Würfelpoker",
-    img: 'img/wuerfelpoker.webp',
+    img: 'img/wuerfelpoker.png',
     description: 'Покер на костях - Russisches Würfelpoker.',
     type: 'game',
     url: 'https://boiler-byte.github.io/Wuerfelpoker/',
