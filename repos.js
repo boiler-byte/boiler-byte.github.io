@@ -154,6 +154,15 @@ const originrepos = [
     tags: ['Kartenspiel', 'Glückspiel']
 },
 {
+    label: "Solitär",
+    img: 'img/solitaer.png',
+    description: 'The Game.',
+    type: 'game',
+    url: 'https://boiler-byte.github.io/Solitear/',
+    year: 2026,
+    tags: ['Kartenspiel', 'Strategie']
+},
+{
     label: "2048",
     img: 'img/2048.png',
     description: 'The Game.',
@@ -336,7 +345,6 @@ const originrepos = [
     type: 'misc',
     year: 2026,
     tags: ['Gute Nacht', 'Geschichte', 'Terminator', 'Kissen-Mann'],
-    // featured: 'tall', //wide,tall
 },
 {
     label: "Der Weiße Kuschel",
@@ -346,7 +354,15 @@ const originrepos = [
     type: 'misc',
     year: 2026,
     tags: ['Gute Nacht', 'Geschichte', 'Der Weiße Hai' ],
-    // featured: 'tall', //wide,tall
+},
+{
+    label: "Der Traumstern",
+    img: 'img/indiana-kuschel.webp',
+    description: 'Blaubeere & der Kuschelhase: Der Traumstern',
+    url: 'indiana-kuschel.html',
+    type: 'misc',
+    year: 2026,
+    tags: ['Gute Nacht', 'Geschichte', 'Indiana Jones' ],
 },
 {
     label: "Textanalyse",
