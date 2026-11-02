@@ -126,10 +126,21 @@ const originrepos = [
     tags: ['WebRTC', 'Lokal']
 },
 {
+    label: "Glücksrad",
+    img: 'img/gluecksrad.png',
+    description: 'Für bis zu 3 Spieler.',
+    type: 'game',
+    status: 'beta',
+    url: 'https://boiler-byte.github.io/Gluecksrad/',
+    year: 2026,
+    tags: ['Ratespiel', 'Multiplayer']
+},
+{
     label: "Würfelpoker",
     img: 'img/wuerfelpoker.png',
     description: 'Покер на костях - Russisches Würfelpoker.',
     type: 'game',
+    status: 'alpha',
     url: 'https://boiler-byte.github.io/Wuerfelpoker/',
     year: 2026,
     tags: ['Würfelspiel', 'Poker']
@@ -148,6 +159,7 @@ const originrepos = [
     label: "Super-Knack",
     img: 'img/superknack.png',
     description: 'The Game.',
+    status: 'alpha',
     type: 'game',
     url: 'https://boiler-byte.github.io/Superknack/',
     year: 2026,
@@ -157,6 +169,7 @@ const originrepos = [
     label: "Solitär",
     img: 'img/solitaer.png',
     description: 'The Game.',
+    status: 'alpha',
     type: 'game',
     url: 'https://boiler-byte.github.io/Solitear/',
     year: 2026,
@@ -166,6 +179,7 @@ const originrepos = [
     label: "2048",
     img: 'img/2048.png',
     description: 'The Game.',
+    status: 'alpha',
     type: 'game',
     url: 'https://boiler-byte.github.io/2048/',
     year: 2026,
