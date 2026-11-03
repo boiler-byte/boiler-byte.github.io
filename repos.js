@@ -171,7 +171,7 @@ const originrepos = [
     description: 'The Game.',
     status: 'alpha',
     type: 'game',
-    url: 'https://boiler-byte.github.io/Solitear/',
+    url: 'https://boiler-byte.github.io/Solitaer/',
     year: 2026,
     tags: ['Kartenspiel', 'Strategie']
 },
@@ -206,13 +206,24 @@ const originrepos = [
     tags: ['Speed Typing', 'High-Score'],
 },
 {
-    label: "Buchstaben",
-    img: 'img/buchstaben.jpg',
-    description: 'Lernspiel für Kinder von 3 bis 5 Jahren.',
+    label: "Schach",
+    img: 'img/schach.png',
+    description: 'Spielt hier jemand Schach?',
     type: 'game',
-    url: 'https://boiler-byte.github.io/Buchstaben/',
+    status: 'alpha',
+    url: 'https://boiler-byte.github.io/Schach/',
     year: 2026,
-    tags: ['Lernspiel', 'Kinder']
+    tags: ['Brettspiel', '1-2 Spieler']
+},
+{
+    label: "Quiz",
+    img: 'img/quiz.png',
+    description: 'Wer wird Millionär? Auf jeden Fall nicht alle.',
+    type: 'game',
+    status: 'alpha',
+    url: 'https://boiler-byte.github.io/Quiz/',
+    year: 2026,
+    tags: ['Fragen', 'Allgemeinwissen']
 },
 {
     label: "Kassenbon Scanner",
@@ -396,6 +407,15 @@ const originrepos = [
     year: 2026,
     tags: ['Information', 'Installation'],
     featured: 'tall', //wide,tall
+},
+{
+    label: "Ninjame",
+    img: 'https://ninjame-byte.github.io/assets/schatzinsel.png',
+    description: 'Vibe Coding macht das besser als offizielle Kinder-Apps. Na endlich! :-)',
+    type: 'game',
+    url: 'https://ninjame-byte.github.io',
+    year: 2026,
+    tags: ['Lernplattform', 'Kinder'],
 },
 {
     label: "Zylinder Ansicht",
