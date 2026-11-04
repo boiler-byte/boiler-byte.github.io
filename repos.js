@@ -226,6 +226,16 @@ const originrepos = [
     tags: ['Fragen', 'Allgemeinwissen']
 },
 {
+    label: "Radio",
+    img: 'img/radio.webp',
+    description: 'Spielt Radiosender ab.',
+    type: 'tool',
+    status: 'beta',
+    url: 'https://boiler-byte.github.io/Radio/',
+    year: 2026,
+    tags: ['Musik', 'Entschleunigung'],
+},
+{
     label: "Kassenbon Scanner",
     img: 'img/kassenbonscanner.webp',
     description: 'Erfasst die Positionen von Kassenbons per Kamera oder Bild.',
