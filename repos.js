@@ -31,22 +31,20 @@ const originrepos = [
     label: "Mindfagg",
     img: 'img/mindfagg.png',
     status: 'beta',
-    description: 'Visualisiere deinen Mindfagg. Markdown, Mindmap, Kanban? Hier ist das ein und das Selbe!',
+    description: 'Visualisiere deinen Mindfagg. Inklusive Github-Sync und HTML App Support!',
     type: 'tool',
     url: 'https://boiler-byte.github.io/mindfagg/',
     year: 2026,
-    tags: ['Notizen', 'Aufgaben']
+    tags: ['Notizen', 'Projekte', 'Aufgaben', 'Kalender', 'Kanban', 'HTML', 'CSS', 'XML', 'SVG']
 },
 {
     label: "HTML-Editor",
     img: 'img/htmleditor.png',
     description: 'Editor, der "Vibe Coding" auf der Couch am Smartphone bequem macht, mit direkt darauf zugeschnittenen Funktionen wie Teilen, Ersetzen, Vorschau, Debugging, Verlauf.',
-    status: 'beta',
     type: 'tool',
     url: 'https://boiler-byte.github.io/htmleditor/',
     year: 2026,
     tags: ['HTML App', 'Vibe Coding', 'JavaScript', 'JS', 'CSS', 'Syntax Highlighting', 'Automatische Formatierung'],
-    featured: 'wide',
 },
 {
     label: "Haltestellen",
@@ -96,6 +94,16 @@ const originrepos = [
     featured: 'wide'
 },
 {
+    label: "Glücksrad",
+    img: 'img/gluecksrad.png',
+    description: 'Für bis zu 3 Spieler.',
+    type: 'game',
+    status: 'beta',
+    url: 'https://boiler-byte.github.io/Gluecksrad/',
+    year: 2026,
+    tags: ['Ratespiel', 'Multiplayer']
+},
+{
     label: "Bildstapel-Verarbeitung",
     img: 'img/bildstapelverarbeitung.png',
     description: 'Auflösungen, Rotation, Zuschneiden, Freistellen, Zerlegen, SVG Vektorkonvertierung. Damit lässt sich in einem Rutsch aus einem Bild mit mehreren Icons eine Sammlung an passgenau zugeschnittenen SVG-Icons erstellen. Import-Formate: jpg, png, webp. Output-Formate: jpg, png, webp, svg.',
@@ -103,7 +111,7 @@ const originrepos = [
     url: 'https://boiler-byte.github.io/Bildstapelverarbeitung/',
     year: 2026,
     tags: ['Bildbearbeitung', 'Thumbmaker', 'crop', 'resize', 'color to alpha', 'Farbe zu Alpha'],
-    featured: true,
+    featured: 'wide',
 },
 {
     label: "Local Storage Sync",
@@ -124,16 +132,6 @@ const originrepos = [
     url: 'https://boiler-byte.github.io/filesync/',
     year: 2026,
     tags: ['WebRTC', 'Lokal']
-},
-{
-    label: "Glücksrad",
-    img: 'img/gluecksrad.png',
-    description: 'Für bis zu 3 Spieler.',
-    type: 'game',
-    status: 'beta',
-    url: 'https://boiler-byte.github.io/Gluecksrad/',
-    year: 2026,
-    tags: ['Ratespiel', 'Multiplayer']
 },
 {
     label: "Würfelpoker",
