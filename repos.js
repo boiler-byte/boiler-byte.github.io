@@ -214,16 +214,6 @@ const originrepos = [
     tags: ['Brettspiel', '1-2 Spieler']
 },
 {
-    label: "Quiz",
-    img: 'img/quiz.png',
-    description: 'Wer wird Millionär? Auf jeden Fall nicht alle.',
-    type: 'game',
-    status: 'alpha',
-    url: 'https://boiler-byte.github.io/Quiz/',
-    year: 2026,
-    tags: ['Fragen', 'Allgemeinwissen']
-},
-{
     label: "Radio",
     img: 'img/radio.webp',
     description: 'Spielt Radiosender ab.',
@@ -242,6 +232,26 @@ const originrepos = [
     url: 'https://boiler-byte.github.io/Podcasts/',
     year: 2026,
     tags: ['Dialog', 'Labern'],
+},
+{
+    label: "Quiz",
+    img: 'img/quiz.png',
+    description: 'Wer wird Millionär? Auf jeden Fall nicht alle.',
+    type: 'game',
+    status: 'alpha',
+    url: 'https://boiler-byte.github.io/Quiz/',
+    year: 2026,
+    tags: ['Fragen', 'Allgemeinwissen']
+},
+{
+    label: "Flaggen-Quiz",
+    img: 'img/flaggenquiz.png',
+    description: 'Flaggen und Länder.',
+    type: 'game',
+    status: 'alpha',
+    url: 'https://boiler-byte.github.io/Flaggenquiz/',
+    year: 2026,
+    tags: ['Fragen', 'Allgemeinwissen']
 },
 {
     label: "Kassenbon Scanner",
