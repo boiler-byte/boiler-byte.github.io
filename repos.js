@@ -234,6 +234,16 @@ const originrepos = [
     tags: ['Musik', 'Entschleunigung'],
 },
 {
+    label: "Podcasts",
+    img: 'img/podcasts.webp',
+    description: 'Spielt Podcasts ab.',
+    type: 'tool',
+    status: 'beta',
+    url: 'https://boiler-byte.github.io/Podcasts/',
+    year: 2026,
+    tags: ['Dialog', 'Labern'],
+},
+{
     label: "Kassenbon Scanner",
     img: 'img/kassenbonscanner.webp',
     description: 'Erfasst die Positionen von Kassenbons per Kamera oder Bild.',
@@ -300,26 +310,26 @@ const originrepos = [
     year: 2026,
     tags: ['Lokal', 'Mobil']
 },
-{
-    label: "Comic Reader",
-    img: 'img/comicreader.png',
-    status: 'alpha',
-    description: 'Comics lesen.',
-    type: 'tool',
-    url: 'https://boiler-byte.github.io/comicreader/',
-    year: 2026,
-    tags: ['Lokal', 'zip', 'cbz', 'pdf']
-},
-{
-    label: "Haushalts-Durchblick",
-    img: 'img/haushaltsdurchblick.png',
-    status: 'alpha',
-    description: 'Überblick über das, was reinkommt, rausgeht und bleibt.',
-    type: 'tool',
-    url: 'https://boiler-byte.github.io/Haushaltsdurchblick/',
-    year: 2026,
-    tags: ['Lokal', 'Sensible Daten']
-},
+// {
+//     label: "Comic Reader",
+//     img: 'img/comicreader.png',
+//     status: 'alpha',
+//     description: 'Comics lesen.',
+//     type: 'tool',
+//     url: 'https://boiler-byte.github.io/comicreader/',
+//     year: 2026,
+//     tags: ['Lokal', 'zip', 'cbz', 'pdf']
+// },
+// {
+//     label: "Haushalts-Durchblick",
+//     img: 'img/haushaltsdurchblick.png',
+//     status: 'alpha',
+//     description: 'Überblick über das, was reinkommt, rausgeht und bleibt.',
+//     type: 'tool',
+//     url: 'https://boiler-byte.github.io/Haushaltsdurchblick/',
+//     year: 2026,
+//     tags: ['Lokal', 'Sensible Daten']
+// },
 {
     label: "Doomsday",
     img: 'https://boiler-byte.github.io/Doomsday/doomsday.webp',
@@ -444,14 +454,14 @@ const originrepos = [
 //     year: 2026,
 //     tags: ['How High', 'Peace']
 // },
-{
-    label: "SVG-Studio",
-    img: 'img/svgstudio.png',
-    description: 'SVG Dateien bearbeiten.',
-    status: 'alpha',
-    type: 'tool',
-    url: 'https://boiler-byte.github.io/svgstudio/',
-    year: 2026,
-    tags: ['svg', 'Optimierung', 'Zuschneiden', 'crop'],
-},
+// {
+//     label: "SVG-Studio",
+//     img: 'img/svgstudio.png',
+//     description: 'SVG Dateien bearbeiten.',
+//     status: 'alpha',
+//     type: 'tool',
+//     url: 'https://boiler-byte.github.io/svgstudio/',
+//     year: 2026,
+//     tags: ['svg', 'Optimierung', 'Zuschneiden', 'crop'],
+// },
 ];
