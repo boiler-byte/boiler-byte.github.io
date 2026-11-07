@@ -147,11 +147,21 @@ const originrepos = [
     label: "Nachthimmel",
     img: 'img/nachthimmel.png',
     status: 'beta',
-    description: 'Zeigt den Nachthimmel.',
+    description: 'Zeigt den Nachthimmel als AR.',
     type: 'tool',
     url: 'https://boiler-byte.github.io/Nachthimmel/',
     year: 2026,
     tags: ['Sternenbilder', 'Satelliten']
+},
+{
+    label: "Hidden Places",
+    img: 'img/hiddenplaces.webp',
+    description: 'AR App, um die Gegend zu erkunden.',
+    type: 'tool',
+    status: 'alpha',
+    url: 'https://boiler-byte.github.io/hiddenplaces/',
+    year: 2026,
+    tags: ['Sehenswürdigkeiten', 'AR'],
 },
 {
     label: "Super-Knack",
