@@ -174,6 +174,16 @@ const originrepos = [
     tags: ['Kartenspiel', 'Glückspiel']
 },
 {
+    label: "Tetris",
+    img: 'img/tetris.png',
+    description: 'The Game.',
+    status: 'beta',
+    type: 'game',
+    url: 'https://boiler-byte.github.io//',
+    year: 2026,
+    tags: ['Kartenspiel', 'Glückspiel']
+},
+{
     label: "Solitär",
     img: 'img/solitaer.png',
     description: 'The Game.',
