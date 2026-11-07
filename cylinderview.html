@@ -191,10 +191,10 @@ const TYPE_NEON_RGB = {
   tool: '39 221 255',  // Cyan
   misc: '65 255 126'   // Grün
 };
-// Die Inhalte wiederholen sich als periodische 2D-Kachel.
-// ROW_STRIDE ist bewusst ungerade gewählt, damit benachbarte Zeilen
-// eine andere Reihenfolge als die Zeile darüber zeigen.
-const ROW_STRIDE = 7;
+// Neue zufällige Verteilung bei jedem Seitenaufruf.
+// Der Seed bleibt während der Sitzung gleich, damit Cards beim Scrollen
+// an ihren Positionen bleiben und nicht bei jedem Rendern wechseln.
+const CARD_SEED = (Math.random() * 0x100000000) >>> 0;
 let panX = 0, panY = 0;
 let scheduled = false;
 const mounted = new Map();
@@ -296,10 +296,16 @@ function startMotion() {
   }
 }
 
-function mod(n, m) { return ((n % m) + m) % m; }
 function escapeHTML(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function cardIndex(col, row) {
-  return mod(mod(col, apps.length) + mod(row, apps.length) * ROW_STRIDE, apps.length);
+  // Jede Rasterposition bekommt einen unabhaengigen, stabilen Zufallsindex.
+  // Anders als ein Shuffle mit periodischer Wiederholung entsteht dabei
+  // kein erkennbares Muster in Zeilen oder Spalten.
+  let h = (Math.imul(col | 0, 0x9e3779b1) ^ Math.imul(row | 0, 0x85ebca77) ^ CARD_SEED) >>> 0;
+  h = Math.imul(h ^ (h >>> 16), 0x7feb352d);
+  h = Math.imul(h ^ (h >>> 15), 0x846ca68b);
+  h = (h ^ (h >>> 16)) >>> 0;
+  return h % apps.length;
 }
 function makeCard(app, index) {
   const hasUrl = typeof app.url === 'string' && app.url.trim() !== '';
@@ -391,10 +397,6 @@ function render() {
   scheduled = false;
   if (!apps.length) { layer.replaceChildren(); mounted.clear(); stats.textContent = 'Bitte mindestens eine App im Array definieren.'; return; }
   const w = viewport.clientWidth, h = viewport.clientHeight;
-  if (!snap) {
-    panX = mod(panX, STEP_X * apps.length);
-    panY = mod(panY, STEP_Y * apps.length);
-  }
   const minCol = Math.floor(-panX / STEP_X) - OVERSCAN;
   const maxCol = Math.ceil((w - panX) / STEP_X) + OVERSCAN;
   const minRow = Math.floor(-panY / STEP_Y) - OVERSCAN;
