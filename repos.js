@@ -179,7 +179,7 @@ const originrepos = [
     description: 'The Game.',
     status: 'beta',
     type: 'game',
-    url: 'https://boiler-byte.github.io//',
+    url: 'https://boiler-byte.github.io/Tetris/',
     year: 2026,
     tags: ['Kartenspiel', 'Glückspiel']
 },
