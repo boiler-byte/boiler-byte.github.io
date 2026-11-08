@@ -38,15 +38,6 @@ const originrepos = [
     tags: ['Notizen', 'Projekte', 'Aufgaben', 'Kalender', 'Kanban', 'HTML', 'CSS', 'XML', 'SVG']
 },
 {
-    label: "HTML-Editor",
-    img: 'img/htmleditor.png',
-    description: 'Editor, der "Vibe Coding" auf der Couch am Smartphone bequem macht, mit direkt darauf zugeschnittenen Funktionen wie Teilen, Ersetzen, Vorschau, Debugging, Verlauf.',
-    type: 'tool',
-    url: 'https://boiler-byte.github.io/htmleditor/',
-    year: 2026,
-    tags: ['HTML App', 'Vibe Coding', 'JavaScript', 'JS', 'CSS', 'Syntax Highlighting', 'Automatische Formatierung'],
-},
-{
     label: "Haltestellen",
     img: 'img/haltestellen.png',
     status: 'beta',
@@ -84,14 +75,23 @@ const originrepos = [
     tags: ['Geduld', 'Logik']
 },
 {
+    label: "Nachthimmel",
+    img: 'img/nachthimmel.png',
+    description: 'Zeigt den Nachthimmel als AR mit Sternenbildern, Planetenbahnen, Satelliten- und Flugzeugdaten.',
+    type: 'tool',
+    url: 'https://boiler-byte.github.io/Nachthimmel/',
+    year: 2026,
+    tags: ['Sternenbilder', 'Satelliten'],
+    featured: 'wide'
+},
+{
     label: "Authenticator",
     img: 'img/authenticator.png',
     description: 'Lokale Schlüssel, AES verschlüssel mit Import/Export.',
     type: 'tool',
     url: 'https://boiler-byte.github.io/Authenticator/',
     year: 2026,
-    tags: ['Lokal', 'Sensible Daten'],
-    featured: 'wide'
+    tags: ['Lokal', 'Sensible Daten']
 },
 {
     label: "Glücksrad",
@@ -138,20 +138,9 @@ const originrepos = [
     img: 'img/wuerfelpoker.png',
     description: 'Покер на костях - Russisches Würfelpoker.',
     type: 'game',
-    status: 'beta',
     url: 'https://boiler-byte.github.io/Wuerfelpoker/',
     year: 2026,
     tags: ['Würfelspiel', 'Poker']
-},
-{
-    label: "Nachthimmel",
-    img: 'img/nachthimmel.png',
-    status: 'beta',
-    description: 'Zeigt den Nachthimmel als AR.',
-    type: 'tool',
-    url: 'https://boiler-byte.github.io/Nachthimmel/',
-    year: 2026,
-    tags: ['Sternenbilder', 'Satelliten']
 },
 {
     label: "Hidden Places",
@@ -167,7 +156,6 @@ const originrepos = [
     label: "Super-Knack",
     img: 'img/superknack.png',
     description: 'The Game.',
-    status: 'beta',
     type: 'game',
     url: 'https://boiler-byte.github.io/Superknack/',
     year: 2026,
@@ -197,7 +185,7 @@ const originrepos = [
     label: "2048",
     img: 'img/2048.png',
     description: 'The Game.',
-    status: 'alpha',
+    status: 'beta',
     type: 'game',
     url: 'https://boiler-byte.github.io/2048/',
     year: 2026,
@@ -222,16 +210,6 @@ const originrepos = [
     url: 'https://boiler-byte.github.io/Typeshooter/',
     year: 2026,
     tags: ['Speed Typing', 'High-Score'],
-},
-{
-    label: "Schach",
-    img: 'img/schach.png',
-    description: 'Spielt hier jemand Schach?',
-    type: 'game',
-    status: 'alpha',
-    url: 'https://boiler-byte.github.io/Schach/',
-    year: 2026,
-    tags: ['Brettspiel', '1-2 Spieler']
 },
 {
     label: "Radio",
@@ -266,7 +244,7 @@ const originrepos = [
     img: 'img/quiz.png',
     description: 'Wer wird Millionär? Auf jeden Fall nicht alle.',
     type: 'game',
-    status: 'alpha',
+    status: 'beta',
     url: 'https://boiler-byte.github.io/Quiz/',
     year: 2026,
     tags: ['Fragen', 'Allgemeinwissen']
@@ -276,10 +254,20 @@ const originrepos = [
     img: 'img/flaggenquiz.png',
     description: 'Flaggen und Länder.',
     type: 'game',
-    status: 'alpha',
+    status: 'beta',
     url: 'https://boiler-byte.github.io/Flaggenquiz/',
     year: 2026,
     tags: ['Fragen', 'Allgemeinwissen']
+},
+{
+    label: "Schach",
+    img: 'img/schach.png',
+    description: 'Spielt hier jemand Schach?',
+    type: 'game',
+    status: 'alpha',
+    url: 'https://boiler-byte.github.io/Schach/',
+    year: 2026,
+    tags: ['Brettspiel', '1-2 Spieler']
 },
 {
     label: "Kassenbon Scanner",
@@ -290,6 +278,15 @@ const originrepos = [
     url: 'https://boiler-byte.github.io/Kassenbonscanner/',
     year: 2026,
     tags: ['OCR', 'Bildverbesserung'],
+},
+{
+    label: "HTML-Editor",
+    img: 'img/htmleditor.png',
+    description: 'Editor, der "Vibe Coding" auf der Couch am Smartphone bequem macht, mit direkt darauf zugeschnittenen Funktionen wie Teilen, Ersetzen, Vorschau, Debugging, Verlauf.',
+    type: 'tool',
+    url: 'https://boiler-byte.github.io/htmleditor/',
+    year: 2026,
+    tags: ['HTML App', 'Vibe Coding', 'JavaScript', 'JS', 'CSS', 'Syntax Highlighting', 'Automatische Formatierung'],
 },
 {
     label: "Countdowns",
