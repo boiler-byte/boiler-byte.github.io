@@ -1,9 +1,21 @@
+const originrepogroups = {
+dev: { label: "Dev-Tools", img: 'img/grp/dev.png' },
+tool: { label: "Nützlich", img: 'img/grp/tool.webp' },
+cards: { label: "Kartenspiele", img: 'img/grp/cards.png' },
+riddle: { label: "Rätsel", img: 'img/grp/riddle.svg' },
+news: { label: "Infotainment", img: 'img/grp/news.webp' },
+blaubeere: { label: "Blaubeere", img: 'img/grp/blaubeere.webp' },
+alltag: { label: "Alltagshelfer", img: 'img/grp/alltag.png' },
+multiplayer: { label: "Multiplayer", img: 'img/grp/multiplayer.png'}
+}
+
 const originrepos = [
 {
     label: "Memory",
     img: 'img/memory.webp',
     description: 'Das gute, alte Memory mit Custom Themes und komfortabler Verwaltung.',
     type: 'game',
+    group: 'riddle',
     url: 'https://boiler-byte.github.io/Memory/',
     year: 2026,
     tags: ['Gedächtnistraining', 'Mobil', 'Looney Tunes', 'Bugs Bunny', 'Die Simpsons', 'Familie Feuerstein']
@@ -14,6 +26,7 @@ const originrepos = [
     status: 'beta',
     description: 'Ein simples Sudoku.',
     type: 'game',
+    group: 'riddle',
     url: 'https://boiler-byte.github.io/Sudoku/',
     year: 2026,
     tags: ['Mobile', 'Riddle']
@@ -23,6 +36,7 @@ const originrepos = [
     img: 'img/wetter.png',
     description: 'Geklonte Wetter App mit öffentlicher API.',
     type: 'tool',
+    group: 'alltag',
     url: 'https://boiler-byte.github.io/Wetter/',
     year: 2026,
     tags: ['API', 'Geo-Location']
@@ -31,6 +45,7 @@ const originrepos = [
     label: "Mindfagg",
     img: 'img/mindfagg.png',
     status: 'beta',
+    group: 'dev',
     description: 'Visualisiere deinen Mindfagg. Inklusive Github-Sync und HTML App Support!',
     type: 'tool',
     url: 'https://boiler-byte.github.io/mindfagg/',
@@ -43,6 +58,7 @@ const originrepos = [
     status: 'beta',
     description: 'Ist mein Zug püntklicht?',
     type: 'tool',
+    group: 'alltag',
     url: 'https://boiler-byte.github.io/Haltestellen/',
     year: 2026,
     tags: ['API', 'ÖPNV']
@@ -52,6 +68,7 @@ const originrepos = [
     img: 'img/snake.png',
     description: 'Snake, wie man es liebt. Mit Tastatursteuerung (WASD, Pfeile) smarter Touchsteuerung durch Tippen auf dem Spielfeld und an den Ecken. Oder durch Wisch-Gesten auf dem gesamten Bildschirm.',
     type: 'game',
+    group: 'riddle',
     url: 'https://boiler-byte.github.io/Snake/',
     year: 2026,
     tags: ['Mobile', 'Classic', 'Nokia']
@@ -61,6 +78,7 @@ const originrepos = [
     img: 'img/dame.png',
     description: 'Dame für 2 Spieler oder gegen den Computer.',
     type: 'game',
+    group: 'multiplayer',
     url: 'https://boiler-byte.github.io/Dame/',
     year: 2026,
     tags: ['2-Spieler', 'Brettspiel', 'Mobil'],
@@ -70,6 +88,7 @@ const originrepos = [
     img: 'img/puzzle.svg',
     description: 'Puzzle-Spiel mit eigenen Bildern.',
     type: 'game',
+    group: 'riddle',
     url: 'https://boiler-byte.github.io/Puzzle/',
     year: 2026,
     tags: ['Geduld', 'Logik']
@@ -79,6 +98,7 @@ const originrepos = [
     img: 'img/nachthimmel.png',
     description: 'Zeigt den Nachthimmel als AR mit Sternenbildern, Planetenbahnen, Satelliten- und Flugzeugdaten.',
     type: 'tool',
+    group: 'alltag',
     url: 'https://boiler-byte.github.io/Nachthimmel/',
     year: 2026,
     tags: ['Sternenbilder', 'Satelliten'],
@@ -89,6 +109,7 @@ const originrepos = [
     img: 'img/authenticator.png',
     description: 'Lokale Schlüssel, AES verschlüssel mit Import/Export.',
     type: 'tool',
+    group: 'alltag',
     url: 'https://boiler-byte.github.io/Authenticator/',
     year: 2026,
     tags: ['Lokal', 'Sensible Daten']
@@ -98,6 +119,7 @@ const originrepos = [
     img: 'img/gluecksrad.png',
     description: 'Für bis zu 3 Spieler.',
     type: 'game',
+    group: 'multiplayer',
     status: 'beta',
     url: 'https://boiler-byte.github.io/Gluecksrad/',
     year: 2026,
@@ -108,6 +130,7 @@ const originrepos = [
     img: 'img/bildstapelverarbeitung.png',
     description: 'Auflösungen, Rotation, Zuschneiden, Freistellen, Zerlegen, SVG Vektorkonvertierung. Damit lässt sich in einem Rutsch aus einem Bild mit mehreren Icons eine Sammlung an passgenau zugeschnittenen SVG-Icons erstellen. Import-Formate: jpg, png, webp. Output-Formate: jpg, png, webp, svg.',
     type: 'tool',
+    group: 'dev',
     url: 'https://boiler-byte.github.io/Bildstapelverarbeitung/',
     year: 2026,
     tags: ['Bildbearbeitung', 'Thumbmaker', 'crop', 'resize', 'color to alpha', 'Farbe zu Alpha'],
@@ -119,6 +142,7 @@ const originrepos = [
     status: 'alpha',
     description: 'Synchronisation von localStorage und indexeddb lokaler HTML Apps zwischen zwei Geräten per WebRTC. Holy mindfagg.',
     type: 'tool',
+    group: 'tool',
     url: 'https://boiler-byte.github.io/lss/',
     year: 2026,
     tags: ['WebRTC', 'App-Sync']
@@ -129,6 +153,7 @@ const originrepos = [
     status: 'alpha',
     description: 'Synchronisation Dateien und Zwischenablage zwischen zwei Geräten per WebRTC.',
     type: 'tool',
+    group: 'tool',
     url: 'https://boiler-byte.github.io/filesync/',
     year: 2026,
     tags: ['WebRTC', 'Lokal']
@@ -138,25 +163,27 @@ const originrepos = [
     img: 'img/wuerfelpoker.png',
     description: 'Покер на костях - Russisches Würfelpoker.',
     type: 'game',
+    group: 'cards',
     url: 'https://boiler-byte.github.io/Wuerfelpoker/',
     year: 2026,
     tags: ['Würfelspiel', 'Poker']
 },
-{
-    label: "Hidden Places",
-    img: 'img/hiddenplaces.webp',
-    description: 'AR App, um die Gegend zu erkunden.',
-    type: 'tool',
-    status: 'alpha',
-    url: 'https://boiler-byte.github.io/hiddenplaces/',
-    year: 2026,
-    tags: ['Sehenswürdigkeiten', 'AR'],
-},
+// {
+//     label: "Hidden Places",
+//     img: 'img/hiddenplaces.webp',
+//     description: 'AR App, um die Gegend zu erkunden.',
+//     type: 'tool',
+//     status: 'alpha',
+//     url: 'https://boiler-byte.github.io/hiddenplaces/',
+//     year: 2026,
+//     tags: ['Sehenswürdigkeiten', 'AR'],
+// },
 {
     label: "Super-Knack",
     img: 'img/superknack.png',
     description: 'The Game.',
     type: 'game',
+    group: 'cards',
     url: 'https://boiler-byte.github.io/Superknack/',
     year: 2026,
     tags: ['Kartenspiel', 'Glückspiel']
@@ -167,6 +194,7 @@ const originrepos = [
     description: 'The Game.',
     status: 'beta',
     type: 'game',
+    group: 'riddle',
     url: 'https://boiler-byte.github.io/Tetris/',
     year: 2026,
     tags: ['Kartenspiel', 'Glückspiel']
@@ -177,6 +205,7 @@ const originrepos = [
     description: 'The Game.',
     status: 'beta',
     type: 'game',
+    group: 'cards',
     url: 'https://boiler-byte.github.io/Solitaer/',
     year: 2026,
     tags: ['Kartenspiel', 'Strategie']
@@ -187,6 +216,7 @@ const originrepos = [
     description: 'The Game.',
     status: 'beta',
     type: 'game',
+    group: 'riddle',
     url: 'https://boiler-byte.github.io/2048/',
     year: 2026,
     tags: ['Merge Puzzle', 'Logik']
@@ -196,6 +226,7 @@ const originrepos = [
     img: 'img/pong.png',
     description: 'Pong. Zu zweit. An einem Handy.',
     type: 'game',
+    group: 'multiplayer',
     status: 'beta',
     url: 'https://boiler-byte.github.io/Pong/',
     year: 2026,
@@ -216,6 +247,7 @@ const originrepos = [
     img: 'img/radio.webp',
     description: 'Spielt Radiosender ab.',
     type: 'tool',
+    group: 'news',
     url: 'https://boiler-byte.github.io/Radio/',
     year: 2026,
     tags: ['Musik', 'Entschleunigung'],
@@ -225,6 +257,7 @@ const originrepos = [
     img: 'img/podcasts.webp',
     description: 'Spielt Podcasts ab.',
     type: 'tool',
+    group: 'news',
     url: 'https://boiler-byte.github.io/Podcasts/',
     year: 2026,
     tags: ['Dialog', 'Labern'],
@@ -234,6 +267,7 @@ const originrepos = [
     img: 'img/news.webp',
     description: 'Newsfeed App.',
     type: 'tool',
+    group: 'news',
     status: 'beta',
     url: 'https://boiler-byte.github.io/News/',
     year: 2026,
@@ -244,6 +278,7 @@ const originrepos = [
     img: 'img/quiz.png',
     description: 'Wer wird Millionär? Auf jeden Fall nicht alle.',
     type: 'game',
+    group: 'riddle',
     status: 'beta',
     url: 'https://boiler-byte.github.io/Quiz/',
     year: 2026,
@@ -254,6 +289,7 @@ const originrepos = [
     img: 'img/flaggenquiz.png',
     description: 'Flaggen und Länder.',
     type: 'game',
+    group: 'riddle',
     status: 'beta',
     url: 'https://boiler-byte.github.io/Flaggenquiz/',
     year: 2026,
@@ -264,6 +300,7 @@ const originrepos = [
     img: 'img/periodensystem.png',
     description: 'Interaktives Periodensystem der Elemente',
     type: 'tool',
+    group: 'tool',
     status: 'beta',
     url: 'https://boiler-byte.github.io/Periodensystem/',
     year: 2026,
@@ -274,6 +311,7 @@ const originrepos = [
     img: 'img/leseliste.png',
     description: 'Leseliste, speziell entwickelt, um sich durch den Wust an Marvel-Comics zu wühlen.',
     type: 'tool',
+    group: 'tool',
     url: 'https://boiler-byte.github.io/Leseliste/',
     year: 2026,
     tags: ['Lesezeichen', 'Comics', 'Marvel', 'DC']
@@ -283,6 +321,7 @@ const originrepos = [
     img: 'img/schach.png',
     description: 'Spielt hier jemand Schach?',
     type: 'game',
+    group: 'multiplayer',
     status: 'alpha',
     url: 'https://boiler-byte.github.io/Schach/',
     year: 2026,
@@ -293,6 +332,7 @@ const originrepos = [
     img: 'img/kassenbonscanner.webp',
     description: 'Erfasst die Positionen von Kassenbons per Kamera oder Bild.',
     type: 'tool',
+    group: 'tool',
     status: 'beta',
     url: 'https://boiler-byte.github.io/Kassenbonscanner/',
     year: 2026,
@@ -303,6 +343,7 @@ const originrepos = [
     img: 'img/htmleditor.png',
     description: 'Editor, der "Vibe Coding" auf der Couch am Smartphone bequem macht, mit direkt darauf zugeschnittenen Funktionen wie Teilen, Ersetzen, Vorschau, Debugging, Verlauf.',
     type: 'tool',
+    group: 'dev',
     url: 'https://boiler-byte.github.io/htmleditor/',
     year: 2026,
     tags: ['HTML App', 'Vibe Coding', 'JavaScript', 'JS', 'CSS', 'Syntax Highlighting', 'Automatische Formatierung'],
@@ -312,6 +353,7 @@ const originrepos = [
     img: 'img/countdown.png',
     description: 'Countdowns mit Bildern (aus der Zwischenablage), Wiederholungen, Vorlagen, smarter Sortierung.',
     type: 'tool',
+    group: 'alltag',
     url: 'https://boiler-byte.github.io/Countdown/',
     year: 2026,
     tags: ['Sonstiges']
@@ -321,6 +363,7 @@ const originrepos = [
     img: 'img/timestamp.png',
     description: 'Ultimatives Unix-Timestamp Tool.',
     type: 'tool',
+    group: 'dev',
     url: 'https://boiler-byte.github.io/Timestamp/',
     year: 2026,
     tags: ['Unix Timestamp', 'Konverter'],
@@ -330,6 +373,7 @@ const originrepos = [
     img: 'img/prettycode.png',
     description: 'Code Formatierung, Minifying, Syntax-Highlighting, Fehleranzeige für HTML, CSS, JavaScript (auch gemischt), MySQL, Python ,PHP, JSON.',
     type: 'tool',
+    group: 'dev',
     url: 'https://boiler-byte.github.io/prettycode/',
     year: 2026,
     tags: ['Lokal', 'Effizient']
@@ -339,6 +383,7 @@ const originrepos = [
     img: 'img/diashow.png',
     description: 'Ein Diashow-Tool',
     type: 'tool',
+    group: 'tool',
     url: 'https://boiler-byte.github.io/Diashow/',
     year: 2026,
     tags: ['Bildergalerie', 'Kunst']
@@ -349,6 +394,7 @@ const originrepos = [
     status: 'beta',
     description: 'QR Codes erstellen, scannen und verwalten.',
     type: 'tool',
+    group: 'tool',
     url: 'https://boiler-byte.github.io/QRCode/',
     year: 2026,
     tags: ['Lokal', 'Sensible Daten']
@@ -359,6 +405,7 @@ const originrepos = [
     status: 'alpha',
     description: 'Einfache Videobearbeitung.',
     type: 'tool',
+    group: 'dev',
     url: 'https://boiler-byte.github.io/Clipwerk/',
     year: 2026,
     tags: ['Lokal', 'Mobil']
@@ -398,6 +445,7 @@ const originrepos = [
     img: 'img/battleship.jpg',
     description: 'Mit optionalen Regeln wie Blitz, Salve, Extra Schuss, Minen, für 2 Spieler oder gegen den Computer.',
     status: 'beta',
+    group: 'multiplayer',
     type: 'game',
     url: 'https://boiler-byte.github.io/Battleship/',
     year: 2026,
@@ -429,6 +477,7 @@ const originrepos = [
     status: 'beta',
     description: 'Ultimatives Tool um mehrere Dateien oder Verzeichnisse umzubenennen.',
     type: 'tool',
+    group: 'tool',
     url: 'https://github.com/boiler-byte/Dateiumbenenner',
     year: 2026,
     tags: ['Dateisystem', 'Lebenshelfer']
@@ -436,6 +485,7 @@ const originrepos = [
 {
     label: "Blaubeere & T-800",
     img: 'img/blaubeere.webp',
+    group: 'blaubeere',
     description: 'Blaubeere & der Kuschelhase: Mission Gute Nacht',
     url: 'kuschelhase-t800.html',
     type: 'misc',
@@ -445,6 +495,7 @@ const originrepos = [
 {
     label: "Der Weiße Kuschel",
     img: 'img/der-weisse-kuschel-poster.webp',
+    group: 'blaubeere',
     description: 'Blaubeere & der Kuschelhase: Der Weiße Kuschel',
     url: 'der-weisse-kuschel.html',
     type: 'misc',
@@ -454,6 +505,7 @@ const originrepos = [
 {
     label: "Der Traumstern",
     img: 'img/indiana-kuschel.webp',
+    group: 'blaubeere',
     description: 'Blaubeere & der Kuschelhase: Der Traumstern',
     url: 'indiana-kuschel.html',
     type: 'misc',
@@ -466,6 +518,7 @@ const originrepos = [
     status: 'beta',
     description: 'Zählen von Wörtern, Sätzen, Häufigkeiten uvm.',
     type: 'tool',
+    group: 'dev',
     url: 'https://boiler-byte.github.io/Textanalyse',
     year: 2026,
     tags: ['Texte', 'Keywords']

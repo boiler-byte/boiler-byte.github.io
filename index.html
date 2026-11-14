@@ -1012,6 +1012,164 @@ a:focus-visible {
   opacity: 1;
   transform: translateX(-50%) translateY(-12px);
 }
+
+/* ---------- REPO-GRUPPEN (nur Kartenansicht) ---------- */
+.card.group-card { cursor: pointer; }
+.card.group-card .card-image { background: radial-gradient(circle at 50% 40%, rgba(183, 138, 255, .20), #111 72%); }
+.card.group-card .card-image img { object-fit: cover; }
+.card.group-card .group-card-count {
+  position: absolute; left: .85rem; bottom: .75rem; z-index: 4;
+  padding: .25rem .65rem; border-radius: 20px; font-size: .73rem;
+  color: #f2e8ff; border: 1px solid var(--violet-border);
+  background: rgba(10, 10, 12, .85);
+}
+.card.group-card .group-card-title { font-size: 1.5rem; }
+.card.group-card:focus-visible { outline: 2px solid var(--violet-base); outline-offset: 3px; }
+
+html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
+.group-overlay[hidden] { display: none !important; }
+.group-overlay {
+  position: fixed; inset: 0; z-index: 1000; display: flex;
+  flex-direction: column; align-items: center;
+  background: rgba(5, 6, 10, .96); backdrop-filter: blur(17px);
+  -webkit-backdrop-filter: blur(17px);
+  color: var(--text-primary); opacity: 0;
+  transition: opacity .32s ease;
+  overflow-y: auto; overscroll-behavior: contain;
+}
+.group-overlay.is-open { opacity: 1; }
+/* Beim Schließen ziehen sich die Repo-Thumbnails zurück zum Mittelpunkt.
+   Erst danach blendet sich die gesamte Gruppenansicht aus. */
+.group-overlay.is-closing { opacity: 0; transition: opacity .28s ease .34s; }
+.group-overlay.is-closing .group-thumb { transition-delay: 0ms !important; }
+.group-overlay.is-closing .group-center {
+  opacity: 0; transform: translate(-50%, -50%) scale(.74);
+  transition-delay: .13s;
+}
+.group-overlay.is-closing .group-thumb,
+.group-overlay.is-closing .group-center,
+.group-overlay.is-closing .group-overlay-close { pointer-events: none; }
+.group-overlay-header {
+  width: min(1060px, calc(100% - 2rem));
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; padding: 1.25rem 0 .5rem; z-index: 11;
+}
+.group-overlay-eyebrow {
+  display: block; color: var(--violet-base); letter-spacing: .16em;
+  font-size: .68rem; font-weight: 600; text-transform: uppercase;
+}
+.group-overlay-header h2 { font-size: clamp(1.25rem, 4vw, 2rem); }
+.group-overlay-close, .group-preview-back {
+  flex: 0 0 auto; cursor: pointer; color: var(--text-primary);
+  border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.06);
+  border-radius: 40px; padding: .55rem .9rem;
+  font: 500 .85rem var(--font-mono);
+}
+.group-overlay-close:hover, .group-preview-back:hover {
+  border-color: var(--violet-base); background: rgba(183,138,255,.12);
+}
+.group-overlay-close:focus-visible, .group-preview-back:focus-visible,
+.group-thumb:focus-visible { outline: 2px solid var(--cyan-base); outline-offset: 4px; }
+.group-stage { width: min(1060px, 100%); margin: auto; position: relative; padding: 0 1rem 1rem; }
+.group-orbit {
+  position: relative; width: 100%; height: clamp(345px, calc(100dvh - 165px), 650px);
+  isolation: isolate;
+}
+.group-orbit::before {
+  content: ''; position: absolute; width: min(64vw, 420px); aspect-ratio: 1;
+  left: 50%; top: 50%; transform: translate(-50%, -50%);
+  border: 1px dashed rgba(183,138,255,.16); border-radius: 50%; pointer-events: none;
+}
+.group-center {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(.86);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 174px; height: 174px; padding: 1rem;
+  border: 1px solid var(--violet-border); border-radius: 50%;
+  box-shadow: 0 0 55px rgba(183,138,255,.18), inset 0 0 35px rgba(183,138,255,.09);
+  background: radial-gradient(circle at center, #26203a, #101016 75%);
+  text-align: center; opacity: 0;
+  transition: transform .45s ease, opacity .45s ease;
+}
+.group-overlay.is-open .group-center { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.group-center { cursor: pointer; color: var(--text-primary); font: inherit; }
+.group-center:hover { border-color: var(--violet-base); box-shadow: 0 0 65px rgba(183,138,255,.3), inset 0 0 35px rgba(183,138,255,.12); }
+.group-center:focus-visible { outline: 2px solid var(--cyan-base); outline-offset: 5px; }
+.group-center img { width: 61px; height: 61px; object-fit: cover; border-radius: 15px; margin-bottom: .5rem; }
+.group-center strong { font-size: .88rem; line-height: 1.1; overflow-wrap: anywhere; }
+.group-center small { font-size: .72rem; color: var(--text-muted); margin-top: .25rem; }
+.group-thumb {
+  --x: 0px; --y: 0px;
+  position: absolute; left: 50%; top: 50%; z-index: 2;
+  transform: translate(-50%, -50%) scale(.35);
+  opacity: 0; width: 112px; padding: .45rem;
+  display: flex; flex-direction: column; align-items: center; gap: .4rem;
+  border: none; border-radius: 15px;
+  background: rgba(20, 22, 29, .76); color: #f4f4f7;
+  font-family: var(--font-mono); font-size: .75rem;
+  cursor: pointer;
+  transition: transform .5s cubic-bezier(.2, .8, .2, 1), opacity .45s ease,
+              background .2s ease, box-shadow .2s ease;
+  transition-delay: var(--delay, 0ms);
+}
+.group-overlay.is-open .group-thumb {
+  opacity: 1;
+  transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(1);
+}
+.group-overlay.is-open .group-thumb:hover,
+.group-overlay.is-open .group-thumb.is-selected {
+  background: rgba(42, 30, 57, .96);
+  box-shadow: 0 0 0 1px var(--violet-border), 0 0 25px rgba(183,138,255,.23);
+}
+.group-thumb img {
+  display: block; width: 88px; height: 88px; object-fit: cover;
+  border-radius: 12px; background: #15141c;
+}
+.group-thumb span { overflow-wrap: anywhere; max-width: 100%; line-height: 1.2; }
+.group-hint {
+  text-align: center; color: var(--text-muted); font-size: .78rem;
+  margin: 0 auto .5rem; max-width: calc(100vw - 2rem);
+}
+.group-preview[hidden] { display: none !important; }
+.group-preview {
+  position: absolute; left: 50%; top: 50%; z-index: 8;
+  width: min(var(--preview-width, 370px), calc(100vw - 2rem));
+  max-height: calc(100dvh - 110px);
+  transform: translate(-50%, -50%) scale(.75);
+  opacity: 0; pointer-events: none;
+  transition: transform .26s cubic-bezier(.2,.8,.2,1), opacity .24s ease;
+}
+.group-preview.is-visible {
+  opacity: 1; pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+.group-preview .card {
+  width: 100%; max-height: calc(100dvh - 130px);
+  overflow-y: auto; opacity: 1; transform: none !important;
+  box-shadow: 0 15px 65px rgba(0, 0, 0, .95), 0 0 0 1px var(--accent-glow);
+}
+.group-preview .card .card-content h3 { font-size: 1.5rem; }
+.group-preview .card.featured .card-content h3 { font-size: 2rem; }
+.group-preview .card:hover { transform: none !important; }
+.group-preview-back {
+  position: absolute; top: -.9rem; right: -.6rem; z-index: 15;
+  background: #1d1d24; padding: .4rem .65rem;
+}
+@media (max-width: 620px) {
+  .group-overlay-header { padding-top: .75rem; }
+  .group-center { width: 118px; height: 118px; padding: .55rem; }
+  .group-center img { width: 40px; height: 40px; margin-bottom: .25rem; }
+  .group-center strong { font-size: .72rem; }
+  .group-center small { font-size: .64rem; }
+  .group-thumb { width: 88px; font-size: .66rem; padding: .25rem; }
+  .group-thumb img { width: 68px; height: 68px; }
+  .group-orbit { height: clamp(350px, calc(100dvh - 152px), 600px); }
+  .group-preview .card-content { padding: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .group-overlay, .group-center, .group-thumb, .group-preview { transition: none !important; }
+}
+
 </style>
 </head>
 <body>
@@ -1092,12 +1250,20 @@ a:focus-visible {
         alpha: { label: 'Alpha', symbol: '🧪🧪🧪' }, //⚡
       };
 
+      // Repo-Gruppen gelten nur für die Kartenansicht. Die erste passende
+      // Repo-Position wird durch eine Gruppenkarte ersetzt. Die Übersicht
+      // und die (auf Touch anwählbare) Vorschau sind History-Zustände.
+      const repogroups = (typeof originrepogroups !== 'undefined') ? originrepogroups : {
+        dev: { label: "Dev-Tools", img: 'img/grp/devtools.png' },
+        cards: { label: "Kartenspiele", img: 'img/grp/cards.png' }
+      }
+
       // ======================================================
       // REPOS
       // ======================================================
       // Optionales "icon" (Emoji/Symbol) für kompakte Ansichten.
       // Optionales "status" ("beta" | "alpha") für Badge.
-      const repos = originrepos ?? [
+      const repos = (typeof originrepos !== 'undefined' && Array.isArray(originrepos)) ? originrepos : [
         {
             label: "Android Vollbild",
             img: 'img/pwa.png',
@@ -1160,6 +1326,7 @@ a:focus-visible {
             label: "Clipwerk",
             img: 'img/clipwerk.png',
             status: 'alpha',
+            group: 'dev',
             description: 'Einfache Videobearbeitung.',
             type: 'tool',
             url: 'https://myprojectpages.github.io/Clipwerk/',
@@ -1181,6 +1348,7 @@ a:focus-visible {
             status: 'beta',
             description: 'Zählen von Wörtern, Sätzen, Häufigkeiten uvm.',
             type: 'tool',
+            group: 'dev',
             url: 'https://myprojectpages.github.io/Textanalyse',
             year: 2026,
             tags: ['Texte', 'Keywords']
@@ -1531,31 +1699,441 @@ a:focus-visible {
         return card;
       }
 
-      // ---------- GRID RENDERN ----------
-      function renderRepos() {
-        repoGrid.innerHTML = '';
 
+      // ---------- GRUPPENKARTEN + KREISFÖRMIGE GRUPPENÜBERSICHT ----------
+      // In anderen Ansichten werden die Repos ganz normal einzeln ausgegeben.
+      const GROUP_HISTORY_KEY = '__boilerRoomRepoGroup';
+      const groupState = {
+        id: null, members: [], previewLabel: null, persistentPreview: false,
+        trigger: null, overlay: null, orbit: null, preview: null,
+        title: null, hint: null, lastTouchPointer: false,
+        previewHideTimer: null, hoverExitTimer: null,
+        isClosing: false, closeTimer: null, openFrame: null
+      };
+      const GROUP_CLOSE_MS = 700; // Thumbs (500ms) + verzögertes Ausblenden (620ms) + Puffer
+
+      function getFilteredRepos() {
         let filtered = repos.filter(repo => {
-          let typeOk;
-          if (activeFilter === 'all') {
-            typeOk = true;
-          } else if (activeFilter === 'favorites') {
-            typeOk = isFavorite(repo.label);
-          } else {
-            typeOk = repo.type === activeFilter;
-          }
-          const searchOk = matchesSearch(repo, activeSearch);
-          return typeOk && searchOk;
+          const typeOk = activeFilter === 'all' ||
+            (activeFilter === 'favorites' ? isFavorite(repo.label) : repo.type === activeFilter);
+          return typeOk && matchesSearch(repo, activeSearch);
         });
 
-        // Favoriten-Sortierung anwenden
         if (activeFilter === 'favorites') {
-          const pos = (label) => {
+          const pos = label => {
             const i = favOrder.indexOf(label);
             return i === -1 ? 9999 : i;
           };
           filtered = filtered.slice().sort((a, b) => pos(a.label) - pos(b.label));
         }
+        return filtered;
+      }
+
+      function createGroupCard(id, members, index) {
+        const definition = repogroups[id];
+        const card = document.createElement('article');
+        card.className = 'card group-card';
+        card.dataset.group = id;
+        card.dataset.label = definition.label;
+        card.tabIndex = 0;
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-haspopup', 'dialog');
+        card.setAttribute('aria-label', `${definition.label} – ${members.length} Projekte anzeigen`);
+        card.style.setProperty('--accent', 'var(--violet-base)');
+        card.style.setProperty('--accent-dim', 'var(--violet-dim)');
+        card.style.setProperty('--accent-glow', 'var(--violet-glow)');
+        card.style.setProperty('--accent-border', 'var(--violet-border)');
+        card.style.transitionDelay = `${(index % 12) * 60}ms`;
+
+        const imageDiv = document.createElement('div');
+        imageDiv.className = 'card-image';
+        const image = document.createElement('img');
+        image.src = definition.img || '';
+        image.alt = '';
+        image.loading = 'lazy';
+        image.width = 800;
+        image.height = 500;
+        imageDiv.appendChild(image);
+        const badge = document.createElement('span');
+        badge.className = 'type-badge';
+        badge.textContent = 'Gruppe';
+        imageDiv.appendChild(badge);
+        const count = document.createElement('span');
+        count.className = 'group-card-count';
+        count.textContent = `${members.length} ${members.length === 1 ? 'Projekt' : 'Projekte'}`;
+        imageDiv.appendChild(count);
+
+        const content = document.createElement('div');
+        content.className = 'card-content';
+        const heading = document.createElement('h3');
+        heading.className = 'group-card-title';
+        heading.textContent = definition.label;
+        const description = document.createElement('p');
+        description.className = 'description';
+        description.textContent = members.map(repo => repo.label).join(' · ');
+        content.append(heading, description);
+        card.append(imageDiv, content);
+
+        const open = () => openGroup(id, members, card);
+        card.addEventListener('click', open);
+        card.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            open();
+          }
+        });
+        return card;
+      }
+
+      function ensureGroupOverlay() {
+        if (groupState.overlay) return;
+        const overlay = document.createElement('div');
+        overlay.className = 'group-overlay';
+        overlay.hidden = true;
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', 'groupOverlayTitle');
+        // Die statischen UI-Elemente enthalten keine Repo-Daten / HTML-Injection.
+        overlay.innerHTML = `
+          <div class="group-overlay-header">
+            <div><span class="group-overlay-eyebrow">Repo-Gruppe</span>
+              <h2 id="groupOverlayTitle"></h2></div>
+            <button type="button" class="group-overlay-close" aria-label="Gruppe schließen">✕ Schließen</button>
+          </div>
+          <div class="group-stage">
+            <div class="group-orbit"></div>
+            <div class="group-preview" hidden></div>
+            <p class="group-hint"></p>
+          </div>`;
+        document.body.appendChild(overlay);
+        groupState.overlay = overlay;
+        groupState.orbit = overlay.querySelector('.group-orbit');
+        groupState.preview = overlay.querySelector('.group-preview');
+        groupState.title = overlay.querySelector('#groupOverlayTitle');
+        groupState.hint = overlay.querySelector('.group-hint');
+        groupState.preview.addEventListener('mouseenter', () => {
+          clearTimeout(groupState.hoverExitTimer);
+        });
+        groupState.preview.addEventListener('mouseleave', () => {
+          if (!groupState.persistentPreview) scheduleHoverPreviewHide();
+        });
+
+        overlay.querySelector('.group-overlay-close').addEventListener('click', closeEntireGroup);
+        overlay.addEventListener('click', e => {
+          if (e.target === overlay) closeEntireGroup();
+        });
+        window.addEventListener('resize', () => {
+          if (groupState.id) positionGroupThumbs();
+        });
+        document.addEventListener('keydown', e => {
+          if (!groupState.id) return;
+          if (e.key === 'Tab') {
+            const focusables = Array.from(overlay.querySelectorAll('button:not([disabled])'))
+              .filter(el => el.getClientRects().length > 0);
+            if (!focusables.length) return;
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
+            if (e.shiftKey && (document.activeElement === first || !overlay.contains(document.activeElement))) {
+              e.preventDefault(); last.focus();
+            } else if (!e.shiftKey && (document.activeElement === last || !overlay.contains(document.activeElement))) {
+              e.preventDefault(); first.focus();
+            }
+            return;
+          }
+          if (e.key !== 'Escape') return;
+          e.preventDefault();
+          if (groupState.persistentPreview) closeGroupPreview();
+          else closeEntireGroup();
+        });
+        window.addEventListener('popstate', e => syncGroupHistory(e.state));
+      }
+
+      function positionGroupThumbs() {
+        if (!groupState.orbit) return;
+        const buttons = Array.from(groupState.orbit.querySelectorAll('.group-thumb'));
+        const n = buttons.length;
+        if (!n) return;
+        const rect = groupState.orbit.getBoundingClientRect();
+        const small = window.innerWidth <= 620;
+        const buttonWidth = small ? 88 : 112;
+        const buttonHeight = small ? 104 : 130;
+        const rx = Math.max(0, rect.width / 2 - buttonWidth / 2 - 15);
+        const ry = Math.max(0, rect.height / 2 - buttonHeight / 2 - 12);
+        buttons.forEach((button, i) => {
+          // Zwei Projekte auf kleinen Displays oben/unten statt zu nah am Zentrum.
+          const angle = n === 1 ? -Math.PI / 2 :
+            (small && n === 2 ? -Math.PI / 2 + i * Math.PI :
+              -Math.PI / 2 + (2 * Math.PI * i / n));
+          button.style.setProperty('--x', `${(Math.cos(angle) * rx).toFixed(1)}px`);
+          button.style.setProperty('--y', `${(Math.sin(angle) * ry).toFixed(1)}px`);
+          button.style.setProperty('--delay', `${Math.min(i * 45, 450)}ms`);
+        });
+      }
+
+      function groupPreviewWidth(repo) {
+        if (repo.featured === true || repo.featured === 'wide') return '660px';
+        return '370px';
+      }
+
+      function updatePreview(repo, persistent) {
+        const preview = groupState.preview;
+        if (!preview || !groupState.id) return;
+        clearTimeout(groupState.previewHideTimer);
+        clearTimeout(groupState.hoverExitTimer);
+        groupState.previewLabel = repo.label;
+        groupState.persistentPreview = persistent;
+        preview.replaceChildren();
+        const card = createCard(repo, 0);
+        card.classList.add('visible');
+        card.style.transitionDelay = '0ms';
+        card.setAttribute('tabindex', '-1');
+        preview.style.setProperty('--preview-width', groupPreviewWidth(repo));
+        const back = document.createElement('button');
+        back.type = 'button';
+        back.className = 'group-preview-back';
+        back.textContent = '✕';
+        back.setAttribute('aria-label', 'Vorschau verkleinern');
+        back.addEventListener('click', e => {
+          e.stopPropagation();
+          closeGroupPreview();
+        });
+        preview.append(card, back);
+        preview.hidden = false;
+        requestAnimationFrame(() => preview.classList.add('is-visible'));
+        groupState.orbit.querySelectorAll('.group-thumb').forEach(btn => {
+          btn.classList.toggle('is-selected', btn.dataset.label === repo.label);
+        });
+      }
+
+      function hidePreview() {
+        const preview = groupState.preview;
+        if (!preview) return;
+        clearTimeout(groupState.hoverExitTimer);
+        preview.classList.remove('is-visible');
+        groupState.previewLabel = null;
+        groupState.persistentPreview = false;
+        groupState.orbit?.querySelectorAll('.group-thumb').forEach(btn => {
+          btn.classList.remove('is-selected');
+        });
+        // Die Karte verkleinert sich zuerst; danach wird sie aus dem DOM entfernt.
+        clearTimeout(groupState.previewHideTimer);
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          preview.hidden = true;
+          preview.replaceChildren();
+        } else {
+          groupState.previewHideTimer = setTimeout(() => {
+            if (!preview.classList.contains('is-visible')) {
+              preview.hidden = true;
+              preview.replaceChildren();
+            }
+          }, 270);
+        }
+      }
+
+      function scheduleHoverPreviewHide() {
+        clearTimeout(groupState.hoverExitTimer);
+        groupState.hoverExitTimer = setTimeout(() => {
+          if (groupState.persistentPreview) return;
+          const hoveredThumb = groupState.orbit?.querySelector('.group-thumb:hover');
+          if (!hoveredThumb && !groupState.preview?.matches(':hover')) hidePreview();
+        }, 350);
+      }
+
+      function openRepoPage(repo) {
+        if (repo.url) window.open(repo.url, '_blank', 'noopener,noreferrer');
+      }
+
+      function makeHistoryState(groupId, repoLabel = null) {
+        const base = history.state && typeof history.state === 'object' ? history.state : {};
+        return { ...base, [GROUP_HISTORY_KEY]: { group: groupId, repo: repoLabel } };
+      }
+
+      function selectGroupThumb(repo) {
+        const isTouch = groupState.lastTouchPointer ||
+          window.matchMedia('(hover: none)').matches;
+        if (!isTouch) {
+          openRepoPage(repo);
+          return;
+        }
+        if (groupState.persistentPreview && groupState.previewLabel === repo.label) {
+          openRepoPage(repo); // Zweiter Tap öffnet die vergrößerte Karte.
+          return;
+        }
+        updatePreview(repo, true);
+        const current = history.state?.[GROUP_HISTORY_KEY];
+        try {
+          if (current?.group === groupState.id && current.repo) {
+            history.replaceState(makeHistoryState(groupState.id, repo.label), '');
+          } else {
+            history.pushState(makeHistoryState(groupState.id, repo.label), '');
+          }
+        } catch (e) { /* History ist in einzelnen Einbettungen nicht verfügbar. */ }
+      }
+
+      function drawGroup(id, members) {
+        const definition = repogroups[id];
+        groupState.id = id;
+        groupState.members = members;
+        groupState.title.textContent = definition.label;
+        groupState.hint.textContent = window.matchMedia('(hover: none)').matches ?
+          'Projekt antippen für die Vorschau · erneut antippen zum Öffnen' :
+          'Projekt berühren für die Vorschau · anklicken zum Öffnen';
+        groupState.orbit.replaceChildren();
+
+        const center = document.createElement('button');
+        center.type = 'button';
+        center.className = 'group-center';
+        center.setAttribute('aria-label', `${definition.label} – Gruppenansicht schließen`);
+        center.title = 'Gruppe schließen';
+        center.addEventListener('click', closeEntireGroup);
+        if (definition.img) {
+          const centerImage = document.createElement('img');
+          centerImage.src = definition.img;
+          centerImage.alt = '';
+          center.appendChild(centerImage);
+        }
+        const label = document.createElement('strong');
+        label.textContent = definition.label;
+        const count = document.createElement('small');
+        count.textContent = `${members.length} ${members.length === 1 ? 'Projekt' : 'Projekte'}`;
+        center.append(label, count);
+        groupState.orbit.appendChild(center);
+
+        members.forEach(repo => {
+          const thumb = document.createElement('button');
+          thumb.type = 'button';
+          thumb.className = 'group-thumb';
+          thumb.dataset.label = repo.label;
+          thumb.setAttribute('aria-label', `${repo.label}: Vorschau oder Projekt öffnen`);
+          const img = document.createElement('img');
+          img.src = repo.img || '';
+          img.alt = '';
+          img.loading = 'eager';
+          const text = document.createElement('span');
+          text.textContent = repo.label;
+          thumb.append(img, text);
+          thumb.addEventListener('pointerdown', e => {
+            groupState.lastTouchPointer = e.pointerType === 'touch';
+          });
+          thumb.addEventListener('mouseenter', () => {
+            if (window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
+                !groupState.persistentPreview) updatePreview(repo, false);
+          });
+          thumb.addEventListener('mouseleave', () => {
+            if (!groupState.persistentPreview && groupState.previewLabel === repo.label) {
+              scheduleHoverPreviewHide();
+            }
+          });
+          thumb.addEventListener('click', () => selectGroupThumb(repo));
+          groupState.orbit.appendChild(thumb);
+        });
+        positionGroupThumbs();
+      }
+
+      function showGroup(id, members, trigger = null) {
+        if (!repogroups[id] || !members.length) return;
+        ensureGroupOverlay();
+        // History-Vorwärts während der Schließanimation kann die Gruppe erneut öffnen.
+        clearTimeout(groupState.closeTimer);
+        groupState.closeTimer = null;
+        groupState.isClosing = false;
+        groupState.overlay.classList.remove('is-closing');
+        if (trigger) groupState.trigger = trigger;
+        const sameGroup = groupState.id === id &&
+          groupState.members.map(r => r.label).join('\0') === members.map(r => r.label).join('\0');
+        if (!sameGroup) {
+          hidePreview();
+          drawGroup(id, members);
+        }
+        groupState.overlay.hidden = false;
+        // Erst nach dem Einblenden sind die Größen für die Kreispositionen messbar.
+        positionGroupThumbs();
+        document.documentElement.classList.add('group-dialog-open');
+        if (groupState.openFrame !== null) cancelAnimationFrame(groupState.openFrame);
+        groupState.openFrame = requestAnimationFrame(() => {
+          groupState.openFrame = null;
+          if (groupState.id === id && !groupState.isClosing) groupState.overlay?.classList.add('is-open');
+        });
+        if (!sameGroup) groupState.overlay.querySelector('.group-overlay-close').focus({preventScroll: true});
+      }
+
+      function openGroup(id, members, trigger) {
+        showGroup(id, members, trigger);
+        try { history.pushState(makeHistoryState(id), ''); }
+        catch (e) { /* Overlay funktioniert auch ohne History-Unterstützung. */ }
+      }
+
+      function finishGroupClose() {
+        if (!groupState.isClosing) return;
+        clearTimeout(groupState.closeTimer);
+        groupState.closeTimer = null;
+        groupState.overlay.hidden = true;
+        groupState.overlay.classList.remove('is-open', 'is-closing');
+        groupState.id = null;
+        groupState.members = [];
+        groupState.isClosing = false;
+        document.documentElement.classList.remove('group-dialog-open');
+        if (groupState.trigger?.isConnected) groupState.trigger.focus({preventScroll: true});
+      }
+
+      function hideGroup() {
+        if (!groupState.overlay || !groupState.id || groupState.isClosing) return;
+        groupState.isClosing = true;
+        if (groupState.openFrame !== null) {
+          cancelAnimationFrame(groupState.openFrame);
+          groupState.openFrame = null;
+        }
+        hidePreview();
+        // Die Animation startet auch bei Browser-Zurück und ESC.
+        groupState.overlay.classList.add('is-closing');
+        groupState.overlay.classList.remove('is-open');
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          finishGroupClose();
+        } else {
+          groupState.closeTimer = setTimeout(finishGroupClose, GROUP_CLOSE_MS);
+        }
+      }
+
+      function syncGroupHistory(state) {
+        const value = state?.[GROUP_HISTORY_KEY];
+        if (!value?.group || !repogroups[value.group] || activeView !== 'cards' || activeFilter !== 'all') {
+          hideGroup();
+          return;
+        }
+        const filtered = getFilteredRepos().filter(r => r.group === value.group);
+        const members = filtered.length ? filtered : repos.filter(r => r.group === value.group);
+        if (!members.length) { hideGroup(); return; }
+        showGroup(value.group, members);
+        const selected = members.find(r => r.label === value.repo);
+        if (selected) updatePreview(selected, true);
+        else hidePreview();
+      }
+
+      function closeGroupPreview() {
+        if (!groupState.previewLabel) return;
+        const current = history.state?.[GROUP_HISTORY_KEY];
+        if (groupState.persistentPreview && current?.group === groupState.id && current.repo) {
+          history.back(); // Back: vergrößerte Karte -> Kreisübersicht.
+        } else {
+          hidePreview(); // Desktop-Hover hat keinen eigenen History-Eintrag.
+        }
+      }
+
+      function closeEntireGroup() {
+        if (!groupState.id || groupState.isClosing) return;
+        const current = history.state?.[GROUP_HISTORY_KEY];
+        // Sofort animieren; das asynchrone popstate darf den Ablauf nicht unterbrechen.
+        hideGroup();
+        if (current?.group === groupState.id) {
+          history.go(current.repo ? -2 : -1);
+        }
+      }
+
+      // ---------- GRID RENDERN ----------
+      function renderRepos() {
+        repoGrid.innerHTML = '';
+
+        const filtered = getFilteredRepos();
 
         if (filtered.length === 0) {
           const empty = document.createElement('div');
@@ -1569,8 +2147,19 @@ a:focus-visible {
           return;
         }
 
+        const drawnGroups = new Set();
         filtered.forEach((repo, i) => {
-          repoGrid.appendChild(createCard(repo, i));
+          // Gruppen werden ausschließlich in der Kartenansicht mit dem Filter „Alle“ angezeigt.
+          const groupId = activeView === 'cards' && activeFilter === 'all' && repo.group && repogroups[repo.group]
+            ? repo.group : null;
+          if (groupId) {
+            if (drawnGroups.has(groupId)) return;
+            drawnGroups.add(groupId);
+            const members = filtered.filter(member => member.group === groupId);
+            repoGrid.appendChild(createGroupCard(groupId, members, i));
+          } else {
+            repoGrid.appendChild(createCard(repo, i));
+          }
         });
 
         // Reduced-motion respektieren
@@ -1609,7 +2198,7 @@ a:focus-visible {
           rootMargin: '0px 0px -40px 0px'
         });
 
-        document.querySelectorAll('.card:not(.visible)').forEach(card => {
+        repoGrid.querySelectorAll('.card:not(.visible)').forEach(card => {
           observer.observe(card);
         });
       }
@@ -1692,6 +2281,8 @@ a:focus-visible {
       }
 
       function setView(view, persist) {
+        // Ein Gruppen-Dialog existiert ausschließlich im Kartenmodus.
+        if (view !== 'cards' && groupState.id) closeEntireGroup();
         activeView = view;
         if (persist) {
           try {
@@ -1829,7 +2420,7 @@ a:focus-visible {
           threshold: 0
         });
 
-        document.querySelectorAll('.card').forEach(c => focusObserver.observe(c));
+        repoGrid.querySelectorAll('.card').forEach(c => focusObserver.observe(c));
       }
 
       function clearFocus() {
@@ -1854,6 +2445,8 @@ a:focus-visible {
         setupViewSwitch();
         setupGridDnd();
         setupFocusObserver();
+        ensureGroupOverlay();
+        if (history.state?.[GROUP_HISTORY_KEY]) syncGroupHistory(history.state);
 
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'visible') {
