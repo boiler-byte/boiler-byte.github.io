@@ -260,6 +260,25 @@ const originrepos = [
     tags: ['Fragen', 'Allgemeinwissen']
 },
 {
+    label: "Periodensystem",
+    img: 'img/periodensystem.png',
+    description: 'Interaktives Periodensystem der Elemente',
+    type: 'tool',
+    status: 'beta',
+    url: 'https://boiler-byte.github.io/Periodensystem/',
+    year: 2026,
+    tags: ['Chemie', 'Atome', 'Neutronen', 'Elektronen']
+},
+{
+    label: "Leseliste",
+    img: 'img/leseliste.png',
+    description: 'Leseliste, speziell entwickelt, um sich durch den Wust an Marvel-Comics zu wühlen.',
+    type: 'tool',
+    url: 'https://boiler-byte.github.io/Leseliste/',
+    year: 2026,
+    tags: ['Lesezeichen', 'Comics', 'Marvel', 'DC']
+},
+{
     label: "Schach",
     img: 'img/schach.png',
     description: 'Spielt hier jemand Schach?',
