@@ -2065,16 +2065,12 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
         overlay.querySelector('.group-overlay-close').addEventListener('click', closeEntireGroup);
         overlay.addEventListener('click', e => {
           if (!groupState.id || groupState.isClosing) return;
-          // Thumbs schalten die Vorschau selbst um; das Center hat eine eigene
-          // zweistufige Schließfunktion und der Schließen-Button schließt die Gruppe.
-          if (e.target.closest('.group-thumb, .group-center, .group-overlay-close')) return;
-          if (groupState.previewLabel) {
-            // Desktop und Touch: Jeder Klick außerhalb der großen Karte
-            // (auch auf Orbit, Überschrift und Overlay) verkleinert nur die Vorschau.
-            if (!groupState.preview.contains(e.target)) closeGroupPreview();
-          } else if (e.target === overlay) {
-            closeEntireGroup();
-          }
+          // Die Projekt-Icons und das Gruppenbild haben eigene Klickfunktionen.
+          // Auch Klicks in der geöffneten Vorschau dürfen diese nicht schließen.
+          if (e.target.closest('.group-thumb, .group-center, .group-overlay-close, .group-preview')) return;
+          // Jede freie Fläche schließt den kompletten Orbit: sowohl der Bereich
+          // hinter dem Orbit als auch leere Stellen zwischen den Icons.
+          closeEntireGroup();
         });
         window.addEventListener('resize', () => {
           if (groupState.id) {
