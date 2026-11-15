@@ -1,18 +1,21 @@
 const originrepogroups = {
-dev: { label: "Dev-Tools", img: 'img/grp/dev.png' },
+dev: { label: "Dev-Tools", img: 'img/grp/dev.webp', 
+    // preview: 'img/grp/tool.webp'
+ },
 tool: { label: "Nützlich", img: 'img/grp/tool.webp' },
-cards: { label: "Kartenspiele", img: 'img/grp/cards.png' },
+cards: { label: "Kartenspiele", img: 'img/grp/cards.webp' },
 riddle: { label: "Rätsel", img: 'img/grp/riddle.svg' },
 news: { label: "Infotainment", img: 'img/grp/news.webp' },
 blaubeere: { label: "Blaubeere", img: 'img/grp/blaubeere.webp' },
-alltag: { label: "Alltagshelfer", img: 'img/grp/alltag.png' },
-multiplayer: { label: "Multiplayer", img: 'img/grp/multiplayer.png'}
+alltag: { label: "Alltagshelfer", img: 'img/grp/alltag.webp' },
+multiplayer: { label: "Multiplayer", img: 'img/grp/multiplayer.webp'}
 }
 
 const originrepos = [
 {
     label: "Memory",
-    img: 'img/memory.webp',
+    img: 'img/app/memory.svg',
+    preview: 'img/app/memory-preview.webp',
     description: 'Das gute, alte Memory mit Custom Themes und komfortabler Verwaltung.',
     type: 'game',
     group: 'riddle',
@@ -22,7 +25,8 @@ const originrepos = [
 },
 {
     label: "Sudoku",
-    img: 'img/sudoku2.png',
+    img: 'img/app/sudoku.webp',
+    preview: 'img/app/sudoku-preview.webp',
     status: 'beta',
     description: 'Ein simples Sudoku.',
     type: 'game',
@@ -33,7 +37,8 @@ const originrepos = [
 },
 {
     label: "Wetter",
-    img: 'img/wetter.svg',
+    img: 'img/app/wetter.svg',
+    preview: 'img/app/wetter-preview.webp',
     description: 'Geklonte Wetter App mit öffentlicher API.',
     type: 'tool',
     group: 'alltag',
@@ -43,7 +48,8 @@ const originrepos = [
 },
 {
     label: "Mindfagg",
-    img: 'img/mindfagg.png',
+    img: 'img/app/mindfagg.svg',
+    preview: 'img/app/mindfagg-preview.webp',
     status: 'beta',
     group: 'dev',
     description: 'Visualisiere deinen Mindfagg. Inklusive Github-Sync und HTML App Support!',
@@ -54,7 +60,8 @@ const originrepos = [
 },
 {
     label: "Haltestellen",
-    img: 'img/haltestellen.svg',
+    img: 'img/app/haltestellen.svg',
+    preview: 'img/app/haltestellen-preview.webp',
     status: 'beta',
     description: 'Ist mein Zug püntklicht?',
     type: 'tool',
@@ -65,7 +72,8 @@ const originrepos = [
 },
 {
     label: "Snake",
-    img: 'img/snake.svg',
+    img: 'img/app/snake.svg',
+    preview: 'img/app/snake-preview.webp',
     description: 'Snake, wie man es liebt. Mit Tastatursteuerung (WASD, Pfeile) smarter Touchsteuerung durch Tippen auf dem Spielfeld und an den Ecken. Oder durch Wisch-Gesten auf dem gesamten Bildschirm.',
     type: 'game',
     group: 'riddle',
@@ -75,7 +83,8 @@ const originrepos = [
 },
 {
     label: "Dame",
-    img: 'img/dame.png',
+    img: 'img/app/dame.webp',
+    preview: 'img/app/dame-preview.webp',
     description: 'Dame für 2 Spieler oder gegen den Computer.',
     type: 'game',
     group: 'multiplayer',
@@ -85,7 +94,8 @@ const originrepos = [
 },
 {
     label: "Puzzle",
-    img: 'img/puzzle.svg',
+    img: 'img/app/puzzle.svg',
+    preview: 'img/app/puzzle-preview.webp',
     description: 'Puzzle-Spiel mit eigenen Bildern.',
     type: 'game',
     group: 'riddle',
@@ -95,7 +105,8 @@ const originrepos = [
 },
 {
     label: "Nachthimmel",
-    img: 'img/nachthimmel2.png',
+    img: 'img/app/nachthimmel.webp',
+    preview: 'img/app/nachthimmel-preview.webp',
     description: 'Zeigt den Nachthimmel als AR mit Sternenbildern, Planetenbahnen, Satelliten- und Flugzeugdaten.',
     type: 'tool',
     group: 'alltag',
@@ -106,7 +117,8 @@ const originrepos = [
 },
 {
     label: "Authenticator",
-    img: 'img/authenticator.svg',
+    img: 'img/app/authenticator.svg',
+    preview: 'img/app/authenticator-preview.webp',
     description: 'Lokale Schlüssel, AES verschlüssel mit Import/Export.',
     type: 'tool',
     group: 'alltag',
@@ -116,7 +128,8 @@ const originrepos = [
 },
 {
     label: "Glücksrad",
-    img: 'img/gluecksrad.png',
+    img: 'img/app/gluecksrad.webp',
+    preview: 'img/app/gluecksrad-preview.webp',
     description: 'Für bis zu 3 Spieler.',
     type: 'game',
     group: 'multiplayer',
@@ -160,7 +173,8 @@ const originrepos = [
 },
 {
     label: "Würfelpoker",
-    img: 'img/wuerfelpoker.png',
+    img: 'img/app/wuerfelpoker.webp',
+    preview: 'img/app/wuerfelpoker-preview.webp',
     description: 'Покер на костях - Russisches Würfelpoker.',
     type: 'game',
     group: 'cards',
@@ -180,7 +194,8 @@ const originrepos = [
 // },
 {
     label: "Super-Knack",
-    img: 'img/superknack.png',
+    img: 'img/app/superknack.webp',
+    preview: 'img/app/superknack-preview.webp',
     description: 'The Game.',
     type: 'game',
     group: 'cards',
@@ -190,7 +205,8 @@ const originrepos = [
 },
 {
     label: "Tetris",
-    img: 'img/tetris.png',
+    img: 'img/app/tetris.webp',
+    preview: 'img/app/tetris-preview.webp',
     description: 'The Game.',
     status: 'beta',
     type: 'game',
@@ -201,7 +217,8 @@ const originrepos = [
 },
 {
     label: "Solitär",
-    img: 'img/solitaer.png',
+    img: 'img/app/solitaer.webp',
+    preview: 'img/app/solitaer-preview.webp',
     description: 'The Game.',
     status: 'beta',
     type: 'game',
@@ -212,7 +229,8 @@ const originrepos = [
 },
 {
     label: "2048",
-    img: 'img/2048.png',
+    img: 'img/app/2048.webp',
+    preview: 'img/app/2048-preview.webp',
     description: 'The Game.',
     status: 'beta',
     type: 'game',
@@ -223,7 +241,8 @@ const originrepos = [
 },
 {
     label: "Pong",
-    img: 'img/pong.png',
+    img: 'img/app/pong.svg',
+    preview: 'img/app/pong-preview.webp',
     description: 'Pong. Zu zweit. An einem Handy.',
     type: 'game',
     group: 'multiplayer',
@@ -234,7 +253,8 @@ const originrepos = [
 },
 {
     label: "Typeshooter",
-    img: 'img/typeshooter.png',
+    img: 'img/app/typeshooter.webp',
+    preview: 'img/app/typeshooter-preview.webp',
     status: 'beta',
     description: 'Schieß die tödlichen Wörter ab.',
     type: 'game',
@@ -244,7 +264,8 @@ const originrepos = [
 },
 {
     label: "Radio",
-    img: 'img/radio.png',
+    img: 'img/app/radio.webp',
+    preview: 'img/app/radio-preview.webp',
     description: 'Spielt Radiosender ab.',
     type: 'tool',
     group: 'news',
@@ -254,7 +275,8 @@ const originrepos = [
 },
 {
     label: "Podcasts",
-    img: 'img/podcasts.webp',
+    img: 'img/app/podcasts.webp',
+    preview: 'img/app/podcasts-preview.webp',
     description: 'Spielt Podcasts ab.',
     type: 'tool',
     group: 'news',
@@ -264,7 +286,8 @@ const originrepos = [
 },
 {
     label: "News",
-    img: 'img/news.png',
+    img: 'img/app/news.webp',
+    preview: 'img/app/news-preview.webp',
     description: 'Newsfeed App.',
     type: 'tool',
     group: 'news',
@@ -275,7 +298,8 @@ const originrepos = [
 },
 {
     label: "Quiz",
-    img: 'img/quiz2.png',
+    img: 'img/app/quiz.webp',
+    preview: 'img/app/quiz-preview.webp',
     description: 'Wer wird Millionär? Auf jeden Fall nicht alle.',
     type: 'game',
     group: 'riddle',
@@ -286,7 +310,8 @@ const originrepos = [
 },
 {
     label: "Flaggen-Quiz",
-    img: 'img/flaggenquiz.svg',
+    img: 'img/app/flaggenquiz.svg',
+    preview: 'img/app/flaggenquiz-preview.webp',
     description: 'Flaggen und Länder.',
     type: 'game',
     group: 'riddle',
@@ -297,7 +322,8 @@ const originrepos = [
 },
 {
     label: "Periodensystem",
-    img: 'img/periodensystem.svg',
+    img: 'img/app/periodensystem.svg',
+    preview: 'img/app/periodensystem-preview.webp',
     description: 'Interaktives Periodensystem der Elemente',
     type: 'tool',
     group: 'tool',
@@ -308,7 +334,8 @@ const originrepos = [
 },
 {
     label: "Leseliste",
-    img: 'img/leseliste.png',
+    img: 'img/app/leseliste.webp',
+    preview: 'img/app/leseliste-preview.webp',
     description: 'Leseliste, speziell entwickelt, um sich durch den Wust an Marvel-Comics zu wühlen.',
     type: 'tool',
     group: 'tool',
@@ -318,7 +345,8 @@ const originrepos = [
 },
 {
     label: "Schach",
-    img: 'img/schach.png',
+    img: 'img/app/schach.svg',
+    preview: 'img/app/schach-preview.webp',
     description: 'Spielt hier jemand Schach?',
     type: 'game',
     group: 'multiplayer',
@@ -340,7 +368,8 @@ const originrepos = [
 },
 {
     label: "HTML-Editor",
-    img: 'img/htmleditor.png',
+    img: 'img/app/htmleditor.svg',
+    preview: 'img/app/htmleditor-preview.webp',
     description: 'Editor, der "Vibe Coding" auf der Couch am Smartphone bequem macht, mit direkt darauf zugeschnittenen Funktionen wie Teilen, Ersetzen, Vorschau, Debugging, Verlauf.',
     type: 'tool',
     group: 'dev',
@@ -350,7 +379,8 @@ const originrepos = [
 },
 {
     label: "Countdowns",
-    img: 'img/countdown.svg',
+    img: 'img/app/countdown.svg',
+    preview: 'img/app/countdown-preview.webp',
     description: 'Countdowns mit Bildern (aus der Zwischenablage), Wiederholungen, Vorlagen, smarter Sortierung.',
     type: 'tool',
     group: 'alltag',
@@ -464,7 +494,8 @@ const originrepos = [
 },
 {
     label: "Drums",
-    img: 'img/drums.jpg',
+    img: 'img/app/drums.webp',
+    preview: 'img/app/drums-preview.webp',
     description: 'Einfaches HTML-Schlagzeug für unterwegs.',
     type: 'tool',
     url: 'https://boiler-byte.github.io/Drums/',

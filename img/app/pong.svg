@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#000000"/>
+  <rect x="16" y="16" width="480" height="480" rx="80" fill="none" stroke="#00ffff" stroke-width="8" opacity="0.4"/>
+  <line x1="256" y1="32" x2="256" y2="480" stroke="#00ffff" stroke-width="6" stroke-dasharray="18 24" opacity="0.3"/>
+  <rect x="64" y="176" width="28" height="160" rx="10" fill="#00ffff"/>
+  <rect x="420" y="176" width="28" height="160" rx="10" fill="#00ffff"/>
+  <circle cx="256" cy="256" r="24" fill="#ffffff"/>
+  <text x="256" y="470" font-family="Arial, sans-serif" font-size="42" font-weight="bold" fill="#00ffff" text-anchor="middle" opacity="0.85">PONG</text>
+</svg>
