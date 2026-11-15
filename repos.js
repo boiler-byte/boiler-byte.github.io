@@ -1,12 +1,10 @@
 const originrepogroups = {
-dev: { label: "Dev-Tools", img: 'img/grp/dev.webp', 
-    // preview: 'img/grp/tool.webp'
- },
+dev: { label: "Dev-Tools", preview: 'all', img: 'img/grp/dev.webp' },
 tool: { label: "Nützlich", img: 'img/grp/tool.webp' },
-cards: { label: "Kartenspiele", img: 'img/grp/cards.webp' },
-riddle: { label: "Rätsel", img: 'img/grp/riddle.svg' },
-dex: { label: "Geschick", img: 'img/grp/dex.webp' },
-news: { label: "Infotainment", img: 'img/grp/news.webp' },
+cards: { label: "Kartenspiele", preview: 'all', img: 'img/grp/cards.webp' },
+riddle: { label: "Rätsel", preview: 'all', img: 'img/grp/riddle.svg' },
+dex: { label: "Geschick", preview: 'all', img: 'img/grp/dex.webp' },
+news: { label: "Infotainment", preview: 'all', img: 'img/grp/news.webp' },
 blaubeere: { label: "Blaubeere", img: 'img/grp/blaubeere.webp' },
 alltag: { label: "Alltagshelfer", img: 'img/grp/alltag.webp' },
 multiplayer: { label: "Multiplayer", img: 'img/grp/multiplayer.webp'}
@@ -436,7 +434,8 @@ const originrepos = [
 },
 {
     label: "Clipwerk",
-    img: 'img/clipwerk.png',
+    img: 'img/app/clipwerk.webp',
+    preview: 'img/app/clipwerk-preview.webp',
     status: 'alpha',
     description: 'Einfache Videobearbeitung.',
     type: 'tool',
@@ -550,7 +549,8 @@ const originrepos = [
 },
 {
     label: "Textanalyse",
-    img: 'img/textanalyse.png',
+    img: 'img/app/textanalyse.webp',
+    preview: 'img/app/textanalyse-preview.webp',
     status: 'beta',
     description: 'Zählen von Wörtern, Sätzen, Häufigkeiten uvm.',
     type: 'tool',
