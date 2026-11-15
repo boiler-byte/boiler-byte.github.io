@@ -442,7 +442,7 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .control-p
     this.resize();
     var aspect=this.width/Math.max(1,this.height),proj=M.perspective(NS.Config.fieldOfView*Math.PI/180,aspect,10,9000);
     this.cameraEye=camera.eye;
-    this.vp=M.multiply(proj,M.lookAt(camera.eye,camera.target,[0,1,0]));
+    this.vp=M.multiply(proj,M.lookAt(camera.eye,camera.target,camera.up||[0,1,0]));
     gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
     gl.disable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE);
 
@@ -516,6 +516,9 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .control-p
     this.curvature=C.initialCurvature;this.curveTarget=C.initialCurvature;
     this.zoom=this.defaultZoom();this.zoomTarget=this.zoom;
     this.pointerX=0;this.pointerY=0;
+    // Kamera-Roll/Nick/Gier: weich gefiltert statt abrupter Drehungen.
+    this.flightRoll=0;this.flightPitch=0;this.flightYaw=0;
+    this.flightRollTarget=0;this.flightPitchTarget=0;this.flightYawTarget=0;
     this.tiles=[];this.hoverKey='';this.hoverTile=null;this.centerTile=null;
     this.lifts=new Map();this.cinema=false;this.reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.camera={eye:[0,0,1100],target:[0,0,0]};
@@ -531,6 +534,14 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .control-p
     this.panX=w*.5-this.stepX-C.cardWidth*.5;
     this.panY=h*.5-this.stepY-C.cardHeight*.5;
     this.curveTarget=C.initialCurvature;this.zoomTarget=this.defaultZoom();
+    this.flightRollTarget=0;this.flightPitchTarget=0;this.flightYawTarget=0;
+  };
+  // Die längere Wischbewegung wird auch als sanfte Flugkurve sichtbar.
+  // Maximal ca. 5 Grad Bank/Gier, damit die Ansicht ruhig bleibt.
+  Scene.prototype.steer=function(vx,vy){
+    this.flightRollTarget=M.clamp(-vx*.0058,-.095,.095);
+    this.flightPitchTarget=M.clamp(vy*.0025,-.052,.052);
+    this.flightYawTarget=M.clamp(-vx*.0051,-.085,.085);
   };
   Scene.prototype.indexFor=function(col,row){return M.hash(col,row,this.seed,this.apps.length);};
   Scene.prototype.update=function(time,dt){
@@ -544,6 +555,11 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .control-p
     var easing=1-Math.pow(.87,Math.max(.001,dt/16.67));
     this.curvature=M.lerp(this.curvature,this.curveTarget,easing);
     this.zoom=M.lerp(this.zoom,this.zoomTarget,easing*.75);
+    // Sanfte, zeitbasierte Fluglage mit langsamer Rückkehr zum Horizontalflug.
+    var attitudeEase=1-Math.exp(-dt/580);
+    this.flightRoll=M.lerp(this.flightRoll,this.flightRollTarget,attitudeEase);
+    this.flightPitch=M.lerp(this.flightPitch,this.flightPitchTarget,attitudeEase);
+    this.flightYaw=M.lerp(this.flightYaw,this.flightYawTarget,attitudeEase);
     var spanX=w*.5+C.cardWidth*2.15,spanY=h*.5+C.cardHeight*1.8;
     var loX=Math.floor((w*.5-spanX-this.panX-C.cardWidth*.5)/this.stepX);
     var hiX=Math.ceil((w*.5+spanX-this.panX-C.cardWidth*.5)/this.stepX);
@@ -587,11 +603,15 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .control-p
     this.tiles=next;this.centerTile=center;
     this.hoverTile=this.hoverKey?next.find(function(t){return t.key===this.hoverKey;},this):null;
     var cameraDistance=h/(2*Math.tan(C.fieldOfView*Math.PI/360))/Math.max(.48,this.zoom);
-    var wave=this.reducedMotion?0:1;
-    this.camera.eye=[this.pointerX*39+Math.sin(time*.00011)*20*wave,
-      -this.pointerY*27+Math.cos(time*.0001)*12*wave,
+    var wave=this.reducedMotion?0:(this.cinema?4:9);
+    this.camera.eye=[this.pointerX*24+Math.sin(time*.00011)*wave,
+      -this.pointerY*18+Math.cos(time*.00010)*wave*.65,
       cameraDistance];
-    this.camera.target=[this.pointerX*5,-this.pointerY*4,0];
+    // Gier und Nick drehen die Blickrichtung; die Up-Achse erzeugt Banking.
+    // Die Distanz bleibt vom mobilen/desktop-spezifischen Zoom abhaengig.
+    this.camera.target=[this.pointerX*5+this.flightYaw*cameraDistance*.8,
+      -this.pointerY*3+this.flightPitch*cameraDistance*.8,0];
+    this.camera.up=[Math.sin(this.flightRoll),Math.cos(this.flightRoll),0];
     this.renderer.draw(next,this.textures,time,this.camera);
     this.textures.prune(needed);
   };
@@ -631,18 +651,27 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .control-p
     this.down=null;this.wasDragged=false;
     this.lastX=0;this.lastY=0;this.lastTime=0;
     this.velocityX=0;this.velocityY=0;
+    // Kurzer, kontrollierter Nachlauf mit anschließendem Einrasten auf einer Kachel.
+    this.flickActive=false;this.glideTau=700;this.glideUntil=0;
+    this.snapPending=false;
     this.wheelAt=-1e8;this.dragAt=0;this.snap=null;this.pointer={x:-1,y:-1};
     this.attach();
   }
-  Interaction.prototype.stop=function(){this.velocityX=0;this.velocityY=0;this.snap=null;};
+  Interaction.prototype.stop=function(){
+    this.velocityX=0;this.velocityY=0;this.flickActive=false;
+    this.glideUntil=0;this.snapPending=false;
+    this.snap=null;this.scene.steer(0,0);
+  };
   Interaction.prototype.markActivity=function(){this.ui.activity();};
   Interaction.prototype.attach=function(){
     var self=this,cv=this.canvas,scene=this.scene;
     cv.addEventListener('pointerdown',function(e){
       if(e.button!==0||self.down)return;
       self.markActivity();self.stop();
-      self.down={id:e.pointerId,x:e.clientX,y:e.clientY,at:performance.now(),moved:0};
-      self.wasDragged=false;self.lastX=e.clientX;self.lastY=e.clientY;self.lastTime=performance.now();
+      var now=performance.now();
+      self.down={id:e.pointerId,x:e.clientX,y:e.clientY,at:now,moved:0,
+        samples:[{x:e.clientX,y:e.clientY,t:now}]};
+      self.wasDragged=false;self.lastX=e.clientX;self.lastY=e.clientY;self.lastTime=now;
       try{cv.setPointerCapture(e.pointerId);}catch(_){ }
     });
     cv.addEventListener('pointermove',function(e){
@@ -653,23 +682,48 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .control-p
       if(!self.down||self.down.id!==e.pointerId)return;
       var now=performance.now(),dx=e.clientX-self.lastX,dy=e.clientY-self.lastY;
       self.down.moved+=Math.hypot(dx,dy);
+      // Geschwindigkeit aus den letzten 160 ms, nicht aus einem einzelnen Pointer-Event.
+      var samples=self.down.samples;
+      samples.push({x:e.clientX,y:e.clientY,t:now});
+      while(samples.length>2&&samples[1].t<now-160)samples.shift();
       if(self.down.moved>7){
         self.wasDragged=true;scene.setHover(null);cv.classList.add('dragging');
         scene.panX+=dx;scene.panY+=dy;
         var elapsed=Math.max(2,now-self.lastTime),blend=.45;
-        self.velocityX=M.clamp(self.velocityX*(1-blend)+dx*16.67/elapsed*blend,-65,65);
-        self.velocityY=M.clamp(self.velocityY*(1-blend)+dy*16.67/elapsed*blend,-65,65);
+        self.velocityX=M.clamp(self.velocityX*(1-blend)+dx*16.67/elapsed*blend,-24,24);
+        self.velocityY=M.clamp(self.velocityY*(1-blend)+dy*16.67/elapsed*blend,-24,24);
       }
       self.lastX=e.clientX;self.lastY=e.clientY;self.lastTime=now;
     });
     function release(e,cancel){
       if(!self.down||e.pointerId!==self.down.id)return;
-      var wasDragged=self.wasDragged,stoppedAt=performance.now();
+      var gesture=self.down,wasDragged=self.wasDragged,stoppedAt=performance.now();
       self.down=null;cv.classList.remove('dragging');
       try{cv.releasePointerCapture(e.pointerId);}catch(_){ }
       if(cancel){self.stop();return;}
       if(wasDragged){
-        if(stoppedAt-self.lastTime>80){self.velocityX=0;self.velocityY=0;}
+        var recent=stoppedAt-self.lastTime<=90;
+        // Schnelle Wischgesten erzeugen einen kurzen, sanft gebremsten Flugimpuls.
+        // Nach dem Ausrollen wird immer die nächste Kachel zentriert.
+        var samples=gesture.samples;
+        var first=samples[0],last=samples[samples.length-1];
+        var elapsed=last.t-first.t;
+        var vx=elapsed>8?(last.x-first.x)*16.67/elapsed:0;
+        var vy=elapsed>8?(last.y-first.y)*16.67/elapsed:0;
+        var speed=Math.hypot(vx,vy);
+        if(recent&&!scene.reducedMotion&&gesture.moved>=45&&speed>=8){
+          var strength=M.clamp((speed-7)/19,0,1);
+          self.flickActive=true;
+          self.glideTau=530+strength*250; // Abklingzeit: 0,53 bis 0,78 Sekunden
+          self.glideUntil=stoppedAt+850+strength*500; // Maximal 0,85 bis 1,35 Sekunden Nachlauf
+          self.velocityX=M.clamp(vx*.72,-15.5,15.5);
+          self.velocityY=M.clamp(vy*.72,-15.5,15.5);
+          self.snap=null;
+        }else if(!recent){
+          self.velocityX=0;self.velocityY=0;
+        }
+        // Auch langsame Wischbewegungen rasten nach dem Auslaufen ein.
+        self.snapPending=true;
         self.dragAt=stoppedAt;
       }else if(!self.ui.ignoreClickUntil||stoppedAt>self.ui.ignoreClickUntil){
         var rect=cv.getBoundingClientRect();var tile=scene.pick(e.clientX-rect.left,e.clientY-rect.top);
@@ -680,14 +734,15 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .control-p
     cv.addEventListener('pointercancel',function(e){release(e,true);});
     cv.addEventListener('pointerleave',function(){if(!self.down){self.pointer.x=-1;self.pointer.y=-1;scene.setHover(null);}});
     cv.addEventListener('wheel',function(e){
-      e.preventDefault();self.markActivity();self.snap=null;
+      e.preventDefault();self.markActivity();self.snap=null;self.flickActive=false;
+      self.snapPending=false;self.glideUntil=0;
       var factor=e.deltaMode===1?16:(e.deltaMode===2?cv.clientHeight:1);
       var dx=e.deltaX*factor,dy=e.deltaY*factor;
       if(e.shiftKey&&Math.abs(dx)<Math.abs(dy)){dx=dy;dy=0;}
       if(e.ctrlKey){scene.zoomTarget=M.clamp(scene.zoomTarget-dy*.001,0.48,1.55);}
       else{
-        self.velocityX=M.clamp(self.velocityX-dx*.24,-68,68);
-        self.velocityY=M.clamp(self.velocityY-dy*.24,-68,68);
+        self.velocityX=M.clamp(self.velocityX-dx*.11,-24,24);
+        self.velocityY=M.clamp(self.velocityY-dy*.11,-24,24);
       }
       self.wheelAt=performance.now();
     },{passive:false});
@@ -696,43 +751,72 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .control-p
       if(e.target&&(/^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(e.target.tagName)))return;
       if(e.code==='Space'){e.preventDefault();self.ui.toggleCinema();return;}
       if(e.key==='Escape'){self.ui.endCinema();return;}
-      var d=0;if(e.key==='ArrowLeft'){scene.panX+=75;d=1;}
-      if(e.key==='ArrowRight'){scene.panX-=75;d=1;}
-      if(e.key==='ArrowUp'){scene.panY+=75;d=1;}
-      if(e.key==='ArrowDown'){scene.panY-=75;d=1;}
-      if(e.key==='+'||e.key==='='){scene.zoomTarget=M.clamp(scene.zoomTarget+.08,.68,1.55);d=1;}
+      // Pfeiltasten geben einen sanften Steuerimpuls statt eines Sprungs.
+      var d=0;if(e.key==='ArrowLeft'){self.velocityX=M.clamp(self.velocityX+8,-20,20);d=1;}
+      if(e.key==='ArrowRight'){self.velocityX=M.clamp(self.velocityX-8,-20,20);d=1;}
+      if(e.key==='ArrowUp'){self.velocityY=M.clamp(self.velocityY+8,-20,20);d=1;}
+      if(e.key==='ArrowDown'){self.velocityY=M.clamp(self.velocityY-8,-20,20);d=1;}
+      if(e.key==='+'||e.key==='='){scene.zoomTarget=M.clamp(scene.zoomTarget+.08,.48,1.55);d=1;}
       if(e.key==='-'||e.key==='_'){scene.zoomTarget=M.clamp(scene.zoomTarget-.08,.48,1.55);d=1;}
       if(e.key==='Enter'&&document.activeElement===cv){var t=scene.focus();if(t)self.ui.select(t,true);d=1;}
-      if(d){e.preventDefault();self.markActivity();self.snap=null;self.wheelAt=performance.now();}
+      if(d){e.preventDefault();self.markActivity();self.snap=null;self.flickActive=false;
+        self.snapPending=false;self.glideUntil=0;self.wheelAt=performance.now();}
     });
   };
-  Interaction.prototype.beginSnap=function(){
+  Interaction.prototype.beginSnap=function(fromSwipe){
     var scene=this.scene,w=this.canvas.clientWidth,h=this.canvas.clientHeight;
     var col=Math.round((w*.5-scene.panX-NS.Config.cardWidth*.5)/scene.stepX);
     var row=Math.round((h*.5-scene.panY-NS.Config.cardHeight*.5)/scene.stepY);
     var targetX=w*.5-(col*scene.stepX+NS.Config.cardWidth*.5);
     var targetY=h*.5-(row*scene.stepY+NS.Config.cardHeight*.5);
     if(Math.hypot(targetX-scene.panX,targetY-scene.panY)<.4)return;
-    this.snap={start:performance.now(),fromX:scene.panX,fromY:scene.panY,toX:targetX,toY:targetY};
+    this.snap={start:performance.now(),fromX:scene.panX,fromY:scene.panY,
+      toX:targetX,toY:targetY,duration:fromSwipe?380:NS.Config.snapDuration};
   };
   Interaction.prototype.update=function(time,dt){
     var scene=this.scene;
-    if(scene.cinema||this.down)return;
-    var frames=Math.min(3,dt/16.67),decay=Math.pow(.91,frames),factor=(1-decay)/.09;
+    if(scene.cinema)return;
+    if(this.down){scene.steer(this.velocityX,this.velocityY);return;}
+    var frames=Math.min(3,dt/16.67),decay,factor;
+    if(this.flickActive){
+      // Zeitbasierte Dämpfung: lange, gleichmäßige Drehung bei 60/120 Hz.
+      decay=Math.exp(-dt/this.glideTau);
+      factor=(this.glideTau/16.67)*(1-decay);
+    }else{
+      decay=Math.pow(.89,frames);
+      factor=(1-decay)/.11;
+    }
     if(this.velocityX||this.velocityY){
       scene.panX+=this.velocityX*factor;scene.panY+=this.velocityY*factor;
       this.velocityX*=decay;this.velocityY*=decay;
-      if(Math.abs(this.velocityX)<.12)this.velocityX=0;
-      if(Math.abs(this.velocityY)<.12)this.velocityY=0;
-    }else if(!this.snap&&time-Math.max(this.wheelAt,this.dragAt)>230&&time-Math.max(this.wheelAt,this.dragAt)<1450){
-      this.beginSnap();this.dragAt=-1e9;this.wheelAt=-1e9;
+      // Wischimpulse früher abfangen, damit das Zentrieren zeitnah beginnt.
+      if(this.flickActive){
+        if(time>=this.glideUntil||Math.hypot(this.velocityX,this.velocityY)<1.4){
+          this.velocityX=0;this.velocityY=0;this.flickActive=false;
+        }
+      }else{
+        if(Math.abs(this.velocityX)<.12)this.velocityX=0;
+        if(Math.abs(this.velocityY)<.12)this.velocityY=0;
+      }
+    }
+    if(!this.velocityX&&!this.velocityY&&!this.snapPending&&!this.snap&&
+       time-Math.max(this.wheelAt,this.dragAt)>230&&
+       time-Math.max(this.wheelAt,this.dragAt)<1450){
+      // Automatisches Zentrieren nach Mausrad/Trackpad bleibt erhalten.
+      this.beginSnap(false);this.dragAt=-1e9;this.wheelAt=-1e9;
+    }
+    if(this.snapPending&&!this.velocityX&&!this.velocityY){
+      // Nach jedem Wischen zentrieren, auch nach einem schnellen Flick.
+      this.snapPending=false;this.flickActive=false;this.glideUntil=0;
+      this.beginSnap(true);this.dragAt=-1e9;this.wheelAt=-1e9;
     }
     if(this.snap){
-      var s=this.snap,t=M.clamp((time-s.start)/NS.Config.snapDuration,0,1);
+      var s=this.snap,t=M.clamp((time-s.start)/s.duration,0,1);
       t=1-Math.pow(1-t,3);
       scene.panX=M.lerp(s.fromX,s.toX,t);scene.panY=M.lerp(s.fromY,s.toY,t);
       if(t>=1)this.snap=null;
     }
+    scene.steer(this.velocityX,this.velocityY);
   };
   Interaction.prototype.updateHover=function(){
     if(this.down||this.scene.cinema)return;
@@ -760,7 +844,7 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .control-p
     this.scene=scene;this.cinemaButton=el('cinemaButton');this.curveSlider=el('curvature');
     this.ignoreClickUntil=0;this.idleAt=performance.now();
     this.cinemaTime=0;this.cinemaStart=0;this.cinemaCurve=scene.curveTarget;
-    this.cinemaZoom=scene.zoomTarget;this.cinemaVel=[0,0];this.lastHUDTime=0;
+    this.cinemaZoom=scene.zoomTarget;this.cinemaVel=[0,0];this.cinemaPointer=[0,0];this.lastHUDTime=0;
     this.bind();this.setCurve(Math.round(scene.curveTarget*100));
   }
   Interface.prototype.setCurve=function(v){
@@ -791,6 +875,8 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .control-p
   Interface.prototype.startCinema=function(){
     if(this.scene.reducedMotion)return;
     var s=this.scene;this.cinemaCurve=s.curveTarget;this.cinemaZoom=s.zoomTarget;
+    this.cinemaPointer=[s.pointerX,s.pointerY];
+    if(this.input)this.input.stop();
     this.cinemaStart=performance.now();this.cinemaTime=0;this.cinemaVel=[0,0];s.cinema=true;s.setHover(null);
     document.body.classList.add('cinema');this.cinemaButton.setAttribute('aria-pressed','true');
     el('cinemaLabel').textContent='EXIT CINEMA';this.cinemaButton.querySelector('.cinema-icon').textContent='■';
@@ -799,6 +885,8 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .control-p
     if(!this.scene.cinema)return;
     this.scene.cinema=false;this.ignoreClickUntil=performance.now()+330;this.idleAt=performance.now();
     this.scene.curveTarget=this.cinemaCurve;this.scene.zoomTarget=this.cinemaZoom;
+    this.scene.pointerX=this.cinemaPointer[0];this.scene.pointerY=this.cinemaPointer[1];
+    this.scene.steer(0,0);
     this.setCurve(Math.round(this.cinemaCurve*100));
     document.body.classList.remove('cinema');this.cinemaButton.setAttribute('aria-pressed','false');
     el('cinemaLabel').textContent='CINEMA MODE';this.cinemaButton.querySelector('.cinema-icon').textContent='▶';
@@ -808,14 +896,23 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .control-p
     if(!s.cinema&&time-this.idleAt>NS.Config.idleDelay&&!s.reducedMotion)this.startCinema();
     if(!s.cinema)return;
     var t=(time-this.cinemaStart)/1000,frame=Math.min(3,dt/16.67);
-    var vx=1.4*Math.cos(t*.26)+1.1*Math.sin(t*.12+1.4);
-    var vy=.9*Math.sin(t*.2)+.65*Math.cos(t*.13+.5);
-    this.cinemaVel[0]=M.lerp(this.cinemaVel[0],vx,.025*frame);
-    this.cinemaVel[1]=M.lerp(this.cinemaVel[1],vy,.025*frame);
+    // Ruhiger Autopilot: ca. 20-35 Weltpixel pro Sekunde,
+    // weite Kurven und nur leichtes Steigen/Sinken.
+    var vx=.42+.15*Math.sin(t*.095+.8);
+    var vy=.16*Math.sin(t*.11+.3);
+    var smoothing=1-Math.exp(-dt/1600);
+    this.cinemaVel[0]=M.lerp(this.cinemaVel[0],vx,smoothing);
+    this.cinemaVel[1]=M.lerp(this.cinemaVel[1],vy,smoothing);
     s.panX+=this.cinemaVel[0]*frame;s.panY+=this.cinemaVel[1]*frame;
-    s.curveTarget=.38+.53*Math.sin(t*.14+.8);
-    s.zoomTarget=1.03+.29*(.5+.5*Math.sin(t*.2-.2));
-    s.pointerX=Math.sin(t*.32)*.38;s.pointerY=Math.cos(t*.28)*.25;
+    // Kurvenlage: Gieren mit dazu passender Querneigung und ruhigem Nicken.
+    s.flightYawTarget=.044*Math.sin(t*.14);
+    s.flightRollTarget=-.058*Math.cos(t*.14);
+    s.flightPitchTarget=.022*Math.sin(t*.10+.7);
+    // Ein kleiner Dolly erzeugt Vorwaertsflug ohne hektisches Zoomen.
+    // Die vom Nutzer gewaehlte Kruemmung und der mobile Bildausschnitt bleiben erhalten.
+    s.curveTarget=this.cinemaCurve;
+    s.zoomTarget=M.clamp(this.cinemaZoom*(1+.045*Math.sin(t*.085)),.48,1.55);
+    s.pointerX=.12*Math.sin(t*.11);s.pointerY=.08*Math.cos(t*.10);
   };
   Interface.prototype.select=function(tile,open){
     if(!tile)return;
