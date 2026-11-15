@@ -150,6 +150,18 @@ const originrepos = [
     featured: 'wide',
 },
 {
+    label: "LocalSync",
+    img: 'img/app/localsync.webp',
+    preview: 'img/app/localsync-preview.webp',
+    status: 'alpha',
+    description: 'Synchronisation von localStorage und indexeddb lokaler HTML Apps und eigenen Dateien & Zwischenablage zwischen zwei Geräten per WebRTC.',
+    type: 'tool',
+    group: 'tool',
+    url: 'https://boiler-byte.github.io/LocalSync/',
+    year: 2026,
+    tags: ['WebRTC', 'App-Sync']
+},
+{
     label: "Local Storage Sync",
     img: 'img/lss.png',
     status: 'alpha',
