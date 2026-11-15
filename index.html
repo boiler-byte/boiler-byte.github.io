@@ -1073,7 +1073,7 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
 .group-stage { width: min(1060px, 100%); margin: auto; position: relative; padding: 0 1rem 1rem; }
 .group-orbit {
   position: relative; width: 100%; height: clamp(345px, calc(100dvh - 165px), 650px);
-  isolation: isolate;
+  /* Kein eigener Stacking-Context: angehobene Thumbs dürfen vor der Vorschau liegen. */
 }
 .group-orbit::before {
   content: ''; position: absolute; width: min(64vw, 420px); aspect-ratio: 1;
@@ -1096,17 +1096,17 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
 .group-center:hover { border-color: var(--violet-base); box-shadow: 0 0 65px rgba(183,138,255,.3), inset 0 0 35px rgba(183,138,255,.12); }
 .group-center:focus-visible { outline: 2px solid var(--cyan-base); outline-offset: 5px; }
 .group-center img { width: 61px; height: 61px; object-fit: cover; border-radius: 15px; margin-bottom: .5rem; }
-.group-center strong { font-size: .88rem; line-height: 1.1; overflow-wrap: anywhere; }
-.group-center small { font-size: .72rem; color: var(--text-muted); margin-top: .25rem; }
+.group-center strong { font-size: 1.03rem; line-height: 1.15; overflow-wrap: anywhere; }
+.group-center small { font-size: .81rem; color: var(--text-muted); margin-top: .3rem; }
 .group-thumb {
   --x: 0px; --y: 0px;
-  position: absolute; left: 50%; top: 50%; z-index: 2;
+  position: absolute; left: 50%; top: 50%; z-index: var(--orbit-z, 2);
   transform: translate(-50%, -50%) scale(.35);
-  opacity: 0; width: 112px; padding: .45rem;
-  display: flex; flex-direction: column; align-items: center; gap: .4rem;
+  opacity: 0; width: 148px; padding: .55rem;
+  display: flex; flex-direction: column; align-items: center; gap: .45rem;
   border: none; border-radius: 15px;
   background: rgba(20, 22, 29, .76); color: #f4f4f7;
-  font-family: var(--font-mono); font-size: .75rem;
+  font-family: var(--font-mono); font-size: .96rem; font-weight: 600;
   cursor: pointer;
   transition: transform .5s cubic-bezier(.2, .8, .2, 1), opacity .45s ease,
               background .2s ease, box-shadow .2s ease;
@@ -1122,21 +1122,21 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
   box-shadow: 0 0 0 1px var(--violet-border), 0 0 25px rgba(183,138,255,.23);
 }
 .group-thumb img {
-  display: block; width: 88px; height: 88px; object-fit: cover;
+  display: block; width: 120px; height: 120px; object-fit: cover;
   border-radius: 12px; background: #15141c;
 }
 .group-thumb span { overflow-wrap: anywhere; max-width: 100%; line-height: 1.2; }
-/* Auf Desktop bleibt der aktivierte Thumb vor der großen Karte anklickbar. */
-@media (hover: hover) and (pointer: fine) {
-  .group-overlay.is-open .group-thumb.is-selected { z-index: 9; }
-}
-.group-hint {
-  text-align: center; color: var(--text-muted); font-size: .78rem;
-  margin: 0 auto .5rem; max-width: calc(100vw - 2rem);
+/* Vertikale Stapelung der Thumbs bleibt auch bei geöffneter Vorschau erhalten.
+   Hover/Fokus hebt den aktiven Thumb an, die Preview bleibt darüber. */
+.group-overlay.is-open .group-thumb:hover,
+.group-overlay.is-open .group-thumb.is-selected,
+.group-overlay.is-open .group-thumb:focus-visible {
+  z-index: var(--orbit-active-z, 12);
+  transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(1.065);
 }
 .group-preview[hidden] { display: none !important; }
 .group-preview {
-  position: absolute; left: 50%; top: 50%; z-index: 8;
+  position: absolute; left: 50%; top: 50%; z-index: var(--orbit-preview-z, 20);
   width: min(var(--preview-width, 370px), calc(100vw - 2rem));
   max-height: calc(100dvh - 110px);
   transform: translate(-50%, -50%) scale(.75);
@@ -1163,10 +1163,10 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
   .group-overlay-header { padding-top: .75rem; }
   .group-center { width: 118px; height: 118px; padding: .55rem; }
   .group-center img { width: 40px; height: 40px; margin-bottom: .25rem; }
-  .group-center strong { font-size: .72rem; }
-  .group-center small { font-size: .64rem; }
-  .group-thumb { width: 88px; font-size: .66rem; padding: .25rem; }
-  .group-thumb img { width: 68px; height: 68px; }
+  .group-center strong { font-size: .86rem; }
+  .group-center small { font-size: .73rem; }
+  .group-thumb { width: 114px; font-size: .84rem; padding: .4rem; gap: .35rem; }
+  .group-thumb img { width: 94px; height: 94px; }
   .group-orbit { height: clamp(350px, calc(100dvh - 152px), 600px); }
   .group-preview .card-content { padding: 1rem; }
 }
@@ -1713,7 +1713,7 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
       const groupState = {
         id: null, members: [], previewLabel: null, persistentPreview: false,
         trigger: null, overlay: null, orbit: null, preview: null,
-        title: null, hint: null,
+        title: null,
         previewHideTimer: null, hoverExitTimer: null, hoverShowTimer: null,
         isClosing: false, closeTimer: null, openFrame: null
       };
@@ -1811,14 +1811,12 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
           <div class="group-stage">
             <div class="group-orbit"></div>
             <div class="group-preview" id="groupRepoPreview" hidden></div>
-            <p class="group-hint"></p>
           </div>`;
         document.body.appendChild(overlay);
         groupState.overlay = overlay;
         groupState.orbit = overlay.querySelector('.group-orbit');
         groupState.preview = overlay.querySelector('.group-preview');
         groupState.title = overlay.querySelector('#groupOverlayTitle');
-        groupState.hint = overlay.querySelector('.group-hint');
         groupState.preview.addEventListener('mouseenter', () => {
           clearTimeout(groupState.hoverExitTimer);
           clearTimeout(groupState.hoverShowTimer);
@@ -1874,19 +1872,33 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
         if (!n) return;
         const rect = groupState.orbit.getBoundingClientRect();
         const small = window.innerWidth <= 620;
-        const buttonWidth = small ? 88 : 112;
-        const buttonHeight = small ? 104 : 130;
+        const buttonWidth = small ? 114 : 148;
+        const buttonHeight = small ? 140 : 170;
         const rx = Math.max(0, rect.width / 2 - buttonWidth / 2 - 15);
         const ry = Math.max(0, rect.height / 2 - buttonHeight / 2 - 12);
-        buttons.forEach((button, i) => {
+        const placements = buttons.map((button, i) => {
           // Zwei Projekte auf kleinen Displays oben/unten statt zu nah am Zentrum.
           const angle = n === 1 ? -Math.PI / 2 :
             (small && n === 2 ? -Math.PI / 2 + i * Math.PI :
               -Math.PI / 2 + (2 * Math.PI * i / n));
-          button.style.setProperty('--x', `${(Math.cos(angle) * rx).toFixed(1)}px`);
-          button.style.setProperty('--y', `${(Math.sin(angle) * ry).toFixed(1)}px`);
+          return { button, i, x: Math.cos(angle) * rx, y: Math.sin(angle) * ry };
+        });
+        placements.forEach(({ button, i, x, y }) => {
+          button.style.setProperty('--x', `${x.toFixed(1)}px`);
+          button.style.setProperty('--y', `${y.toFixed(1)}px`);
           button.style.setProperty('--delay', `${Math.min(i * 45, 450)}ms`);
         });
+        // Untere Thumbnails liegen hinter den oberen. So bleiben die Labels
+        // der oberen Buttons auch bei überlappenden Bildern sichtbar.
+        [...placements]
+          .sort((a, b) => b.y - a.y || a.i - b.i)
+          .forEach(({ button }, rank) => {
+            button.style.setProperty('--orbit-z', String(rank + 2));
+          });
+        // Aktiver Thumb vor anderen Thumbs, aber weiterhin hinter der Preview.
+        const stage = groupState.orbit.parentElement;
+        stage.style.setProperty('--orbit-active-z', String(n + 2));
+        stage.style.setProperty('--orbit-preview-z', String(n + 3));
       }
 
       function groupPreviewWidth(repo) {
@@ -1902,6 +1914,7 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
         clearTimeout(groupState.hoverShowTimer);
         groupState.previewLabel = repo.label;
         groupState.persistentPreview = persistent;
+        groupState.orbit.classList.add('has-preview');
         preview.replaceChildren();
         const card = createCard(repo, 0);
         card.classList.add('visible');
@@ -1935,6 +1948,7 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
         preview.classList.remove('is-visible');
         groupState.previewLabel = null;
         groupState.persistentPreview = false;
+        groupState.orbit?.classList.remove('has-preview');
         groupState.orbit?.querySelectorAll('.group-thumb').forEach(btn => {
           btn.classList.remove('is-selected');
           btn.setAttribute('aria-pressed', 'false');
@@ -1992,9 +2006,6 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
         groupState.id = id;
         groupState.members = members;
         groupState.title.textContent = definition.label;
-        groupState.hint.textContent = window.matchMedia('(hover: none)').matches ?
-          'Thumb antippen: Vorschau ein-/ausklappen · Projekt über die große Karte öffnen' :
-          'Thumb anklicken: Vorschau ein-/ausklappen · Hover nach 600 ms · Projekt über die große Karte öffnen';
         groupState.orbit.replaceChildren();
 
         const center = document.createElement('button');
