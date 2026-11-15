@@ -1126,6 +1126,8 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
 .group-overlay.is-closing {
   clip-path: var(--group-card-clip, inset(50% 50% 50% 50% round 12px));
   transition: clip-path .82s cubic-bezier(.65, 0, 1, .55);
+  /* Die Rückflug-Animation bleibt sichtbar, blockiert aber keine Scroll-Gesten. */
+  pointer-events: none;
 }
 .group-overlay.is-closing .group-thumb {
   transition-delay: 0ms !important;
@@ -2081,7 +2083,7 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
           }
         });
         document.addEventListener('keydown', e => {
-          if (!groupState.id) return;
+          if (!groupState.id || groupState.isClosing) return;
           if (e.key === 'Tab') {
             const focusables = Array.from(overlay.querySelectorAll('button:not([disabled])'))
               .filter(el => el.getClientRects().length > 0);
@@ -2408,8 +2410,8 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
         groupState.id = null;
         groupState.members = [];
         groupState.isClosing = false;
+        // Fallback, falls die Animation ohne regulären Schließablauf endet.
         document.documentElement.classList.remove('group-dialog-open');
-        if (groupState.trigger?.isConnected) groupState.trigger.focus({preventScroll: true});
       }
 
       function hideGroup() {
@@ -2423,6 +2425,10 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
         hidePreview();
         // Die Card kann sich seit dem Öffnen verschoben haben (Resize/Scroll).
         updateGroupCardOrigin();
+        // Fokus und Seiten-Scroll schon zu Beginn des Rückflugs freigeben.
+        // Dadurch funktionieren Mausrad, Touch und Tastatur sofort wieder.
+        if (groupState.trigger?.isConnected) groupState.trigger.focus({preventScroll: true});
+        document.documentElement.classList.remove('group-dialog-open');
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
           finishGroupClose();
           return;
