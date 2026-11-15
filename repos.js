@@ -1,13 +1,13 @@
 const originrepogroups = {
 dev: { label: "Dev-Tools", preview: 'all', img: 'img/grp/dev.webp' },
-tool: { label: "Nützlich", img: 'img/grp/tool.webp' },
+tool: { label: "Nützlich", preview: 'all', img: 'img/grp/tool.webp' },
 cards: { label: "Kartenspiele", preview: 'all', img: 'img/grp/cards.webp' },
 riddle: { label: "Rätsel", preview: 'all', img: 'img/grp/riddle.svg' },
 dex: { label: "Geschick", preview: 'all', img: 'img/grp/dex.webp' },
 news: { label: "Infotainment", preview: 'all', img: 'img/grp/news.webp' },
-blaubeere: { label: "Blaubeere", img: 'img/grp/blaubeere.webp' },
-alltag: { label: "Alltagshelfer", img: 'img/grp/alltag.webp' },
-multiplayer: { label: "Multiplayer", img: 'img/grp/multiplayer.webp'}
+blaubeere: { label: "Blaubeere", preview: 'all', img: 'img/grp/blaubeere.webp' },
+alltag: { label: "Alltagshelfer", preview: 'all', img: 'img/grp/alltag.webp' },
+multiplayer: { label: "Multiplayer", preview: 'all', img: 'img/grp/multiplayer.webp'}
 }
 
 const originrepos = [
