@@ -1126,6 +1126,10 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
   border-radius: 12px; background: #15141c;
 }
 .group-thumb span { overflow-wrap: anywhere; max-width: 100%; line-height: 1.2; }
+/* Auf Desktop bleibt der aktivierte Thumb vor der großen Karte anklickbar. */
+@media (hover: hover) and (pointer: fine) {
+  .group-overlay.is-open .group-thumb.is-selected { z-index: 9; }
+}
 .group-hint {
   text-align: center; color: var(--text-muted); font-size: .78rem;
   margin: 0 auto .5rem; max-width: calc(100vw - 2rem);
@@ -1253,7 +1257,7 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
       // Repo-Gruppen gelten nur für die Kartenansicht. Die erste passende
       // Repo-Position wird durch eine Gruppenkarte ersetzt. Die Übersicht
       // und die (auf Touch anwählbare) Vorschau sind History-Zustände.
-      const repogroups = (typeof originrepogroups !== 'undefined') ? originrepogroups : {
+      const repogroups =  (typeof originrepogroups !== 'undefined') ? originrepogroups : {
         dev: { label: "Dev-Tools", img: 'img/grp/devtools.png' },
         cards: { label: "Kartenspiele", img: 'img/grp/cards.png' }
       }
@@ -1703,13 +1707,16 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
       // ---------- GRUPPENKARTEN + KREISFÖRMIGE GRUPPENÜBERSICHT ----------
       // In anderen Ansichten werden die Repos ganz normal einzeln ausgegeben.
       const GROUP_HISTORY_KEY = '__boilerRoomRepoGroup';
+      const NAV_HISTORY_KEY = '__boilerRoomNavigation';
+      const VIEW_BACK_CYCLE = ['cards', 'list', 'icons'];
       const groupState = {
         id: null, members: [], previewLabel: null, persistentPreview: false,
         trigger: null, overlay: null, orbit: null, preview: null,
-        title: null, hint: null, lastTouchPointer: false,
-        previewHideTimer: null, hoverExitTimer: null,
+        title: null, hint: null,
+        previewHideTimer: null, hoverExitTimer: null, hoverShowTimer: null,
         isClosing: false, closeTimer: null, openFrame: null
       };
+      const GROUP_HOVER_DELAY_MS = 600;
       const GROUP_CLOSE_MS = 700; // Thumbs (500ms) + verzögertes Ausblenden (620ms) + Puffer
 
       function getFilteredRepos() {
@@ -1802,7 +1809,7 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
           </div>
           <div class="group-stage">
             <div class="group-orbit"></div>
-            <div class="group-preview" hidden></div>
+            <div class="group-preview" id="groupRepoPreview" hidden></div>
             <p class="group-hint"></p>
           </div>`;
         document.body.appendChild(overlay);
@@ -1813,6 +1820,7 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
         groupState.hint = overlay.querySelector('.group-hint');
         groupState.preview.addEventListener('mouseenter', () => {
           clearTimeout(groupState.hoverExitTimer);
+          clearTimeout(groupState.hoverShowTimer);
         });
         groupState.preview.addEventListener('mouseleave', () => {
           if (!groupState.persistentPreview) scheduleHoverPreviewHide();
@@ -1820,7 +1828,17 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
 
         overlay.querySelector('.group-overlay-close').addEventListener('click', closeEntireGroup);
         overlay.addEventListener('click', e => {
-          if (e.target === overlay) closeEntireGroup();
+          if (!groupState.id || groupState.isClosing) return;
+          // Thumbs schalten die Vorschau selbst um; das Center hat eine eigene
+          // zweistufige Schließfunktion und der Schließen-Button schließt die Gruppe.
+          if (e.target.closest('.group-thumb, .group-center, .group-overlay-close')) return;
+          if (groupState.previewLabel) {
+            // Desktop und Touch: Jeder Klick außerhalb der großen Karte
+            // (auch auf Orbit, Überschrift und Overlay) verkleinert nur die Vorschau.
+            if (!groupState.preview.contains(e.target)) closeGroupPreview();
+          } else if (e.target === overlay) {
+            closeEntireGroup();
+          }
         });
         window.addEventListener('resize', () => {
           if (groupState.id) positionGroupThumbs();
@@ -1845,7 +1863,7 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
           if (groupState.persistentPreview) closeGroupPreview();
           else closeEntireGroup();
         });
-        window.addEventListener('popstate', e => syncGroupHistory(e.state));
+        window.addEventListener('popstate', e => handleHistoryBack(e.state));
       }
 
       function positionGroupThumbs() {
@@ -1880,6 +1898,7 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
         if (!preview || !groupState.id) return;
         clearTimeout(groupState.previewHideTimer);
         clearTimeout(groupState.hoverExitTimer);
+        clearTimeout(groupState.hoverShowTimer);
         groupState.previewLabel = repo.label;
         groupState.persistentPreview = persistent;
         preview.replaceChildren();
@@ -1901,7 +1920,9 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
         preview.hidden = false;
         requestAnimationFrame(() => preview.classList.add('is-visible'));
         groupState.orbit.querySelectorAll('.group-thumb').forEach(btn => {
-          btn.classList.toggle('is-selected', btn.dataset.label === repo.label);
+          const selected = btn.dataset.label === repo.label;
+          btn.classList.toggle('is-selected', selected);
+          btn.setAttribute('aria-pressed', String(selected && persistent));
         });
       }
 
@@ -1909,11 +1930,13 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
         const preview = groupState.preview;
         if (!preview) return;
         clearTimeout(groupState.hoverExitTimer);
+        clearTimeout(groupState.hoverShowTimer);
         preview.classList.remove('is-visible');
         groupState.previewLabel = null;
         groupState.persistentPreview = false;
         groupState.orbit?.querySelectorAll('.group-thumb').forEach(btn => {
           btn.classList.remove('is-selected');
+          btn.setAttribute('aria-pressed', 'false');
         });
         // Die Karte verkleinert sich zuerst; danach wird sie aus dem DOM entfernt.
         clearTimeout(groupState.previewHideTimer);
@@ -1939,24 +1962,17 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
         }, 350);
       }
 
-      function openRepoPage(repo) {
-        if (repo.url) window.open(repo.url, '_blank', 'noopener,noreferrer');
-      }
-
       function makeHistoryState(groupId, repoLabel = null) {
         const base = history.state && typeof history.state === 'object' ? history.state : {};
         return { ...base, [GROUP_HISTORY_KEY]: { group: groupId, repo: repoLabel } };
       }
 
       function selectGroupThumb(repo) {
-        const isTouch = groupState.lastTouchPointer ||
-          window.matchMedia('(hover: none)').matches;
-        if (!isTouch) {
-          openRepoPage(repo);
-          return;
-        }
+        // Einheitlicher Toggle-Button auf Touch und Desktop: Der Thumb öffnet
+        // oder schließt ausschließlich die große Vorschau, nie das Projekt.
+        clearTimeout(groupState.hoverShowTimer);
         if (groupState.persistentPreview && groupState.previewLabel === repo.label) {
-          openRepoPage(repo); // Zweiter Tap öffnet die vergrößerte Karte.
+          closeGroupPreview();
           return;
         }
         updatePreview(repo, true);
@@ -1976,8 +1992,8 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
         groupState.members = members;
         groupState.title.textContent = definition.label;
         groupState.hint.textContent = window.matchMedia('(hover: none)').matches ?
-          'Projekt antippen für die Vorschau · erneut antippen zum Öffnen' :
-          'Projekt berühren für die Vorschau · anklicken zum Öffnen';
+          'Thumb antippen: Vorschau ein-/ausklappen · Projekt über die große Karte öffnen' :
+          'Thumb anklicken: Vorschau ein-/ausklappen · Hover nach 600 ms · Projekt über die große Karte öffnen';
         groupState.orbit.replaceChildren();
 
         const center = document.createElement('button');
@@ -1985,7 +2001,12 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
         center.className = 'group-center';
         center.setAttribute('aria-label', `${definition.label} – Gruppenansicht schließen`);
         center.title = 'Gruppe schließen';
-        center.addEventListener('click', closeEntireGroup);
+        center.addEventListener('click', () => {
+          // Ein Klick außerhalb einer vergrößerten Karte verkleinert diese zuerst.
+          // Erst der nächste Klick auf die Gruppenmitte schließt die Gruppe.
+          if (groupState.previewLabel) closeGroupPreview();
+          else closeEntireGroup();
+        });
         if (definition.img) {
           const centerImage = document.createElement('img');
           centerImage.src = definition.img;
@@ -2004,7 +2025,9 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
           thumb.type = 'button';
           thumb.className = 'group-thumb';
           thumb.dataset.label = repo.label;
-          thumb.setAttribute('aria-label', `${repo.label}: Vorschau oder Projekt öffnen`);
+          thumb.setAttribute('aria-label', `${repo.label}: Vorschau ein- oder ausklappen`);
+          thumb.setAttribute('aria-pressed', 'false');
+          thumb.setAttribute('aria-controls', 'groupRepoPreview');
           const img = document.createElement('img');
           img.src = repo.img || '';
           img.alt = '';
@@ -2012,14 +2035,20 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
           const text = document.createElement('span');
           text.textContent = repo.label;
           thumb.append(img, text);
-          thumb.addEventListener('pointerdown', e => {
-            groupState.lastTouchPointer = e.pointerType === 'touch';
-          });
           thumb.addEventListener('mouseenter', () => {
-            if (window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
-                !groupState.persistentPreview) updatePreview(repo, false);
+            if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches ||
+                groupState.persistentPreview) return;
+            // Kleine Mausbewegungen sollen keine großflächige Karte aufblenden.
+            clearTimeout(groupState.hoverShowTimer);
+            groupState.hoverShowTimer = setTimeout(() => {
+              if (groupState.id === id && !groupState.isClosing &&
+                  !groupState.persistentPreview && thumb.matches(':hover')) {
+                updatePreview(repo, false);
+              }
+            }, GROUP_HOVER_DELAY_MS);
           });
           thumb.addEventListener('mouseleave', () => {
+            clearTimeout(groupState.hoverShowTimer);
             if (!groupState.persistentPreview && groupState.previewLabel === repo.label) {
               scheduleHoverPreviewHide();
             }
@@ -2083,6 +2112,7 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
           cancelAnimationFrame(groupState.openFrame);
           groupState.openFrame = null;
         }
+        clearTimeout(groupState.hoverShowTimer);
         hidePreview();
         // Die Animation startet auch bei Browser-Zurück und ESC.
         groupState.overlay.classList.add('is-closing');
@@ -2112,10 +2142,13 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
       function closeGroupPreview() {
         if (!groupState.previewLabel) return;
         const current = history.state?.[GROUP_HISTORY_KEY];
-        if (groupState.persistentPreview && current?.group === groupState.id && current.repo) {
-          history.back(); // Back: vergrößerte Karte -> Kreisübersicht.
-        } else {
-          hidePreview(); // Desktop-Hover hat keinen eigenen History-Eintrag.
+        const hasHistoryEntry = groupState.persistentPreview &&
+          current?.group === groupState.id && current.repo;
+        // Sofort visuell verkleinern, unabhängig vom asynchronen popstate.
+        hidePreview();
+        if (hasHistoryEntry) {
+          try { history.back(); } // Browser-Zurück bleibt konsistent mit dem Toggle.
+          catch (e) { /* Funktioniert auch ohne History-Zugriff. */ }
         }
       }
 
@@ -2204,19 +2237,21 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
       }
 
       // ---------- FILTER-LOGIK ----------
+      function syncActiveFilterChip() {
+        document.querySelectorAll('.chip').forEach(chip => {
+          const selected = chip.dataset.type === activeFilter;
+          chip.classList.toggle('active', selected);
+          chip.setAttribute('aria-pressed', String(selected));
+        });
+      }
+
       function setupFilters() {
         filterChips.addEventListener('click', (e) => {
           const chip = e.target.closest('.chip');
           if (!chip) return;
 
-          document.querySelectorAll('.chip').forEach(c => {
-            c.classList.remove('active');
-            c.setAttribute('aria-pressed', 'false');
-          });
-          chip.classList.add('active');
-          chip.setAttribute('aria-pressed', 'true');
-
           activeFilter = chip.dataset.type;
+          syncActiveFilterChip();
 
           repoGrid.style.opacity = '0.3';
           setTimeout(() => {
@@ -2241,11 +2276,7 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
             //Bei aktiver Suche auf "Alle" wechseln
             if (activeSearch.length > 0 && activeFilter !== 'all') {
               activeFilter = 'all';
-              document.querySelectorAll('.chip').forEach(c => {
-                const isAll = c.dataset.type === 'all';
-                c.classList.toggle('active', isAll);
-                c.setAttribute('aria-pressed', isAll ? 'true' : 'false');
-              });
+              syncActiveFilterChip();
             }
 
             repoGrid.style.opacity = '0.3';
@@ -2270,6 +2301,56 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
             searchClear.click();
           }
         });
+      }
+
+      // ---------- BROWSER-ZURÜCK (FILTER UND ANSICHTEN) ----------
+      // Ein Basis-Eintrag und ein aktiver Eintrag halten die Seite in der
+      // Browser-History. So kann Zurück unter 'Alle' beliebig oft die Ansichten
+      // Cards -> List -> Icons -> Cards durchlaufen, ohne die Seite zu verlassen.
+      // Gruppen-/Vorschau-Einträge liegen darüber und haben Vorrang.
+      function initializeNavigationHistory() {
+        try {
+          const current = history.state && typeof history.state === 'object' ? history.state : {};
+          const navigation = current[NAV_HISTORY_KEY];
+          if (navigation?.kind === 'active') return; // z.B. nach einem Reload
+          if (navigation?.kind === 'base') {
+            history.pushState({ ...current, [NAV_HISTORY_KEY]: { kind: 'active' } }, '');
+            return;
+          }
+          const base = { ...current };
+          delete base[GROUP_HISTORY_KEY];
+          history.replaceState({ ...base, [NAV_HISTORY_KEY]: { kind: 'base' } }, '');
+          history.pushState({ ...base, [NAV_HISTORY_KEY]: { kind: 'active' } }, '');
+        } catch (e) {
+          console.warn('[Boiler] Browser-History konnte nicht initialisiert werden:', e);
+        }
+      }
+
+      function handleHistoryBack(state) {
+        const groupWasOpen = Boolean(groupState.id);
+        // Wichtig: Browser-Zurück schließt zuerst die Repo-Vorschau und danach
+        // die Gruppe. Dabei darf weder der Filter noch die Ansicht wechseln.
+        syncGroupHistory(state);
+        if (state?.[NAV_HISTORY_KEY]?.kind !== 'base') return;
+
+        if (!groupWasOpen) {
+          if (activeFilter !== 'all') {
+            activeFilter = 'all';
+            syncActiveFilterChip();
+            renderRepos();
+          } else {
+            const i = VIEW_BACK_CYCLE.indexOf(activeView);
+            const nextView = VIEW_BACK_CYCLE[(i + 1) % VIEW_BACK_CYCLE.length];
+            setView(nextView, true);
+          }
+        }
+        // Neuer aktiver Eintrag: jeder weitere Zurück-Klick erreicht erneut
+        // den Basis-Eintrag, ohne wachsende History-Stapel anzulegen.
+        try {
+          history.pushState({ ...state, [NAV_HISTORY_KEY]: { kind: 'active' } }, '');
+        } catch (e) {
+          console.warn('[Boiler] Browser-History konnte nicht fortgesetzt werden:', e);
+        }
       }
 
       // ---------- ANSICHTS-WECHSEL ----------
@@ -2446,6 +2527,7 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
         setupGridDnd();
         setupFocusObserver();
         ensureGroupOverlay();
+        initializeNavigationHistory();
         if (history.state?.[GROUP_HISTORY_KEY]) syncGroupHistory(history.state);
 
         document.addEventListener('visibilitychange', () => {
