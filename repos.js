@@ -393,7 +393,8 @@ const originrepos = [
 },
 {
     label: "Timestamp",
-    img: 'img/timestamp.png',
+    img: 'img/app/timestamp.webp',
+    preview: 'img/app/timestamp-preview.webp',
     description: 'Ultimatives Unix-Timestamp Tool.',
     type: 'tool',
     group: 'dev',
@@ -403,7 +404,8 @@ const originrepos = [
 },
 {
     label: "PrettyCode",
-    img: 'img/prettycode.png',
+    img: 'img/app/prettycode.svg',
+    preview: 'img/app/prettycode-preview.webp',
     description: 'Code Formatierung, Minifying, Syntax-Highlighting, Fehleranzeige für HTML, CSS, JavaScript (auch gemischt), MySQL, Python ,PHP, JSON.',
     type: 'tool',
     group: 'dev',
