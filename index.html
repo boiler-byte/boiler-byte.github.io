@@ -2304,15 +2304,16 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
       }
 
       // ---------- BROWSER-ZURÜCK (FILTER UND ANSICHTEN) ----------
-      // Ein Basis-Eintrag und ein aktiver Eintrag halten die Seite in der
-      // Browser-History. So kann Zurück unter 'Alle' beliebig oft die Ansichten
-      // Cards -> List -> Icons -> Cards durchlaufen, ohne die Seite zu verlassen.
-      // Gruppen-/Vorschau-Einträge liegen darüber und haben Vorrang.
+      // Ein festes Paar aus Basis-/Aktiv-Eintrag dient als Navigations-Anker.
+      // Anders als v7 wird beim popstate KEIN pushState() mehr aufgerufen:
+      // Chromium/Brave kann solche nachträglich erzeugten Einträge überspringen.
+      // Stattdessen geht es mit history.forward() zum EXISTIERENDEN Aktiv-Eintrag.
+      // Zusätzliche Gruppen-/Vorschau-Einträge liegen darüber und bleiben unabhängig.
       function initializeNavigationHistory() {
         try {
           const current = history.state && typeof history.state === 'object' ? history.state : {};
           const navigation = current[NAV_HISTORY_KEY];
-          if (navigation?.kind === 'active') return; // z.B. nach einem Reload
+          if (navigation?.kind === 'active') return; // bestehender Anker, z.B. nach Reload
           if (navigation?.kind === 'base') {
             history.pushState({ ...current, [NAV_HISTORY_KEY]: { kind: 'active' } }, '');
             return;
@@ -2328,8 +2329,8 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
 
       function handleHistoryBack(state) {
         const groupWasOpen = Boolean(groupState.id);
-        // Wichtig: Browser-Zurück schließt zuerst die Repo-Vorschau und danach
-        // die Gruppe. Dabei darf weder der Filter noch die Ansicht wechseln.
+        // Gruppen- und Vorschau-Verlauf hat Vorrang. Die Ansichten dürfen dabei
+        // nicht wechseln, solange eine Gruppe geöffnet bzw. gerade geschlossen wird.
         syncGroupHistory(state);
         if (state?.[NAV_HISTORY_KEY]?.kind !== 'base') return;
 
@@ -2344,13 +2345,17 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
             setView(nextView, true);
           }
         }
-        // Neuer aktiver Eintrag: jeder weitere Zurück-Klick erreicht erneut
-        // den Basis-Eintrag, ohne wachsende History-Stapel anzulegen.
-        try {
-          history.pushState({ ...state, [NAV_HISTORY_KEY]: { kind: 'active' } }, '');
-        } catch (e) {
-          console.warn('[Boiler] Browser-History konnte nicht fortgesetzt werden:', e);
-        }
+
+        // Den bereits vorhandenen aktiven Eintrag wieder ansteuern.
+        // 0-ms-Verzögerung lässt die aktuelle History-Traversierung erst enden
+        // (insbesondere Firefox), bevor eine weitere gestartet wird.
+        setTimeout(() => {
+          if (history.state?.[NAV_HISTORY_KEY]?.kind === 'base' &&
+              !history.state?.[GROUP_HISTORY_KEY]) {
+            try { history.forward(); }
+            catch (e) { console.warn('[Boiler] History-Anker konnte nicht wiederhergestellt werden:', e); }
+          }
+        }, 0);
       }
 
       // ---------- ANSICHTS-WECHSEL ----------
