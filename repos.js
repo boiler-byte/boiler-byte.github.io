@@ -22,7 +22,7 @@ const originrepos = [
 },
 {
     label: "Sudoku",
-    img: 'img/sudoku.png',
+    img: 'img/sudoku2.png',
     status: 'beta',
     description: 'Ein simples Sudoku.',
     type: 'game',
@@ -33,7 +33,7 @@ const originrepos = [
 },
 {
     label: "Wetter",
-    img: 'img/wetter.png',
+    img: 'img/wetter.svg',
     description: 'Geklonte Wetter App mit öffentlicher API.',
     type: 'tool',
     group: 'alltag',
@@ -54,7 +54,7 @@ const originrepos = [
 },
 {
     label: "Haltestellen",
-    img: 'img/haltestellen.png',
+    img: 'img/haltestellen.svg',
     status: 'beta',
     description: 'Ist mein Zug püntklicht?',
     type: 'tool',
@@ -65,7 +65,7 @@ const originrepos = [
 },
 {
     label: "Snake",
-    img: 'img/snake.png',
+    img: 'img/snake.svg',
     description: 'Snake, wie man es liebt. Mit Tastatursteuerung (WASD, Pfeile) smarter Touchsteuerung durch Tippen auf dem Spielfeld und an den Ecken. Oder durch Wisch-Gesten auf dem gesamten Bildschirm.',
     type: 'game',
     group: 'riddle',
@@ -95,7 +95,7 @@ const originrepos = [
 },
 {
     label: "Nachthimmel",
-    img: 'img/nachthimmel.png',
+    img: 'img/nachthimmel2.png',
     description: 'Zeigt den Nachthimmel als AR mit Sternenbildern, Planetenbahnen, Satelliten- und Flugzeugdaten.',
     type: 'tool',
     group: 'alltag',
@@ -106,7 +106,7 @@ const originrepos = [
 },
 {
     label: "Authenticator",
-    img: 'img/authenticator.png',
+    img: 'img/authenticator.svg',
     description: 'Lokale Schlüssel, AES verschlüssel mit Import/Export.',
     type: 'tool',
     group: 'alltag',
@@ -244,7 +244,7 @@ const originrepos = [
 },
 {
     label: "Radio",
-    img: 'img/radio.webp',
+    img: 'img/radio.png',
     description: 'Spielt Radiosender ab.',
     type: 'tool',
     group: 'news',
@@ -264,7 +264,7 @@ const originrepos = [
 },
 {
     label: "News",
-    img: 'img/news.webp',
+    img: 'img/news.png',
     description: 'Newsfeed App.',
     type: 'tool',
     group: 'news',
@@ -275,7 +275,7 @@ const originrepos = [
 },
 {
     label: "Quiz",
-    img: 'img/quiz.png',
+    img: 'img/quiz2.png',
     description: 'Wer wird Millionär? Auf jeden Fall nicht alle.',
     type: 'game',
     group: 'riddle',
@@ -286,7 +286,7 @@ const originrepos = [
 },
 {
     label: "Flaggen-Quiz",
-    img: 'img/flaggenquiz.png',
+    img: 'img/flaggenquiz.svg',
     description: 'Flaggen und Länder.',
     type: 'game',
     group: 'riddle',
@@ -297,7 +297,7 @@ const originrepos = [
 },
 {
     label: "Periodensystem",
-    img: 'img/periodensystem.png',
+    img: 'img/periodensystem.svg',
     description: 'Interaktives Periodensystem der Elemente',
     type: 'tool',
     group: 'tool',
@@ -350,7 +350,7 @@ const originrepos = [
 },
 {
     label: "Countdowns",
-    img: 'img/countdown.png',
+    img: 'img/countdown.svg',
     description: 'Countdowns mit Bildern (aus der Zwischenablage), Wiederholungen, Vorlagen, smarter Sortierung.',
     type: 'tool',
     group: 'alltag',
