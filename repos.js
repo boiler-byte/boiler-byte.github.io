@@ -141,7 +141,8 @@ const originrepos = [
 },
 {
     label: "Bildstapel-Verarbeitung",
-    img: 'img/bildstapelverarbeitung.png',
+    img: 'img/app/bildstapelverarbeitung.webp',
+    preview: 'img/app/bildstapelverarbeitung-preview.webp',
     description: 'Auflösungen, Rotation, Zuschneiden, Freistellen, Zerlegen, SVG Vektorkonvertierung. Damit lässt sich in einem Rutsch aus einem Bild mit mehreren Icons eine Sammlung an passgenau zugeschnittenen SVG-Icons erstellen. Import-Formate: jpg, png, webp. Output-Formate: jpg, png, webp, svg.',
     type: 'tool',
     group: 'dev',
