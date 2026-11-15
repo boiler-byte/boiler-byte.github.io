@@ -1202,6 +1202,7 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
         <div class="search-wrap" id="searchWrap">
           <input
             type="search"
+            enterkeyhint="search"
             class="search-input"
             id="searchInput"
             placeholder="Suchen…"
@@ -2262,44 +2263,63 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
       }
 
       // ---------- SUCH-LOGIK ----------
+      let searchDebounceTimer = null;
+
+      function applySearch() {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = null;
+        activeSearch = searchInput.value.trim();
+        searchWrap.classList.toggle('has-value', searchInput.value.length > 0);
+
+        // Bei aktiver Suche auf "Alle" wechseln.
+        if (activeSearch && activeFilter !== 'all') {
+          activeFilter = 'all';
+          syncActiveFilterChip();
+        }
+        repoGrid.style.opacity = '1';
+        renderRepos();
+      }
+
+      function resetSearch(restoreFocus = false) {
+        // Verhindert, dass eine noch ausstehende Debounce-Suche
+        // die gerade zurückgesetzte Suche erneut übernimmt.
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = null;
+        searchInput.value = '';
+        activeSearch = '';
+        searchWrap.classList.remove('has-value');
+        repoGrid.style.opacity = '1';
+        renderRepos();
+        if (restoreFocus) searchInput.focus();
+        else searchInput.blur();
+      }
+
       function setupSearch() {
-        let debounceTimer = null;
-
         searchInput.addEventListener('input', () => {
-          const val = searchInput.value;
-          searchWrap.classList.toggle('has-value', val.length > 0);
-
-          clearTimeout(debounceTimer);
-          debounceTimer = setTimeout(() => {
-            activeSearch = val.trim();
-
-            //Bei aktiver Suche auf "Alle" wechseln
-            if (activeSearch.length > 0 && activeFilter !== 'all') {
-              activeFilter = 'all';
-              syncActiveFilterChip();
-            }
-
-            repoGrid.style.opacity = '0.3';
-            setTimeout(() => {
-              renderRepos();
-              repoGrid.style.opacity = '1';
-            }, 100);
-          }, 180);
+          searchWrap.classList.toggle('has-value', searchInput.value.length > 0);
+          clearTimeout(searchDebounceTimer);
+          searchDebounceTimer = setTimeout(applySearch, 180);
         });
 
-        searchClear.addEventListener('click', () => {
-          searchInput.value = '';
-          searchWrap.classList.remove('has-value');
-          activeSearch = '';
-          renderRepos();
-          searchInput.focus();
-        });
+        searchClear.addEventListener('click', () => resetSearch(true));
 
         searchInput.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape' && searchInput.value) {
+          if (e.key === 'Enter') {
             e.preventDefault();
-            searchClear.click();
+            // Suche sofort übernehmen und die Bildschirmtastatur schließen.
+            applySearch();
+            searchInput.blur();
+          } else if (e.key === 'Escape' && searchInput.value) {
+            e.preventDefault();
+            resetSearch(true);
           }
+        });
+
+        // iOS/Safari kann die Suchtaste über das native "search"-Event
+        // melden, auch ohne ein zuverlässiges Enter-keydown.
+        searchInput.addEventListener('search', () => {
+          applySearch();
+          searchInput.blur();
         });
       }
 
@@ -2335,7 +2355,11 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
         if (state?.[NAV_HISTORY_KEY]?.kind !== 'base') return;
 
         if (!groupWasOpen) {
-          if (activeFilter !== 'all') {
+          // Erste Zurück-Aktion ohne offenen Dialog: Suche leeren.
+          // Auch nicht abgearbeitete Eingaben (Debounce) berücksichtigen.
+          if (searchInput.value || activeSearch) {
+            resetSearch();
+          } else if (activeFilter !== 'all') {
             activeFilter = 'all';
             syncActiveFilterChip();
             renderRepos();
