@@ -33,7 +33,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,canvas:focus-visible {o
 .scanlines {position:absolute;inset:0;z-index:4;pointer-events:none;opacity:.14;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 4px,rgba(0,0,0,.2) 5px,transparent 6px);mix-blend-mode:multiply}
 .overlay {z-index:8;position:absolute;pointer-events:none}
 .interactive {pointer-events:auto}
-.monospace,.brand-detail,.system-status,.eyebrow,.hero-index,.feature-kicker,.feature-counter,.feature-vertical,.feature-foot,.control-panel,.footer {font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,Liberation Mono,monospace}
+.monospace,.brand-detail,.system-status,.eyebrow,.hero-index,.control-panel,.footer {font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,Liberation Mono,monospace}
 .header {top:0;left:0;right:0;padding:26px 43px;display:flex;align-items:center;gap:24px;transition:opacity .7s ease,transform .7s ease}
 .brand {display:flex;align-items:center;gap:14px;margin-right:auto}
 .brand-symbol {width:40px;height:40px;display:grid;place-items:center;border-radius:10px;border:1px solid #8af4ff4a;background:linear-gradient(135deg,#21374a8c,#071221);box-shadow:0 0 32px #27a5d516;transform:rotate(-6deg)}
@@ -48,28 +48,23 @@ button:focus-visible,a:focus-visible,input:focus-visible,canvas:focus-visible {o
 .hero p {max-width:315px;color:#a9bdd3;font-size:13px;line-height:1.8;margin:0;text-shadow:0 2px 10px #000}
 .hero-index {margin-top:33px;display:flex;flex-direction:column;gap:5px;font-size:10px;letter-spacing:.07em;color:#bbd5ea}.hero-index-label {font-size:9px;color:#748ca8;letter-spacing:.2em}
 .crosshair {left:50%;top:50%;width:36px;height:36px;transform:translate(-50%,-50%);opacity:.28}.crosshair span:first-child {position:absolute;left:50%;top:2px;width:1px;height:32px;background:#a1d4ff}.crosshair span:last-child {position:absolute;top:50%;left:2px;width:32px;height:1px;background:#a1d4ff}
-.feature-panel {bottom:76px;left:4.2vw;width:min(344px,32vw);padding:20px 23px 17px;border-left:1px solid #8bf4fa88;background:linear-gradient(90deg,#060d1de0,#081222c2 65%,transparent);box-shadow:-7px 0 32px #4dd1ff0c;transition:opacity .7s ease,transform .7s ease}
-.feature-head,.feature-foot {display:flex;justify-content:space-between;align-items:center;gap:12px}.feature-kicker {font-size:10px;letter-spacing:.18em;color:#a8e8f4}.feature-signal {display:inline-block;width:6px;height:6px;border-radius:50%;background:#66ffc9;box-shadow:0 0 12px #66ffc9;margin-left:6px}.feature-counter {font-size:10px;color:#8197b3}
-.feature-main {display:flex;gap:14px;align-items:stretch;margin:18px 0 17px}.feature-vertical {writing-mode:vertical-rl;transform:rotate(180deg);color:#67cbe7;font-size:10px;letter-spacing:.25em;border-left:1px solid #8ed8f336;padding-left:12px;min-width:21px;text-align:right}.feature-text {min-width:0}.feature-main h2 {font-size:22px;margin:0 0 9px;line-height:1.13;letter-spacing:-.035em;max-width:290px}.feature-main p {font-size:12px;line-height:1.55;color:#a1b1c9;margin:0;max-width:280px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.feature-foot {border-top:1px solid #ffffff19;padding-top:13px;font-size:9px;letter-spacing:.1em;color:#839db1}.feature-open {text-decoration:none;font-weight:740;color:#c4f1fd;white-space:nowrap;pointer-events:auto;transition:color .2s}.feature-open span {margin-left:7px;font-size:14px}.feature-open:hover {color:white}.feature-open.is-disabled {pointer-events:none;opacity:.35}
 .control-panel {bottom:79px;right:4.2vw;width:300px;padding:20px;border:1px solid #a7dfff31;border-radius:5px;background:linear-gradient(145deg,rgba(9,19,35,.91),rgba(8,14,26,.80));box-shadow:0 12px 50px #0009,inset 0 1px #ffffff12;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);transition:opacity .7s ease,transform .7s ease}
 .control-top,.control-bottom {display:flex;justify-content:space-between;align-items:center;gap:12px}.control-title {color:#e3f5ff;font-size:11px;letter-spacing:.13em;font-weight:760}.control-sub {color:#6387a6;font-size:9px}.preset-group {display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:18px}.preset {padding:10px 6px;border:1px solid #49647d55;background:#10203585;border-radius:2px;color:#8ea5bf;font-size:10px;letter-spacing:.11em}.preset.active,.preset:hover {color:#d6faff;border-color:#7ce2fa9c;background:#12364b9e}.preset.active {box-shadow:inset 0 -2px #71e4fa}
 .range-header {display:flex;justify-content:space-between;margin-top:22px;gap:12px;font-size:9px;letter-spacing:.08em;color:#b3c5d8}.range-header output {color:#83deff;font-size:11px}.curvature-slider {display:block;margin:17px 0 9px;width:100%;accent-color:#65d6f5;cursor:pointer}.range-ticks {display:flex;justify-content:space-between;color:#647992;font-size:8px;letter-spacing:.03em}
 .control-separator {height:1px;background:#ffffff1a;margin:19px 0 14px}.control-bottom {font-size:9px;letter-spacing:.06em;color:#87a3b6}.control-indicator {display:inline-block;width:5px;height:5px;background:#59f6ba;border-radius:50%;vertical-align:2px;margin-right:4px;box-shadow:0 0 9px #59f6ba}.reset-button {pointer-events:auto;background:transparent;color:#b6d5e7;border:0;font-size:9px;letter-spacing:.07em;padding:0}.reset-button:hover {color:#fff}
 .footer {left:4.2vw;right:4.2vw;bottom:20px;height:29px;display:flex;align-items:center;justify-content:space-between;gap:20px;color:#7d94b1;font-size:10px;letter-spacing:.09em;border-top:1px solid #ffffff20;padding-top:16px;transition:opacity .7s ease}.footer-number {display:flex;gap:10px;align-items:baseline}.footer-hash {color:#7fdef8;font-size:13px}.footer-number #visibleCount {font-size:15px;color:#c5e9f7}.footer-instructions {white-space:nowrap;color:#9db4c9}.instruction-dot {color:#4e6f87;padding:0 10px}.footer-right {white-space:nowrap}.footer-divider {display:inline-block;width:14px}.keyboard-mark {font-size:9px;border:1px solid #8596a64b;padding:4px 6px;border-radius:3px;color:#afcbdc;margin-right:4px}
-body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .feature-panel,body.cinema .control-panel {opacity:0;transform:translateY(18px);pointer-events:none}body.cinema .header {opacity:.38}body.cinema .footer {opacity:0}body.cinema .cinema-button {opacity:1;pointer-events:auto}body.cinema .system-status {opacity:0}
+body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .control-panel {opacity:0;transform:translateY(18px);pointer-events:none}body.cinema .header {opacity:.38}body.cinema .footer {opacity:0}body.cinema .cinema-button {opacity:1;pointer-events:auto}body.cinema .system-status {opacity:0}
 .fallback {position:absolute;z-index:30;inset:12%;overflow:auto;padding:30px;background:#101b2d;border:1px solid #567590;color:#f4f9ff}.fallback[hidden] {display:none}.fallback h2 {margin-top:0}.fallback a {display:inline-block;margin:8px 15px 8px 0;color:#aaf1ff}
 @keyframes signal {50% {opacity:.5;box-shadow:0 0 2px #68eabf}}
-@media (max-width:1100px) {.hero {top:22%;max-width:320px}.hero h1 {font-size:clamp(51px,6.1vw,82px)}.feature-panel {width:260px}.control-panel {width:260px}.footer-instructions {display:none}.system-status {display:none}}
+@media (max-width:1100px) {.hero {top:22%;max-width:320px}.hero h1 {font-size:clamp(51px,6.1vw,82px)}.control-panel {width:260px}.footer-instructions {display:none}.system-status {display:none}}
 @media (max-width:700px) {
   .header {padding:16px 17px}.brand-symbol {width:34px;height:34px}.brand-name {font-size:11px}.brand-detail {font-size:8px}.brand-version {display:none}.cinema-button {font-size:9px;padding:10px}.cinema-icon {font-size:9px}
   .hero {left:20px;top:16.5%;max-width:280px}
   .hero::before {content:"";position:absolute;z-index:-1;inset:-16px -25px -16px -22px;background:linear-gradient(90deg,rgba(3,8,18,.74),rgba(3,8,18,.45) 58%,transparent);filter:blur(16px);pointer-events:none}.hero h1 {font-size:clamp(42px,12vw,65px);margin:16px 0 11px}.eyebrow {font-size:8px}.hero p {font-size:11px;line-height:1.55;max-width:240px}.hero-index {display:none}
-  .control-panel {width:calc(100% - 36px);right:18px;left:18px;bottom:59px;padding:13px 15px}.control-top {display:none}.preset-group {margin-top:0;max-width:100%}.preset {padding:7px 4px}.range-header {margin-top:13px}.curvature-slider {margin:5px 0 2px}.range-ticks {display:none}.control-separator,.control-bottom {display:none}
-  .feature-panel {left:20px;bottom:220px;width:min(290px,75vw);padding:11px 15px;background:linear-gradient(90deg,#06101ed8,transparent)}.feature-head {font-size:9px}.feature-main {margin:8px 0;gap:9px}.feature-main h2 {font-size:17px}.feature-main p {font-size:10px}.feature-vertical {font-size:9px;padding-left:7px}.feature-foot {padding-top:8px}
+  .control-panel {width:calc(100% - 36px);right:18px;left:18px;bottom:59px;padding:13px 15px}.control-top {display:none}.preset-group {margin-top:0;max-width:100%}.preset {padding:7px 4px}.range-header,.curvature-slider,.range-ticks {display:none}.control-separator,.control-bottom {display:none}
   .footer {left:20px;right:20px;bottom:14px;padding-top:11px}.footer-number {font-size:8px}.footer-right {font-size:8px}.keyboard-mark {font-size:7px;padding:2px 3px}
 }
-@media (max-height:690px) and (min-width:701px) {.hero {top:19%}.hero h1 {font-size:58px}.hero p,.hero-index {display:none}.control-panel {bottom:60px}.feature-panel {bottom:60px}}
+@media (max-height:690px) and (min-width:701px) {.hero {top:19%}.hero h1 {font-size:58px}.hero p,.hero-index {display:none}.control-panel {bottom:60px}}
 @media (prefers-reduced-motion:reduce) {* {animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
 </style>
@@ -96,18 +91,10 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .feature-p
     </header>
 
     <section class="hero overlay" aria-label="Einleitung">
-      <div class="eyebrow"><span class="tiny-line"></span> EXPERIMENTAL DIGITAL SPACE</div>
-      <h1>BEYOND<br><em>THE GRID.</em></h1>
-      <p>Ein unendlicher Raum für Ideen, Experimente und digitale Welten.</p>
       <div class="hero-index"><span class="hero-index-label">COORDINATES</span><span id="coordinates" class="monospace">X +0000 &nbsp; Y +0000</span></div>
     </section>
 
     <div class="crosshair overlay" aria-hidden="true"><span></span><span></span></div>
-    <aside class="feature-panel overlay" aria-live="polite">
-      <div class="feature-head"><span class="feature-kicker">IN FOCUS <span class="feature-signal"></span></span><span class="feature-counter" id="featureCounter">01 / 12</span></div>
-      <div class="feature-main"><div class="feature-vertical" id="featureType">TOOL</div><div class="feature-text"><h2 id="featureTitle">APP UNIVERSE</h2><p id="featureDescription">Wähle eine App im dreidimensionalen Raum.</p></div></div>
-      <div class="feature-foot"><span id="featureStatus">DISCOVER</span><a href="#" class="feature-open interactive" id="featureOpen" aria-label="Ausgewählte App öffnen">APP ÖFFNEN <span aria-hidden="true">↗</span></a></div>
-    </aside>
 
     <section class="control-panel overlay" aria-label="3D-Einstellungen">
       <div class="control-top"><span class="control-title">SPACE CONTROL</span><span class="control-sub">01 / GEOMETRY</span></div>
@@ -527,7 +514,7 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .feature-p
     this.seed=(Math.random()*4294967296)>>>0;
     this.panX=0;this.panY=0;
     this.curvature=C.initialCurvature;this.curveTarget=C.initialCurvature;
-    this.zoom=.86;this.zoomTarget=.86;
+    this.zoom=this.defaultZoom();this.zoomTarget=this.zoom;
     this.pointerX=0;this.pointerY=0;
     this.tiles=[];this.hoverKey='';this.hoverTile=null;this.centerTile=null;
     this.lifts=new Map();this.cinema=false;this.reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -536,11 +523,14 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .feature-p
     this.lastWidth=this.canvas.clientWidth||window.innerWidth;
     this.lastHeight=this.canvas.clientHeight||window.innerHeight;
   }
+  Scene.prototype.defaultZoom=function(){
+    return window.matchMedia('(max-width: 700px)').matches ? .52 : .86;
+  };
   Scene.prototype.reset=function(){
     var w=this.canvas.clientWidth||window.innerWidth,h=this.canvas.clientHeight||window.innerHeight;
     this.panX=w*.5-this.stepX-C.cardWidth*.5;
     this.panY=h*.5-this.stepY-C.cardHeight*.5;
-    this.curveTarget=C.initialCurvature;this.zoomTarget=.86;
+    this.curveTarget=C.initialCurvature;this.zoomTarget=this.defaultZoom();
   };
   Scene.prototype.indexFor=function(col,row){return M.hash(col,row,this.seed,this.apps.length);};
   Scene.prototype.update=function(time,dt){
@@ -548,6 +538,7 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .feature-p
     // Bildschirmmitte auch nach Resize / Rotation auf demselben Weltpunkt halten.
     if(this.lastWidth!==w||this.lastHeight!==h){
       this.panX+=(w-this.lastWidth)/2;this.panY+=(h-this.lastHeight)/2;
+      if((this.lastWidth<=700)!==(w<=700))this.zoomTarget=this.defaultZoom();
       this.lastWidth=w;this.lastHeight=h;
     }
     var easing=1-Math.pow(.87,Math.max(.001,dt/16.67));
@@ -595,7 +586,7 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .feature-p
     this.lifts.forEach(function(_,k){if(!live.has(k))this.lifts.delete(k);},this);
     this.tiles=next;this.centerTile=center;
     this.hoverTile=this.hoverKey?next.find(function(t){return t.key===this.hoverKey;},this):null;
-    var cameraDistance=h/(2*Math.tan(C.fieldOfView*Math.PI/360))/Math.max(.75,this.zoom);
+    var cameraDistance=h/(2*Math.tan(C.fieldOfView*Math.PI/360))/Math.max(.48,this.zoom);
     var wave=this.reducedMotion?0:1;
     this.camera.eye=[this.pointerX*39+Math.sin(time*.00011)*20*wave,
       -this.pointerY*27+Math.cos(time*.0001)*12*wave,
@@ -693,7 +684,7 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .feature-p
       var factor=e.deltaMode===1?16:(e.deltaMode===2?cv.clientHeight:1);
       var dx=e.deltaX*factor,dy=e.deltaY*factor;
       if(e.shiftKey&&Math.abs(dx)<Math.abs(dy)){dx=dy;dy=0;}
-      if(e.ctrlKey){scene.zoomTarget=M.clamp(scene.zoomTarget-dy*.001,0.68,1.55);}
+      if(e.ctrlKey){scene.zoomTarget=M.clamp(scene.zoomTarget-dy*.001,0.48,1.55);}
       else{
         self.velocityX=M.clamp(self.velocityX-dx*.24,-68,68);
         self.velocityY=M.clamp(self.velocityY-dy*.24,-68,68);
@@ -710,7 +701,7 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .feature-p
       if(e.key==='ArrowUp'){scene.panY+=75;d=1;}
       if(e.key==='ArrowDown'){scene.panY-=75;d=1;}
       if(e.key==='+'||e.key==='='){scene.zoomTarget=M.clamp(scene.zoomTarget+.08,.68,1.55);d=1;}
-      if(e.key==='-'||e.key==='_'){scene.zoomTarget=M.clamp(scene.zoomTarget-.08,.68,1.55);d=1;}
+      if(e.key==='-'||e.key==='_'){scene.zoomTarget=M.clamp(scene.zoomTarget-.08,.48,1.55);d=1;}
       if(e.key==='Enter'&&document.activeElement===cv){var t=scene.focus();if(t)self.ui.select(t,true);d=1;}
       if(d){e.preventDefault();self.markActivity();self.snap=null;self.wheelAt=performance.now();}
     });
@@ -767,7 +758,7 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .feature-p
   }
   function Interface(scene){
     this.scene=scene;this.cinemaButton=el('cinemaButton');this.curveSlider=el('curvature');
-    this.activeFocus='';this.ignoreClickUntil=0;this.idleAt=performance.now();
+    this.ignoreClickUntil=0;this.idleAt=performance.now();
     this.cinemaTime=0;this.cinemaStart=0;this.cinemaCurve=scene.curveTarget;
     this.cinemaZoom=scene.zoomTarget;this.cinemaVel=[0,0];this.lastHUDTime=0;
     this.bind();this.setCurve(Math.round(scene.curveTarget*100));
@@ -783,10 +774,6 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .feature-p
     document.querySelectorAll('.preset').forEach(function(btn){btn.addEventListener('click',function(){self.activity();self.setCurve(Number(btn.dataset.curve));});});
     el('resetButton').addEventListener('click',function(){self.activity();if(self.input)self.input.stop();self.scene.reset();self.setCurve(-92);});
     this.cinemaButton.addEventListener('click',function(e){e.stopPropagation();self.toggleCinema();});
-    el('featureOpen').addEventListener('click',function(e){
-      var tile=self.scene.focus();var url=tile?safeURL(tile.app.url):'';
-      if(!url||self.scene.cinema||performance.now()<self.ignoreClickUntil)e.preventDefault();
-    });
     ['pointerdown','wheel','keydown','touchstart'].forEach(function(evt){
       document.addEventListener(evt,function(e){
         // Der Cinema-Button schaltet selbst um: sein pointerdown darf den Zustand nicht vorab ändern.
@@ -842,19 +829,6 @@ body.cinema .hero {opacity:.1;transform:translateX(-20px)}body.cinema .feature-p
   };
   Interface.prototype.afterFrame=function(time){
     var scene=this.scene,tile=scene.focus();
-    if(tile&&tile.key!==this.activeFocus){
-      this.activeFocus=tile.key;
-      el('featureTitle').textContent=tile.app.label;
-      el('featureDescription').textContent=tile.app.description||'Entdecke die App im dreidimensionalen Raum.';
-      el('featureCounter').textContent=String(tile.index+1).padStart(2,'0')+' / '+String(scene.apps.length).padStart(2,'0');
-      el('featureType').textContent=tile.app.type.toUpperCase();
-      el('featureStatus').textContent=tile.app.status?tile.app.status.toUpperCase():'AVAILABLE';
-      var link=safeURL(tile.app.url),a=el('featureOpen');
-      a.href=link||'#';a.classList.toggle('is-disabled',!link);
-      a.setAttribute('aria-disabled',link?'false':'true');
-      if(/^https?:\/\//i.test(link)){a.target='_blank';a.rel='noopener noreferrer';}
-      else{a.removeAttribute('target');a.removeAttribute('rel');}
-    }
     if(time-this.lastHUDTime>160){
       this.lastHUDTime=time;
       el('visibleCount').textContent=String(scene.tiles.length).padStart(3,'0');
