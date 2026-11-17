@@ -46,16 +46,16 @@ const originrepos = [
     tags: ['API', 'Geo-Location']
 },
 {
-    label: "Mindfagg",
+    label: "Mifa Mindmap",
     img: 'img/app/mindfagg.svg',
     preview: 'img/app/mindfagg-preview.webp',
     status: 'beta',
     group: 'dev',
-    description: 'Visualisiere deinen Mindfagg. Inklusive Github-Sync und HTML App Support!',
+    description: 'Visualisiere deinen Mindfagg. Inklusive Kalender, Import/Export + Github-Sync!',
     type: 'tool',
     url: 'https://boiler-byte.github.io/mindfagg/',
     year: 2026,
-    tags: ['Notizen', 'Projekte', 'Aufgaben', 'Kalender', 'Kanban', 'HTML', 'CSS', 'XML', 'SVG']
+    tags: ['Notizen', 'Kanban', 'Projekte', 'Aufgaben', 'Kalender', 'HTML', 'CSS', 'XML', 'SVG']
 },
 {
     label: "Haltestellen",
