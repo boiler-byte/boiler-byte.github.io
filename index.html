@@ -1650,19 +1650,58 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
         if (el) el.textContent = String(favorites.size);
       }
 
-      // ---------- SUCH-FILTER ----------
-      function matchesSearch(repo, query) {
-        if (!query) return true;
-        const q = query.toLowerCase();
-        const haystack = [
-          repo.label,
-          repo.description,
-          ...(repo.tags || []),
-          String(repo.year || ''),
-          types[repo.type]?.label || repo.type,
-          repo.status ? (STATUS[repo.status]?.label || repo.status) : '',
-        ].join(' ').toLowerCase();
-        return haystack.includes(q);
+      // ---------- SUCHE MIT RELEVANZBEWERTUNG ----------
+      // Normalisierung macht die Suche unabhängig von Groß-/Kleinschreibung,
+      // Umlauten und mehrfachen Leerzeichen.
+      function normalizeSearchText(value) {
+        return String(value ?? '')
+          .normalize('NFKD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLocaleLowerCase('de')
+          .replace(/ß/g, 'ss')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+      // Höhere Werte bedeuten relevantere Treffer; -1 bedeutet kein Treffer.
+      // Titel (exakt > Beginn > Wortbeginn > Teilstring) stehen immer vor
+      // Tags, Beschreibung und sonstigen Metadaten.
+      function searchRelevance(repo, query) {
+        const q = normalizeSearchText(query);
+        if (!q) return 0;
+
+        const title = normalizeSearchText(repo.label);
+        const description = normalizeSearchText(repo.description);
+        const tags = (repo.tags || []).map(normalizeSearchText);
+        const type = normalizeSearchText(types[repo.type]?.label || repo.type);
+        const status = normalizeSearchText(repo.status ? (STATUS[repo.status]?.label || repo.status) : '');
+        const year = normalizeSearchText(repo.year);
+
+        if (title === q) return 1000;
+        if (title.startsWith(q)) return 950;
+        if (title.split(/[\s._/-]+/).some(word => word.startsWith(q))) return 900;
+        if (title.includes(q)) return 850;
+
+        if (tags.some(tag => tag === q)) return 700;
+        if (tags.some(tag => tag.startsWith(q))) return 650;
+        if (tags.some(tag => tag.includes(q))) return 600;
+
+        if (description.startsWith(q)) return 550;
+        if (description.includes(q)) return 500;
+
+        if (type === q) return 400;
+        if (type.includes(q)) return 350;
+        if (status === q || year === q) return 300;
+        if (status.includes(q) || year.includes(q)) return 250;
+
+        // Auch mehrere Suchwörter dürfen über verschiedene Felder verteilt sein.
+        // Es müssen aber alle Wörter vorkommen (keine beliebigen Teiltreffer).
+        const combined = [title, description, ...tags, type, status, year].join(' ');
+        const terms = q.split(' ');
+        if (terms.length > 1 && terms.every(term => combined.includes(term))) {
+          return 100 + terms.filter(term => title.includes(term)).length * 10;
+        }
+        return -1;
       }
 
       // ---------- SVG-Stern ----------
@@ -1866,20 +1905,31 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
       const GROUP_CLOSE_MS = 960; // Rückflug und Backdrop-Fade (820ms) + Puffer
 
       function getFilteredRepos() {
-        let filtered = repos.filter(repo => {
-          const typeOk = activeFilter === 'all' ||
-            (activeFilter === 'favorites' ? isFavorite(repo.label) : repo.type === activeFilter);
-          return typeOk && matchesSearch(repo, activeSearch);
-        });
+        const searching = Boolean(activeSearch.trim());
+        const filtered = repos
+          .map((repo, index) => ({
+            repo,
+            index,
+            relevance: searching ? searchRelevance(repo, activeSearch) : 0,
+          }))
+          .filter(({ repo, relevance }) => {
+            const typeOk = activeFilter === 'all' ||
+              (activeFilter === 'favorites' ? isFavorite(repo.label) : repo.type === activeFilter);
+            return typeOk && (!searching || relevance >= 0);
+          });
 
-        if (activeFilter === 'favorites') {
+        if (searching) {
+          // Bei Gleichstand bleibt die ursprüngliche Reihenfolge erhalten.
+          filtered.sort((a, b) => b.relevance - a.relevance || a.index - b.index);
+        } else if (activeFilter === 'favorites') {
+          // Die manuelle Favoriten-Reihenfolge bleibt ohne Suchbegriff erhalten.
           const pos = label => {
             const i = favOrder.indexOf(label);
             return i === -1 ? 9999 : i;
           };
-          filtered = filtered.slice().sort((a, b) => pos(a.label) - pos(b.label));
+          filtered.sort((a, b) => pos(a.repo.label) - pos(b.repo.label));
         }
-        return filtered;
+        return filtered.map(({ repo }) => repo);
       }
 
       // Dieselbe Collage für das Gruppenbild, das Hover-Preview und die Orbit-Mitte.
@@ -2439,7 +2489,7 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
 
       function syncGroupHistory(state) {
         const value = state?.[GROUP_HISTORY_KEY];
-        if (!value?.group || !repogroups[value.group] || activeView !== 'cards' || activeFilter !== 'all') {
+        if (!value?.group || !repogroups[value.group] || activeView !== 'cards' || activeFilter !== 'all' || activeSearch) {
           hideGroup();
           return;
         }
@@ -2494,9 +2544,11 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
         }
 
         const drawnGroups = new Set();
+        const searching = Boolean(activeSearch.trim());
         filtered.forEach((repo, i) => {
-          // Gruppen werden ausschließlich in der Kartenansicht mit dem Filter „Alle“ angezeigt.
-          const groupId = activeView === 'cards' && activeFilter === 'all' && repo.group && repogroups[repo.group]
+          // Gruppen nur in der normalen Kartenübersicht, niemals bei aktiver Suche.
+          // Suchtreffer werden immer als einzelne, direkt anklickbare Apps angezeigt.
+          const groupId = !searching && activeView === 'cards' && activeFilter === 'all' && repo.group && repogroups[repo.group]
             ? repo.group : null;
           if (groupId) {
             if (drawnGroups.has(groupId)) return;
@@ -2504,7 +2556,11 @@ html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
             const members = filtered.filter(member => member.group === groupId);
             repoGrid.appendChild(createGroupCard(groupId, members, i));
           } else {
-            repoGrid.appendChild(createCard(repo, i));
+            const card = createCard(repo, i);
+            // Gleich große Trefferkarten bewahren die sichtbare Relevanz-Reihenfolge
+            // auch dann, wenn Repos normalerweise als Featured-Karten erscheinen.
+            if (searching) card.classList.remove('featured', 'featured-wide', 'featured-tall');
+            repoGrid.appendChild(card);
           }
         });
 

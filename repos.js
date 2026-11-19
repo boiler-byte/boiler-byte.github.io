@@ -352,7 +352,7 @@ const originrepos = [
     description: 'Interaktives Sonnensystem.',
     type: 'tool',
     group: 'tool',
-    status: 'alpha',
+    status: 'beta',
     url: 'https://boiler-byte.github.io/Sonnensystem/',
     year: 2026,
     tags: ['Astronomie', 'Planeten', 'Asteroiden', 'Monde', 'Jupiter', 'Mars', 'Erde', 'Venus', 'Neptun', 'Uranus', 'Pluto']
