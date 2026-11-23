@@ -1,5 +1,5 @@
 const originrepogroups = {
-dev: { label: "Dev-Tools", preview: 'all', img: 'img/grp/dev.webp' },
+dev: { label: "Power User", preview: 'all', img: 'img/grp/dev.webp' },
 tool: { label: "Nützlich", preview: 'all', img: 'img/grp/tool.webp' },
 cards: { label: "Kartenspiele", preview: 'all', img: 'img/grp/cards.webp' },
 riddle: { label: "Rätsel", preview: 'all', img: 'img/grp/riddle.svg' },
@@ -56,6 +56,17 @@ const originrepos = [
     url: 'https://boiler-byte.github.io/mindfagg/',
     year: 2026,
     tags: ['Notizen', 'Kanban', 'Projekte', 'Aufgaben', 'Kalender', 'HTML', 'CSS', 'XML', 'SVG']
+},
+{
+    label: "Diff Text",
+    img: 'img/app/diff.svg',
+    preview: 'img/app/diff-preview.webp',
+    group: 'dev',
+    description: 'Finde den Unterschied oder das Duplikat.',
+    type: 'tool',
+    url: 'https://boiler-byte.github.io/Diff/',
+    year: 2026,
+    tags: ['Text', 'Dubletten', 'difftool']
 },
 {
     label: "Haltestellen",
