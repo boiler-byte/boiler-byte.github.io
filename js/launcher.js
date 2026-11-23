@@ -13,8 +13,8 @@
       button.setAttribute('aria-pressed', String(active));
     });
     if (hint) hint.textContent = B.state.launcherView === 'apps'
-      ? 'App-Symbole gedrückt halten und verschieben · per Klick öffnen · Alt + Pfeiltasten zum Sortieren.'
-      : 'Ziehe die Einträge, um die Reihenfolge deiner Favoriten anzupassen.';
+      ? 'Gruppenüberschriften ziehen (Touch: Punktgriff) · Apps am Symbol sortieren · Alt + Pfeiltasten.'
+      : 'Gruppenüberschriften ziehen (Touch: Punktgriff) · App-Zeilen innerhalb der Gruppe sortieren.';
   }
 
   function loadView() {
@@ -32,6 +32,97 @@
       B.renderer.renderLauncher();
     }
     syncViewControls();
+  }
+
+  // Beide Launcher-Ansichten teilen sich dieselbe Typ-Reihenfolge und den Oeffnungszustand.
+  // Auch aktuell leere Typen behalten ihre Position im Speicher.
+  function getTypeOrder(types) {
+    const known = [...new Set(['game', 'tool', 'misc', ...Object.keys(B.data.types),
+      ...B.data.repos.map(repo => (typeof repo.type === 'string' && repo.type.trim()) ? repo.type : 'misc'), ...types])];
+    const saved = B.storage.get('launcherTypeOrder') || [];
+    return [...saved.filter(type => known.includes(type)), ...known.filter(type => !saved.includes(type))];
+  }
+
+  function persistTypeOrder() {
+    const visible = Array.from(B.dom.launcherGrid.querySelectorAll(':scope > .launcher-type-group'))
+      .map(group => group.dataset.type);
+    const previous = getTypeOrder([]);
+    // Versteckte/aktuell leere Gruppen behalten ihre gespeicherte relative Position.
+    const it = visible[Symbol.iterator]();
+    const next = previous.map(type => visible.includes(type) ? it.next().value : type);
+    B.storage.set('launcherTypeOrder', next);
+  }
+
+  function toggleType(type, open) {
+    const closed = new Set(B.storage.get('launcherTypeClosed') || []);
+    if (open) closed.delete(type);
+    else closed.add(type);
+    B.storage.set('launcherTypeClosed', [...closed]);
+  }
+
+  function isTypeOpen(type) {
+    return !(B.storage.get('launcherTypeClosed') || []).includes(type);
+  }
+
+  function makeTypeGroup(type, count, appView) {
+    const section = document.createElement('section');
+    section.className = 'launcher-type-group';
+    section.dataset.type = type;
+
+    const heading = document.createElement('div');
+    heading.className = 'launcher-type-heading';
+    heading.draggable = true;
+    heading.title = 'Gruppe ziehen, um die Reihenfolge zu ändern';
+
+    const grip = document.createElement('span');
+    grip.className = 'launcher-type-grip';
+    grip.setAttribute('aria-hidden', 'true');
+    grip.innerHTML = '<svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="6" cy="5" r="1.4"/><circle cx="13" cy="5" r="1.4"/><circle cx="6" cy="10" r="1.4"/><circle cx="13" cy="10" r="1.4"/><circle cx="6" cy="15" r="1.4"/><circle cx="13" cy="15" r="1.4"/></svg>';
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'launcher-type-toggle';
+    const label = B.data.types[type]?.label || (type.charAt(0).toLocaleUpperCase('de') + type.slice(1));
+    const name = document.createElement('span');
+    name.className = 'launcher-type-name';
+    name.textContent = label;
+    const number = document.createElement('span');
+    number.className = 'launcher-type-count';
+    number.textContent = String(count);
+    const chevron = document.createElement('span');
+    chevron.className = 'launcher-type-chevron';
+    chevron.setAttribute('aria-hidden', 'true');
+    const items = document.createElement('div');
+    items.id = 'launcher-type-items-' + encodeURIComponent(type);
+    button.setAttribute('aria-controls', items.id);
+    items.className = appView ? 'launcher-type-items launcher-type-apps' : 'launcher-type-items view-list';
+    const open = isTypeOpen(type);
+    button.setAttribute('aria-expanded', String(open));
+    items.hidden = !open;
+    button.append(name, number, chevron);
+    button.addEventListener('click', () => {
+      const next = button.getAttribute('aria-expanded') !== 'true';
+      button.setAttribute('aria-expanded', String(next));
+      items.hidden = !next;
+      toggleType(type, next);
+    });
+    button.addEventListener('keydown', e => {
+      if (!e.altKey || !['ArrowUp', 'ArrowDown'].includes(e.key)) return;
+      e.preventDefault();
+      const parent = section.parentElement;
+      if (!parent) return;
+      const sections = Array.from(parent.querySelectorAll(':scope > .launcher-type-group'));
+      const index = sections.indexOf(section);
+      const target = sections[index + (e.key === 'ArrowUp' ? -1 : 1)];
+      if (!target) return;
+      parent.insertBefore(section, e.key === 'ArrowUp' ? target : target.nextSibling);
+      persistTypeOrder();
+      B.drag.announceTypePosition(section);
+      button.focus({ preventScroll: true });
+    });
+    heading.append(grip, button);
+    section.append(heading, items);
+    return { section, items };
   }
 
   function makeIcon(repo) {
@@ -75,15 +166,31 @@
   const addWrap = document.getElementById('launcherAddWrap');
   const addButton = document.getElementById('launcherAddButton');
   const addMenu = document.getElementById('launcherAddMenu');
+  const addGroups = document.getElementById('launcherAddGroups');
+  const addSearch = document.getElementById('launcherAddSearch');
+  const addSearchWrap = document.getElementById('launcherAddSearchWrap');
+  const addSearchClear = document.getElementById('launcherAddSearchClear');
+  let addSearchDebounceTimer = null;
 
-  // Die Auswahl wird aus denselben originrepos/Fallback-Repos erzeugt wie die Ansichten.
-  // Bereits favorisierte Apps stehen nicht im Dropdown.
+  // Wie bisher keine Favoriten, zusaetzlich nur Apps mit nichtleerer URL.
+  // Relative URLs aus einer produktiven repos.js bleiben zulaessig.
   function availableApps() {
-    return B.data.repos.filter(repo => !B.favorites.isFavorite(repo.label));
+    return B.data.repos.filter(repo =>
+      typeof repo.url === 'string' && repo.url.trim() !== '' && !B.favorites.isFavorite(repo.label)
+    );
+  }
+
+  function resetAddSearch() {
+    clearTimeout(addSearchDebounceTimer);
+    addSearchDebounceTimer = null;
+    addSearch.value = '';
+    addSearchWrap.classList.remove('has-value');
   }
 
   function closeAddMenu(returnFocus = false) {
     if (!addMenu) return;
+    clearTimeout(addSearchDebounceTimer);
+    addSearchDebounceTimer = null;
     addMenu.hidden = true;
     addButton.setAttribute('aria-expanded', 'false');
     if (returnFocus && !addButton.disabled) addButton.focus();
@@ -93,32 +200,86 @@
     if (!addMenu) return;
     const entries = availableApps();
     addButton.disabled = entries.length === 0;
-    addButton.title = entries.length ? 'App zum Launcher hinzufügen' : 'Alle Apps sind bereits im Launcher';
-    addMenu.replaceChildren();
+    addButton.title = entries.length ? 'App zum Launcher hinzufügen' : 'Keine weiteren Apps mit URL verfügbar';
+    const query = addSearch.value.trim();
+    addGroups.replaceChildren();
+
+    // Identische Relevanzsuche wie in der Bibliothek: Titel, Tags,
+    // Beschreibung, Typ und Metadaten, inklusive Umlaut-Normalisierung.
+    const collator = new Intl.Collator('de', { sensitivity: 'base', numeric: true });
+    const groups = new Map();
     entries.forEach(repo => {
-      const option = document.createElement('button');
-      option.type = 'button';
-      option.className = 'launcher-add-option';
-      option.setAttribute('role', 'menuitem');
-      option.dataset.label = repo.label;
-      const icon = document.createElement('span');
-      icon.className = 'launcher-add-option-icon';
-      if (repo.img) {
-        const img = document.createElement('img');
-        img.src = repo.img;
-        img.alt = '';
-        img.loading = 'lazy';
-        img.addEventListener('error', () => {
-          img.remove();
-          icon.textContent = repo.icon || repo.label.charAt(0).toLocaleUpperCase('de');
-        }, { once: true });
-        icon.appendChild(img);
-      } else icon.textContent = repo.icon || repo.label.charAt(0).toLocaleUpperCase('de');
-      const name = document.createElement('span');
-      name.textContent = repo.label;
-      option.append(icon, name);
-      addMenu.appendChild(option);
+      const relevance = query ? B.search.searchRelevance(repo, query) : 0;
+      if (relevance < 0) return;
+      const type = typeof repo.type === 'string' && repo.type.trim() ? repo.type : 'other';
+      if (!groups.has(type)) groups.set(type, []);
+      groups.get(type).push({ repo, relevance });
     });
+    // Gruppenreihenfolge folgt der Bibliothek, unbekannte Typen werden ergaenzt.
+    const knownTypes = Object.keys(B.data.types);
+    const typeKeys = Array.from(groups.keys()).sort((a, b) => {
+      const aIndex = knownTypes.indexOf(a);
+      const bIndex = knownTypes.indexOf(b);
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      return collator.compare(a, b);
+    });
+
+    typeKeys.forEach(type => {
+      const repos = groups.get(type).sort((a, b) =>
+        (query ? b.relevance - a.relevance : 0) || collator.compare(a.repo.label, b.repo.label)
+      );
+      const section = document.createElement('details');
+      section.className = 'launcher-add-group';
+      // Normalzustand geschlossen, bei aktiver Suche Treffer direkt sichtbar.
+      if (query) section.open = true;
+      const summary = document.createElement('summary');
+      summary.className = 'launcher-add-group-heading';
+      const title = document.createElement('span');
+      title.textContent = B.data.types[type]?.label || (type === 'other' ? 'Sonstige' : type);
+      const count = document.createElement('span');
+      count.className = 'launcher-add-group-count';
+      count.textContent = String(repos.length);
+      count.setAttribute('aria-label', `${repos.length} Apps`);
+      summary.append(title, count);
+      const list = document.createElement('div');
+      list.className = 'launcher-add-group-options';
+
+      repos.forEach(({ repo }) => {
+        const option = document.createElement('button');
+        option.type = 'button';
+        option.className = 'launcher-add-option';
+        option.dataset.label = repo.label;
+        const icon = document.createElement('span');
+        icon.className = 'launcher-add-option-icon';
+        if (repo.img) {
+          const img = document.createElement('img');
+          img.src = repo.img;
+          img.alt = '';
+          img.loading = 'lazy';
+          img.addEventListener('error', () => {
+            img.remove();
+            icon.textContent = repo.icon || repo.label.charAt(0).toLocaleUpperCase('de');
+          }, { once: true });
+          icon.appendChild(img);
+        } else icon.textContent = repo.icon || repo.label.charAt(0).toLocaleUpperCase('de');
+        const name = document.createElement('span');
+        name.textContent = repo.label;
+        option.append(icon, name);
+        list.appendChild(option);
+      });
+
+      section.append(summary, list);
+      addGroups.appendChild(section);
+    });
+    if (!typeKeys.length && entries.length) {
+      const empty = document.createElement('p');
+      empty.className = 'launcher-add-empty';
+      empty.setAttribute('role', 'status');
+      empty.textContent = 'Keine Apps gefunden';
+      addGroups.appendChild(empty);
+    }
     if (!entries.length) closeAddMenu();
   }
 
@@ -135,13 +296,33 @@
     addButton.addEventListener('click', () => {
       if (addButton.disabled) return;
       if (!addMenu.hidden) { closeAddMenu(); return; }
+      resetAddSearch();
       refreshAddMenu();
       addMenu.hidden = false;
       addButton.setAttribute('aria-expanded', 'true');
-      addMenu.querySelector('[role="menuitem"]')?.focus();
+      addSearch.focus();
+    });
+    addSearch.addEventListener('input', () => {
+      addSearchWrap.classList.toggle('has-value', addSearch.value.length > 0);
+      clearTimeout(addSearchDebounceTimer);
+      addSearchDebounceTimer = setTimeout(() => {
+        addSearchDebounceTimer = null;
+        if (!addMenu.hidden) refreshAddMenu();
+      }, 180);
+    });
+    addSearchClear.addEventListener('click', () => {
+      resetAddSearch();
+      refreshAddMenu();
+      addSearch.focus();
+    });
+    addSearch.addEventListener('search', () => {
+      clearTimeout(addSearchDebounceTimer);
+      addSearchDebounceTimer = null;
+      addSearchWrap.classList.toggle('has-value', addSearch.value.length > 0);
+      if (!addMenu.hidden) refreshAddMenu();
     });
     addMenu.addEventListener('click', e => {
-      const option = e.target.closest('[role="menuitem"]');
+      const option = e.target.closest('.launcher-add-option');
       if (!option || !addMenu.contains(option)) return;
       const label = option.dataset.label;
       if (!label || B.favorites.isFavorite(label)) return;
@@ -152,17 +333,37 @@
     });
     addWrap.addEventListener('keydown', e => {
       if (addMenu.hidden) return;
-      if (e.key === 'Escape') { e.preventDefault(); closeAddMenu(true); return; }
-      const options = Array.from(addMenu.querySelectorAll('[role="menuitem"]'));
-      if (!options.length || !['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (document.activeElement === addSearch && addSearch.value) {
+          resetAddSearch();
+          refreshAddMenu();
+        } else closeAddMenu(true);
+        return;
+      }
+      if (document.activeElement === addSearch) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          clearTimeout(addSearchDebounceTimer);
+          addSearchDebounceTimer = null;
+          refreshAddMenu();
+          return;
+        }
+        // Home/End bewegen beim Tippen den Cursor, Pfeil nach unten die Auswahl.
+        if (e.key !== 'ArrowDown') return;
+      }
+      // Nur sichtbare Eintraege sind per Pfeiltaste erreichbar; native
+      // <summary>-Elemente lassen sich weiterhin mit Enter/Leertaste oeffnen.
+      const controls = Array.from(addGroups.querySelectorAll('.launcher-add-group-heading, .launcher-add-group[open] .launcher-add-option'));
+      if (!controls.length || !['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return;
       e.preventDefault();
-      const index = options.indexOf(document.activeElement);
+      const index = controls.indexOf(document.activeElement);
       let next = index;
-      if (e.key === 'ArrowDown') next = (index + 1) % options.length;
-      if (e.key === 'ArrowUp') next = (index - 1 + options.length) % options.length;
+      if (e.key === 'ArrowDown') next = (index + 1) % controls.length;
+      if (e.key === 'ArrowUp') next = (index - 1 + controls.length) % controls.length;
       if (e.key === 'Home') next = 0;
-      if (e.key === 'End') next = options.length - 1;
-      options[next].focus();
+      if (e.key === 'End') next = controls.length - 1;
+      controls[next].focus();
     });
     document.addEventListener('pointerdown', e => {
       if (!addMenu.hidden && !addWrap.contains(e.target)) closeAddMenu();
@@ -171,5 +372,6 @@
     refreshAddMenu();
   }
 
-  B.launcher = { makeIcon, loadView, setView, syncViewControls, refreshAddMenu, closeAddMenu, setup };
+  B.launcher = { makeIcon, makeTypeGroup, getTypeOrder, persistTypeOrder,
+    loadView, setView, syncViewControls, refreshAddMenu, closeAddMenu, setup };
 })(window.BoilerRoom);

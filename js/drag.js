@@ -1,4 +1,4 @@
-/* Listen-DnD und Long-Press-Sortierung der kreisrunden Launcher-App-Symbole. */
+/* Typgruppen-DnD sowie Sortierung von Launcher-Listen und App-Symbolen. */
 (function (B) {
   'use strict';
 
@@ -6,6 +6,9 @@
   const HOLD_MS = 460;
   const MOVE_TOLERANCE = 10;
   let draggedCard = null;
+  let draggedGroup = null;
+  let groupDragOriginal = null;
+  let touchGroup = null;
   let press = null;
   let ghost = null;
   let suppressClickUntil = 0;
@@ -16,6 +19,43 @@
 
   function persistIcons() {
     B.favorites.setOrder(getLabels('.launcher-app'));
+  }
+
+  function announceTypePosition(section) {
+    const status = document.getElementById('launcherOrderStatus');
+    if (!status) return;
+    const groups = Array.from(grid.querySelectorAll(':scope > .launcher-type-group'));
+    const label = section.querySelector('.launcher-type-name')?.textContent || section.dataset.type;
+    status.textContent = 'Gruppe „' + label + '“ auf Position ' +
+      (groups.indexOf(section) + 1) + ' von ' + groups.length + ' verschoben.';
+  }
+
+  function clearGroupFeedback() {
+    grid.querySelectorAll('.is-group-target, .is-group-dragging').forEach(node =>
+      node.classList.remove('is-group-target', 'is-group-dragging'));
+  }
+
+  function moveGroup(source, target, pointerY) {
+    if (!target || source === target || target.parentElement !== grid) return;
+    const rect = target.querySelector('.launcher-type-heading').getBoundingClientRect();
+    const before = pointerY < rect.top + rect.height / 2;
+    const next = before ? target : target.nextSibling;
+    if (next !== source) grid.insertBefore(source, next);
+    grid.querySelectorAll('.is-group-target').forEach(el => el.classList.remove('is-group-target'));
+    target.classList.add('is-group-target');
+  }
+
+  function finishNativeGroupDrag(commit = false) {
+    if (!draggedGroup) return;
+    const group = draggedGroup;
+    draggedGroup = null;
+    clearGroupFeedback();
+    if (!commit) groupDragOriginal?.forEach(section => grid.appendChild(section));
+    else {
+      B.launcher.persistTypeOrder();
+      announceTypePosition(group);
+    }
+    groupDragOriginal = null;
   }
 
   function announcePosition(tile) {
@@ -41,7 +81,7 @@
       const fav = card.querySelector('.fav-btn');
       if (fav) fav.draggable = false;
       card.addEventListener('dragstart', e => {
-        if (B.state.launcherView !== 'list') { e.preventDefault(); return; }
+        if (B.state.launcherView !== 'list' || !grid.contains(card)) { e.preventDefault(); return; }
         draggedCard = card;
         card.classList.add('dragging');
         if (e.dataTransfer) {
@@ -67,10 +107,11 @@
     if (press?.timer) { clearTimeout(press.timer); press.timer = null; }
   }
 
-  function restoreIconOrder(labels) {
-    const byLabel = new Map(Array.from(grid.querySelectorAll('.launcher-app'))
+  function restoreIconOrder(labels, container) {
+    if (!container) return;
+    const byLabel = new Map(Array.from(container.querySelectorAll(':scope > .launcher-app'))
       .map(tile => [tile.dataset.label, tile]));
-    labels.forEach(label => { if (byLabel.has(label)) grid.appendChild(byLabel.get(label)); });
+    labels.forEach(label => { if (byLabel.has(label)) container.appendChild(byLabel.get(label)); });
   }
 
   function finishIconDrag(commit) {
@@ -86,8 +127,8 @@
       try {
         if (state.tile.hasPointerCapture(state.pointerId)) state.tile.releasePointerCapture(state.pointerId);
       } catch (e) {}
-      if (!commit) restoreIconOrder(state.originalOrder);
-      else if (state.originalOrder.join('\0') !== getLabels('.launcher-app').join('\0')) {
+      if (!commit) restoreIconOrder(state.originalOrder, state.container);
+      else if (state.originalOrder.join('\0') !== Array.from(state.container.children).map(el => el.dataset.label).join('\0')) {
         persistIcons();
         announcePosition(state.tile);
       }
@@ -97,6 +138,8 @@
   function cancelIconDrag() {
     finishIconDrag(false);
     draggedCard = null;
+    finishNativeGroupDrag();
+    finishTouchGroupDrag(false);
   }
 
   function positionGhost(x, y) {
@@ -109,7 +152,8 @@
     if (press !== state || B.state.section !== 'launcher' || B.state.launcherView !== 'apps') return;
     state.active = true;
     state.timer = null;
-    state.originalOrder = getLabels('.launcher-app');
+    state.container = state.tile.parentElement;
+    state.originalOrder = Array.from(state.container.children).map(el => el.dataset.label);
     state.tile.classList.add('is-dragging');
     grid.classList.add('is-sorting');
     ghost = state.tile.cloneNode(true);
@@ -159,11 +203,11 @@
     positionGhost(e.clientX, e.clientY);
     // Der Ghost faengt keine Pointer-Events ab, ebenso wenig der Platzhalter.
     const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('.launcher-app');
-    if (!target || target === state.tile || target.parentElement !== grid) return;
-    const items = Array.from(grid.querySelectorAll('.launcher-app'));
+    if (!target || target === state.tile || target.parentElement !== state.container) return;
+    const items = Array.from(state.container.querySelectorAll(':scope > .launcher-app'));
     const from = items.indexOf(state.tile);
     const to = items.indexOf(target);
-    grid.insertBefore(state.tile, from < to ? target.nextSibling : target);
+    state.container.insertBefore(state.tile, from < to ? target.nextSibling : target);
   }
 
   function onIconPointerUp(e) {
@@ -182,8 +226,9 @@
   function onIconKeyDown(e) {
     if (B.state.section !== 'launcher' || B.state.launcherView !== 'apps' || !e.altKey) return;
     const tile = e.target.closest('.launcher-app');
-    if (!tile || tile.parentElement !== grid) return;
-    const tiles = Array.from(grid.querySelectorAll('.launcher-app'));
+    if (!tile || !grid.contains(tile)) return;
+    const container = tile.parentElement;
+    const tiles = Array.from(container.querySelectorAll(':scope > .launcher-app'));
     const current = tiles.indexOf(tile);
     const firstTop = tiles[0]?.getBoundingClientRect().top;
     const columns = Math.max(1, tiles.filter(item =>
@@ -193,27 +238,101 @@
     e.preventDefault();
     const next = Math.max(0, Math.min(tiles.length - 1, current + moves[e.key]));
     if (next === current) return;
-    grid.insertBefore(tile, next > current ? tiles[next].nextSibling : tiles[next]);
+    container.insertBefore(tile, next > current ? tiles[next].nextSibling : tiles[next]);
     persistIcons();
     announcePosition(tile);
     tile.focus({ preventScroll: true });
   }
 
+  // Touch-DnD: die sechs Punkte der Ueberschrift sind der Touch-Handle.
+  // Die native Desktop-Drag-Flaeche bleibt die komplette Ueberschrift.
+  function onGroupPointerDown(e) {
+    if (B.state.section !== 'launcher' || e.pointerType === 'mouse' || !e.isPrimary) return;
+    const grip = e.target.closest('.launcher-type-grip');
+    const section = grip?.closest('.launcher-type-group');
+    if (!section || !grid.contains(section)) return;
+    touchGroup = {
+      source: section, pointerId: e.pointerId,
+      x: e.clientX, y: e.clientY, active: false,
+      original: Array.from(grid.querySelectorAll(':scope > .launcher-type-group'))
+    };
+  }
+
+  function onGroupPointerMove(e) {
+    const state = touchGroup;
+    if (!state || e.pointerId !== state.pointerId) return;
+    if (!state.active && Math.hypot(e.clientX - state.x, e.clientY - state.y) < 8) return;
+    if (!state.active) {
+      state.active = true;
+      state.source.classList.add('is-group-dragging');
+    }
+    e.preventDefault();
+    const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('.launcher-type-group');
+    if (target && grid.contains(target)) moveGroup(state.source, target, e.clientY);
+  }
+
+  function finishTouchGroupDrag(commit) {
+    if (!touchGroup) return;
+    const state = touchGroup;
+    touchGroup = null;
+    clearGroupFeedback();
+    if (!state.active) return;
+    if (!commit) state.original.forEach(section => grid.appendChild(section));
+    else {
+      B.launcher.persistTypeOrder();
+      announceTypePosition(state.source);
+    }
+  }
+
   function setupGridDnd() {
+    grid.addEventListener('dragstart', e => {
+      const heading = e.target.closest('.launcher-type-heading');
+      if (!heading || !grid.contains(heading) || B.state.section !== 'launcher') return;
+      draggedGroup = heading.closest('.launcher-type-group');
+      groupDragOriginal = Array.from(grid.querySelectorAll(':scope > .launcher-type-group'));
+      draggedGroup.classList.add('is-group-dragging');
+      if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = 'move';
+        try { e.dataTransfer.setData('text/plain', draggedGroup.dataset.type); } catch (err) {}
+      }
+    });
     grid.addEventListener('dragover', e => {
-      if (B.state.launcherView !== 'list' || !draggedCard || draggedCard.parentElement !== grid) return;
+      if (draggedGroup) {
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+        moveGroup(draggedGroup, e.target.closest('.launcher-type-group'), e.clientY);
+        return;
+      }
+      if (B.state.launcherView !== 'list' || !draggedCard || !grid.contains(draggedCard)) return;
       e.preventDefault();
       if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
       const target = e.target.closest('.card');
-      if (!target || target === draggedCard) return;
+      if (!target || target === draggedCard || target.parentElement !== draggedCard.parentElement) return;
       grid.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
       target.classList.add('drag-over');
       const rect = target.getBoundingClientRect();
-      grid.insertBefore(draggedCard, e.clientY - rect.top < rect.height / 2 ? target : target.nextSibling);
+      draggedCard.parentElement.insertBefore(draggedCard,
+        e.clientY - rect.top < rect.height / 2 ? target : target.nextSibling);
     });
-    grid.addEventListener('drop', e => { if (draggedCard) e.preventDefault(); });
+    grid.addEventListener('drop', e => {
+      if (draggedGroup || draggedCard) e.preventDefault();
+      if (draggedGroup) finishNativeGroupDrag(true);
+    });
+    grid.addEventListener('dragend', e => {
+      // Auch wenn DOM-Umsortierung den nativen drop-Event unterdrueckt.
+      if (draggedGroup) finishNativeGroupDrag(true);
+    });
     grid.addEventListener('dragleave', e => {
-      if (e.target === grid) grid.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+      if (e.target === grid) grid.querySelectorAll('.drag-over, .is-group-target')
+        .forEach(el => el.classList.remove('drag-over', 'is-group-target'));
+    });
+    grid.addEventListener('pointerdown', onGroupPointerDown);
+    document.addEventListener('pointermove', onGroupPointerMove, { passive: false });
+    document.addEventListener('pointerup', e => {
+      if (touchGroup && e.pointerId === touchGroup.pointerId) finishTouchGroupDrag(true);
+    });
+    document.addEventListener('pointercancel', e => {
+      if (touchGroup && e.pointerId === touchGroup.pointerId) finishTouchGroupDrag(false);
     });
     // Delegation: funktioniert auch nach jedem neuen renderLauncher().
     grid.addEventListener('pointerdown', onIconPointerDown);
@@ -239,6 +358,7 @@
 
   B.drag = {
     enableList: enableListDrag,
+    announceTypePosition,
     setup: setupGridDnd,
     cancelIconDrag,
     suppressIconClick: () => Date.now() < suppressClickUntil

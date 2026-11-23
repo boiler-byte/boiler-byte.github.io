@@ -116,9 +116,19 @@
         <p class="launcher-hint" id="launcherHint">App-Symbole gedrückt halten und verschieben, um die Reihenfolge anzupassen.</p>
         <div class="launcher-add-wrap" id="launcherAddWrap">
           <button type="button" class="launcher-add-button" id="launcherAddButton"
-                  aria-haspopup="menu" aria-controls="launcherAddMenu" aria-expanded="false">+ App</button>
-          <div class="launcher-add-menu" id="launcherAddMenu" role="menu"
-               aria-label="App zum Launcher hinzufügen" hidden></div>
+                  aria-haspopup="dialog" aria-controls="launcherAddMenu" aria-expanded="false">+ App</button>
+          <div class="launcher-add-menu" id="launcherAddMenu" role="dialog"
+               aria-label="App zum Launcher hinzufügen" hidden>
+            <div class="launcher-add-search search-wrap" id="launcherAddSearchWrap">
+              <input type="search" class="search-input" id="launcherAddSearch"
+                     placeholder="Apps suchen…" aria-label="Apps zum Hinzufügen durchsuchen"
+                     aria-controls="launcherAddGroups" enterkeyhint="search" autocomplete="off">
+              <span class="search-icon" aria-hidden="true">⌕</span>
+              <button type="button" class="search-clear" id="launcherAddSearchClear"
+                      aria-label="Suche leeren">✕</button>
+            </div>
+            <div id="launcherAddGroups" class="launcher-add-groups"></div>
+          </div>
         </div>
       </div>
     </section>

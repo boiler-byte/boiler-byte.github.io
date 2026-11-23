@@ -58,9 +58,37 @@ Angepasst: `css/cards.css`.
 - Der aktive „Alle“-Filter verwendet dasselbe Neutralgrau wie der „Ueber“-Tab, ohne Glow.
 - Games, Tools und Misc verwenden monochrome Inline-SVGs anstelle der Emoji-Icons. Die Filterfunktion und die Beschriftungen bleiben unveraendert.
 
+## Launcher: +App nach Typ gruppiert
+
+- Die Auswahl unter **+ App** ist in die vorhandenen Typen **Games**, **Tools** und **Misc** gegliedert. Weitere in `repos.js` definierte Typen erscheinen als eigene Gruppen.
+- Jede Typgruppe ist ein einklappbarer Bereich und **beim Oeffnen der Auswahl geschlossen**. Die Anzahl verfuegbarer Apps steht neben dem Gruppentitel.
+- Apps sind innerhalb jeder Gruppe nach deutschem Alphabet (mit natuerlicher Zahlensortierung) geordnet. Bereits favorisierte Apps bleiben ausgeblendet.
+- Klick oder Enter/Leertaste auf einen Gruppentitel klappt sie auf oder zu; Pfeiltasten navigieren durch sichtbare Titel und Apps, Escape schliesst das Dropdown.
+- Die bisherige Funktion zum Hinzufuegen, die Favoritenreihenfolge und der leere Launcher bleiben erhalten.
+
+## Launcher: +App mit Bibliothekssuche
+
+- Direkt am Anfang des +App-Dropdowns steht ein Suchfeld mit Löschschaltfläche.
+- Die Suche verwendet dieselbe Relevanzfunktion wie die Bibliothek: App-Namen, Tags, Beschreibungen, Typen, Status und Jahr werden berücksichtigt; Groß-/Kleinschreibung und Umlaute sind normalisiert.
+- Ergebnisse bleiben nach App-Typ gruppiert und werden bei einer Suchanfrage direkt aufgeklappt. Innerhalb der Gruppen steht die Relevanz vor der alphabetischen Reihenfolge; ohne Suche bleiben alle Gruppen initial geschlossen und Namen alphabetisch sortiert.
+- Apps ohne URL oder mit leerer URL sowie bereits zum Launcher hinzugefügte Apps erscheinen nicht in der Auswahl.
+- Bei einer Suche ohne Treffer erscheint ein Hinweis. Die Suche lässt sich per X oder Escape leeren; Escape ohne Suchtext schließt das Dropdown.
+
+## Launcher: Apps nach Typ gruppiert und dauerhaft sortierbar
+
+- Die Hauptansicht **Apps** und die **Liste** zeigen Favoriten getrennt nach Typ (Games, Tools, Misc); eigene Typen aus `repos.js` werden ebenfalls automatisch eingeordnet. Leere Typgruppen werden nicht angezeigt.
+- Alle Gruppen sind bei der ersten Nutzung **aufgeklappt**. Ein Klick auf den Gruppentitel klappt die Gruppe ein oder aus. Der Zustand bleibt beim Wechsel zwischen Apps/Liste sowie nach einem Reload erhalten.
+- Die **Typ-Überschriften lassen sich per Drag & Drop verschieben** (Desktop: Ueberschrift greifen; Touch: Punktgriff links ziehen). Mit **Alt + Pfeil hoch/runter** lässt sich eine fokussierte Überschrift auch per Tastatur verschieben.
+- Gruppenreihenfolge und eingeklappte Gruppen werden unter `launcherTypeOrder` und `launcherTypeClosed` innerhalb des bestehenden `localStorage.boilerRoom` gespeichert. Die Favoritenreihenfolge (`favoriteOrder`) bleibt eine eigene Einstellung.
+- Einzelne Apps lassen sich weiterhin **innerhalb ihrer Typgruppe** sortieren: Listenzeilen ziehen; in der App-Ansicht Icons gedrückt halten oder Alt + Pfeiltasten nutzen.
+- Auch Typen, die vorübergehend keine Favoriten besitzen, behalten ihre gespeicherte Position. Neu auftauchende Typen werden ergänzt, ohne die vorhandene Sortierung zu überschreiben.
+- Das +App-Menü mit anfänglich **geschlossenen** Typen sowie Bibliothekssuche bleibt unabhängig davon unverändert.
+
+Geändert: `js/launcher.js`, `js/render.js`, `js/drag.js`, `js/storage.js` und `css/platform.css`.
+
 ## Weiterhin gueltig
 
-- `localStorage.boilerRoom` bleibt der einzige persistente Datenspeicher fuer Favoriten, Favoritenreihenfolge, Bibliotheks- und Launcher-Ansicht sowie zuletzt geoeffneten Bereich.
+- `localStorage.boilerRoom` bleibt der einzige persistente Datenspeicher fuer Favoriten, Favoritenreihenfolge, Typgruppen-Sortierung und -Oeffnungszustand, Bibliotheks- und Launcher-Ansicht sowie zuletzt geoeffneten Bereich.
 - Keine Migration und keine Aenderung der bestehenden Repo-Datenstruktur.
 - Die Bibliothek zeigt alle Apps einzeln; Gruppen sind nur Metadaten fuer Entdecken.
 - Horizontal scrollbare Highlights und Shelves inklusive Maus-Ziehen und Scroll-Pfeilen.
@@ -72,3 +100,11 @@ Angepasst: `css/cards.css`.
 - Zusaetzliche Tests fuer echtes Maus-Drag-to-Scroll auf Smartphone-Breite (simulierte Maus) und Desktop sowie Browser-Vorwaerts, Favorite in der Vorschau und den Schliessen-Button.
 - Keine JavaScript-Laufzeitfehler oder horizontale Ueberbreite des Hauptdokuments.
 - Der direkte `file://`-Aufruf ist in der QA-Umgebung administrativ gesperrt; der Browsertest nutzte ein eingebettetes Dokument mit inhaltlich unveraenderten Projekt-Skripten und CSS sowie nur im Test verwendeten externen Demo-Repos. Die produktive `repos.js` war nicht beteiligt.
+
+### Zusaetzliche Pruefung: Launcher-Typgruppen
+
+- JavaScript-Syntax mit `node --check` geprueft.
+- Chromium mit eingebetteten CSS-/JS-Projektdateien und isolierten Demo-Repos: 320, 390 und 1280 px, ohne Laufzeitfehler oder horizontalen Überlauf.
+- Initial offene Gruppen, Einklappen und Wiederherstellen, Desktop-Drag & Drop, Touch-Griff, Tastatur-Sortierung, Reload und Ansicht-Wechsel geprueft.
+- Weiterhin funktionsfaehig: einzelne Apps per Alt + Pfeil bzw. Listen-Drag sortieren, Entfernen und erneutes Hinzufuegen ueber die +App-Suche, Ausschluss von Repos ohne URL im Dropdown.
+- Das Testdokument ist isoliert; die produktive `repos.js` wird nicht eingebunden oder veraendert.

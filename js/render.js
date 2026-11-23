@@ -122,21 +122,31 @@
       grid.appendChild(empty);
       return;
     }
-    entries.forEach((repo, i) => {
-      if (appView) {
-        grid.appendChild(B.launcher.makeIcon(repo));
-        return;
-      }
-      const card = B.cards.createCard(repo, i, { favoriteVariant: 'trash' });
-      card.classList.add('visible');
-      // Der Entfernen-Button kommt ganz rechts hinter den App-Namen.
-      const image = card.querySelector('.card-image');
-      const favorite = image?.querySelector('.fav-btn');
-      if (favorite) card.appendChild(favorite);
-      image?.remove();
-      card.querySelector('.card-tooltip')?.remove();
-      card.querySelector('.card-meta')?.remove();
-      grid.appendChild(card);
+    const groups = new Map();
+    entries.forEach(repo => {
+      const type = (typeof repo.type === 'string' && repo.type.trim()) ? repo.type : 'misc';
+      if (!groups.has(type)) groups.set(type, []);
+      groups.get(type).push(repo);
+    });
+    let index = 0;
+    B.launcher.getTypeOrder([...groups.keys()]).forEach(type => {
+      const groupRepos = groups.get(type);
+      if (!groupRepos?.length) return;
+      const { section, items } = B.launcher.makeTypeGroup(type, groupRepos.length, appView);
+      groupRepos.forEach(repo => {
+        if (appView) { items.appendChild(B.launcher.makeIcon(repo)); return; }
+        const card = B.cards.createCard(repo, index++, { favoriteVariant: 'trash' });
+        card.classList.add('visible');
+        // Der Entfernen-Button kommt ganz rechts hinter den App-Namen.
+        const image = card.querySelector('.card-image');
+        const favorite = image?.querySelector('.fav-btn');
+        if (favorite) card.appendChild(favorite);
+        image?.remove();
+        card.querySelector('.card-tooltip')?.remove();
+        card.querySelector('.card-meta')?.remove();
+        items.appendChild(card);
+      });
+      grid.appendChild(section);
     });
     if (!appView) B.drag.enableList();
   }

@@ -431,7 +431,7 @@
   box-shadow: 0 0 18px var(--cyan-dim);
 }
 .launcher-add-button:disabled { opacity: .45; cursor: default; }
-.launcher-add-button:focus-visible, .launcher-add-option:focus-visible {
+.launcher-add-button:focus-visible, .launcher-add-option:focus-visible, .launcher-add-group-heading:focus-visible {
   outline: 2px solid var(--cyan-base); outline-offset: 2px;
 }
 .launcher-add-menu {
@@ -443,11 +443,66 @@
   max-height: min(350px, 60dvh);
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-color: rgba(154,163,178,.48) transparent;
+  scrollbar-width: thin;
   padding: .35rem;
   border: 1px solid rgba(255,255,255,.22);
   border-radius: 14px;
   background: #171a21;
   box-shadow: 0 18px 45px rgba(0,0,0,.75);
+}
+/* Fixiertes Suchfeld als erster Eintrag im +App-Menue. Suchstil wie Bibliothek. */
+.launcher-add-search {
+  position: sticky;
+  top: -.35rem;
+  z-index: 2;
+  width: 100%;
+  min-width: 0;
+  flex: none;
+  padding: .35rem .35rem .65rem;
+  background: #171a21;
+}
+.launcher-add-search .search-input { min-height: 38px; }
+.launcher-add-search .search-clear:focus-visible {
+  outline: 2px solid var(--cyan-base);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+.launcher-add-empty {
+  margin: .3rem .4rem .65rem;
+  padding: .8rem .35rem;
+  color: var(--text-muted);
+  text-align: center;
+  font: 500 .8rem var(--font-mono);
+}
+/* Native Details: pro App-Typ ein einklappbarer Bereich, initial geschlossen. */
+.launcher-add-group + .launcher-add-group { border-top: 1px solid rgba(255,255,255,.09); }
+.launcher-add-group-heading {
+  display: flex; align-items: center; gap: .65rem;
+  min-height: 43px; padding: .64rem .7rem;
+  border-radius: 8px;
+  color: var(--text-primary);
+  font: 600 .86rem var(--font-mono);
+  cursor: pointer; list-style: none;
+}
+.launcher-add-group-heading::-webkit-details-marker { display: none; }
+.launcher-add-group-heading:hover { background: rgba(255,255,255,.055); }
+.launcher-add-group-heading::after {
+  content: '';
+  width: 7px; height: 7px; margin-left: .15rem; flex: 0 0 auto;
+  border-right: 1.6px solid var(--text-muted);
+  border-bottom: 1.6px solid var(--text-muted);
+  transform: rotate(45deg); transition: transform .15s ease;
+}
+.launcher-add-group[open] > .launcher-add-group-heading::after { transform: rotate(225deg); }
+.launcher-add-group-count {
+  margin-left: auto; color: var(--text-muted);
+  font: 500 .77rem var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.launcher-add-group-options { padding: 0 .2rem .45rem .6rem; }
+@media (prefers-reduced-motion: reduce) {
+  .launcher-add-group-heading::after { transition: none; }
 }
 .launcher-add-option {
   display: flex; align-items: center; width: 100%; gap: .8rem;
@@ -517,12 +572,82 @@
 .launcher-page .view-list .card-content h3 { min-width: 0; overflow-wrap: anywhere; }
 
 /* App-Ansicht: runde Repo-Bilder, klickbar und per Halten verschiebbar. */
-#launcherGrid.launcher-app-grid {
+/* Typgruppen strukturieren beide Launcher-Ansichten; die App-Raster liegen innen. */
+#launcherGrid.launcher-app-grid,
+#launcherGrid.view-list {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: clamp(1.2rem, 2.8vw, 2rem);
+}
+.launcher-type-group { min-width: 0; }
+.launcher-type-heading {
+  display: flex;
+  align-items: center;
+  min-height: 46px;
+  gap: .35rem;
+  border-bottom: 1px solid rgba(185,203,226,.22);
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.launcher-type-heading:active { cursor: grabbing; }
+.launcher-type-grip {
+  display: grid;
+  place-items: center;
+  flex: 0 0 26px;
+  color: var(--text-muted);
+  opacity: .7;
+  touch-action: none;
+  cursor: grab;
+}
+.launcher-type-heading:hover .launcher-type-grip { opacity: 1; }
+.launcher-type-toggle {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex: 1;
+  min-width: 0;
+  padding: .7rem .5rem .7rem .15rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: 600 clamp(.92rem, 1.5vw, 1.04rem) var(--font-mono);
+  text-align: left;
+  cursor: pointer;
+}
+.launcher-type-toggle:focus-visible { outline: 2px solid var(--cyan-base); outline-offset: -2px; border-radius: 6px; }
+.launcher-type-name { overflow-wrap: anywhere; }
+.launcher-type-count { color: var(--text-muted); font: 500 .78rem var(--font-mono); }
+.launcher-type-chevron {
+  width: 9px;
+  height: 9px;
+  margin-left: auto;
+  border-right: 1.8px solid var(--text-muted);
+  border-bottom: 1.8px solid var(--text-muted);
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform .15s ease;
+}
+.launcher-type-toggle[aria-expanded="true"] .launcher-type-chevron {
+  transform: translateY(2px) rotate(225deg);
+}
+.launcher-type-items[hidden] { display: none !important; }
+.launcher-type-items { padding-top: .9rem; }
+.launcher-type-items.launcher-type-apps {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(98px, 120px));
   align-items: start;
   justify-content: start;
   gap: clamp(.6rem, 1.8vw, 1.15rem);
+}
+.launcher-type-items.view-list { display: flex; flex-direction: column; gap: .5rem; }
+.launcher-type-group.is-group-dragging { opacity: .45; }
+.launcher-type-group.is-group-target > .launcher-type-heading {
+  border-bottom-color: var(--text-muted);
+  box-shadow: 0 2px 0 rgba(154,163,178,.65);
+}
+@media (prefers-reduced-motion: reduce) {
+  .launcher-type-chevron { transition: none; }
 }
 .launcher-app {
   display: flex;
@@ -572,8 +697,8 @@
   min-height: 2.6em;
   overflow-wrap: anywhere;
 }
-#launcherGrid.launcher-app-grid.is-sorting .launcher-app { transition: none; }
-#launcherGrid.launcher-app-grid .launcher-app.is-dragging { opacity: .2; pointer-events: none; }
+#launcherGrid.is-sorting .launcher-app { transition: none; }
+#launcherGrid .launcher-app.is-dragging { opacity: .2; pointer-events: none; }
 .launcher-app-ghost {
   position: fixed;
   z-index: 3500;
@@ -637,7 +762,7 @@
   .discover-heading-icon { flex-basis: 30px; width: 30px; height: 30px; }
   .library-sort-wrap { flex: 0 0 60px; min-width: 60px; }
   .launcher-page .view-list .card-content { flex-wrap: wrap; }
-  #launcherGrid.launcher-app-grid { grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); }
+  .launcher-type-items.launcher-type-apps { grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); }
   .launcher-app { padding-inline: .2rem; }
 }
 @media (max-width: 390px) {

@@ -7,6 +7,8 @@
   const DEFAULTS = {
     favorites: [],
     favoriteOrder: [],
+    launcherTypeOrder: ['game', 'tool', 'misc'],
+    launcherTypeClosed: [],
     libraryView: 'cards',
     launcherView: 'apps',
     lastSection: 'discover'
@@ -18,7 +20,8 @@
     'boilerRoomLauncherView'
   ];
 
-  let values = { ...DEFAULTS, favorites: [], favoriteOrder: [] };
+  let values = { ...DEFAULTS, favorites: [], favoriteOrder: [],
+    launcherTypeOrder: DEFAULTS.launcherTypeOrder.slice(), launcherTypeClosed: [] };
   let available = false;
 
   function snapshotValue(value) {
@@ -46,6 +49,12 @@
             }
             if (Array.isArray(data.favoriteOrder)) {
               values.favoriteOrder = data.favoriteOrder.filter(x => typeof x === 'string');
+            }
+            if (Array.isArray(data.launcherTypeOrder)) {
+              values.launcherTypeOrder = [...new Set(data.launcherTypeOrder.filter(x => typeof x === 'string' && x.trim()))];
+            }
+            if (Array.isArray(data.launcherTypeClosed)) {
+              values.launcherTypeClosed = [...new Set(data.launcherTypeClosed.filter(x => typeof x === 'string' && x.trim()))];
             }
             if (['cards', 'list', 'icons'].includes(data.libraryView)) {
               values.libraryView = data.libraryView;
