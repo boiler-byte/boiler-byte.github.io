@@ -137,6 +137,19 @@ const originrepos = [
     tags: ['Lokal', 'Sensible Daten']
 },
 {
+    label: "Sonnensystem",
+    img: 'img/app/sonnensystem.webp',
+    preview: 'img/app/sonnensystem-preview.webp',
+    description: 'Interaktives Sonnensystem.',
+    type: 'tool',
+    group: 'tool',
+    status: 'beta',
+    featured: 'wide',
+    url: 'https://boiler-byte.github.io/Sonnensystem/',
+    year: 2026,
+    tags: ['Astronomie', 'Planeten', 'Asteroiden', 'Monde', 'Jupiter', 'Mars', 'Erde', 'Venus', 'Neptun', 'Uranus', 'Pluto']
+},
+{
     label: "Glücksrad",
     img: 'img/app/gluecksrad.webp',
     preview: 'img/app/gluecksrad-preview.webp',
@@ -144,6 +157,7 @@ const originrepos = [
     type: 'game',
     group: 'multiplayer',
     status: 'beta',
+    featured: 'wide',
     url: 'https://boiler-byte.github.io/Gluecksrad/',
     year: 2026,
     tags: ['Ratespiel', 'Multiplayer']
@@ -157,8 +171,7 @@ const originrepos = [
     group: 'dev',
     url: 'https://boiler-byte.github.io/Bildstapelverarbeitung/',
     year: 2026,
-    tags: ['Bildbearbeitung', 'Thumbmaker', 'crop', 'resize', 'color to alpha', 'Farbe zu Alpha'],
-    featured: 'wide',
+    tags: ['Bildbearbeitung', 'Thumbmaker', 'crop', 'resize', 'color to alpha', 'Farbe zu Alpha']
 },
 {
     label: "LocalSync",
@@ -287,6 +300,18 @@ const originrepos = [
     tags: ['Speed Typing', 'High-Score'],
 },
 {
+    label: "Periodensystem",
+    img: 'img/app/periodensystem.svg',
+    preview: 'img/app/periodensystem-preview.webp',
+    description: 'Interaktives Periodensystem der Elemente',
+    type: 'tool',
+    group: 'tool',
+    status: 'beta',
+    url: 'https://boiler-byte.github.io/Periodensystem/',
+    year: 2026,
+    tags: ['Chemie', 'Atome', 'Neutronen', 'Elektronen']
+},
+{
     label: "Radio",
     img: 'img/app/radio.webp',
     preview: 'img/app/radio-preview.webp',
@@ -343,30 +368,6 @@ const originrepos = [
     url: 'https://boiler-byte.github.io/Flaggenquiz/',
     year: 2026,
     tags: ['Fragen', 'Allgemeinwissen']
-},
-{
-    label: "Periodensystem",
-    img: 'img/app/periodensystem.svg',
-    preview: 'img/app/periodensystem-preview.webp',
-    description: 'Interaktives Periodensystem der Elemente',
-    type: 'tool',
-    group: 'tool',
-    status: 'beta',
-    url: 'https://boiler-byte.github.io/Periodensystem/',
-    year: 2026,
-    tags: ['Chemie', 'Atome', 'Neutronen', 'Elektronen']
-},
-{
-    label: "Sonnensystem",
-    img: 'img/app/sonnensystem.webp',
-    preview: 'img/app/sonnensystem-preview.webp',
-    description: 'Interaktives Sonnensystem.',
-    type: 'tool',
-    group: 'tool',
-    status: 'beta',
-    url: 'https://boiler-byte.github.io/Sonnensystem/',
-    year: 2026,
-    tags: ['Astronomie', 'Planeten', 'Asteroiden', 'Monde', 'Jupiter', 'Mars', 'Erde', 'Venus', 'Neptun', 'Uranus', 'Pluto']
 },
 {
     label: "Leseliste",
@@ -527,6 +528,7 @@ const originrepos = [
     img: 'img/synthesizer.jpg',
     description: 'Einfacher Synthesizer für unterwegs.',
     type: 'tool',
+    featured: 'wide',
     url: 'https://boiler-byte.github.io/Synthesizer/',
     year: 2026,
     tags: ['Mobile', 'Keyboard']
@@ -601,13 +603,14 @@ const originrepos = [
     type: 'misc',
     year: 2026,
     tags: ['Information', 'Installation'],
-    featured: 'tall', //wide,tall
+    // featured: 'tall', //wide,tall
 },
 {
     label: "Ninjame",
     img: 'https://ninjame-byte.github.io/assets/schatzinsel.png',
     description: 'Vibe Coding macht das besser als offizielle Kinder-Apps. Na endlich! :-)',
     type: 'game',
+    featured: 'wide',
     url: 'https://ninjame-byte.github.io',
     year: 2026,
     tags: ['Lernplattform', 'Kinder'],

@@ -52,6 +52,12 @@ Angepasst: `css/cards.css`.
 - Der Entfernen-Button in der Launcher-Liste ist neutralgrau und besitzt auch bei Hover keinen Glow.
 - Navigation, Favoriten-Logik und lokale Speicherung behalten ihre bisherigen Schnittstellen.
 
+## Bibliothek: reduzierte Filterleiste
+
+- Die Filterleiste ist transparent und verzichtet auf den bisherigen Backdrop-Blur; Rahmen und Abstaende bleiben erhalten.
+- Der aktive „Alle“-Filter verwendet dasselbe Neutralgrau wie der „Ueber“-Tab, ohne Glow.
+- Games, Tools und Misc verwenden monochrome Inline-SVGs anstelle der Emoji-Icons. Die Filterfunktion und die Beschriftungen bleiben unveraendert.
+
 ## Weiterhin gueltig
 
 - `localStorage.boilerRoom` bleibt der einzige persistente Datenspeicher fuer Favoriten, Favoritenreihenfolge, Bibliotheks- und Launcher-Ansicht sowie zuletzt geoeffneten Bereich.
