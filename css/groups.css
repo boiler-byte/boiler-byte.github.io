@@ -1,0 +1,261 @@
+/* ---------- REPO-GRUPPEN (nur Kartenansicht) ---------- */
+.card.group-card { cursor: pointer; }
+.card.group-card .card-image { background: radial-gradient(circle at 50% 40%, rgba(183, 138, 255, .20), #111 72%); }
+.card.group-card .card-image img { object-fit: cover; }
+/* "all" bei repogroups.img / repogroups.preview: gemeinsames Bildraster. */
+.group-collage {
+  display: grid;
+  grid-template-columns: repeat(var(--collage-columns, 2), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--collage-rows, 2), minmax(0, 1fr));
+  gap: 3px;
+  overflow: hidden;
+  background: #111;
+}
+.card.group-card .group-image-collage,
+.card.group-card .group-preview-collage {
+  position: absolute;
+  inset: 0;
+}
+.card.group-card .group-image-collage { z-index: 0; }
+.card.group-card .group-preview-collage {
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .35s ease;
+}
+.card.group-card:hover .group-preview-collage,
+.card.group-card:focus-visible .group-preview-collage {
+  opacity: 1;
+}
+.card.group-card .group-collage img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  object-fit: cover;
+  transform: none;
+  filter: brightness(.94) contrast(1.04);
+  transition: filter .35s ease;
+}
+.card.group-card:hover .group-collage img,
+.card.group-card:focus-visible .group-collage img {
+  transform: none;
+  filter: brightness(1) contrast(1.05);
+}
+.card.group-card .group-card-count {
+  position: absolute; left: .85rem; bottom: .75rem; z-index: 4;
+  padding: .25rem .65rem; border-radius: 20px; font-size: .73rem;
+  color: #f2e8ff; border: 1px solid var(--violet-border);
+  background: rgba(10, 10, 12, .85);
+}
+.card.group-card .group-card-title { font-size: 1.5rem; }
+.card.group-card:focus-visible { outline: 2px solid var(--violet-base); outline-offset: 3px; }
+
+html.group-dialog-open, html.group-dialog-open body { overflow: hidden; }
+/* Separater, vollflächiger Backdrop: nur Fade, kein Clip-/Zoom-Effekt.
+   Die Clip-Path-Animation betrifft ausschließlich die Orbit-Ebene. */
+.group-backdrop[hidden] { display: none !important; }
+.group-backdrop {
+  position: fixed; inset: 0; z-index: 999;
+  background: rgba(5, 6, 10, .96);
+  backdrop-filter: blur(17px);
+  -webkit-backdrop-filter: blur(17px);
+  opacity: 0; pointer-events: none;
+  transition: opacity .76s cubic-bezier(.16, 1, .3, 1);
+}
+.group-backdrop.is-visible { opacity: .9; }
+.group-backdrop.is-closing {
+  opacity: 0;
+  transition: opacity .82s cubic-bezier(.65, 0, 1, .55);
+}
+.group-overlay[hidden] { display: none !important; }
+.group-overlay {
+  position: fixed; inset: 0; z-index: 1000; display: flex;
+  flex-direction: column; align-items: center;
+  background: transparent;
+  color: var(--text-primary);
+  /* Die Orbit-Ansicht wächst weiterhin direkt aus der angeklickten Gruppen-Card. */
+  clip-path: var(--group-card-clip, inset(50% 50% 50% 50% round 12px));
+  transition: clip-path .76s cubic-bezier(.16, 1, .3, 1);
+  overflow-y: auto; overscroll-behavior: contain;
+  /* Auch beim Wechsel zwischen Scroll-/Nicht-Scroll-Zustand stabil. */
+  scrollbar-gutter: stable;
+}
+/* Zuerst die korrekte Card-Position im Layout verankern, ohne dass
+   Clip-Maske oder Orbit bereits zum Fallback-Ursprung animieren. */
+.group-overlay.is-preparing,
+.group-overlay.is-preparing .group-center,
+.group-overlay.is-preparing .group-thumb {
+  transition: none !important;
+}
+.group-overlay.is-open { clip-path: inset(0 0 0 0 round 0px); }
+/* Rückflug und Backdrop-Fade starten gemeinsam. */
+.group-overlay.is-closing {
+  clip-path: var(--group-card-clip, inset(50% 50% 50% 50% round 12px));
+  transition: clip-path .82s cubic-bezier(.65, 0, 1, .55);
+  /* Die Rückflug-Animation bleibt sichtbar, blockiert aber keine Scroll-Gesten. */
+  pointer-events: none;
+}
+.group-overlay.is-closing .group-thumb {
+  transition-delay: 0ms !important;
+  transition-duration: .62s, .46s, .2s, .2s;
+  transition-timing-function: cubic-bezier(.6, 0, 1, .45), ease, ease, ease;
+}
+.group-overlay.is-closing .group-center {
+  transition-duration: .63s, .45s;
+  transition-timing-function: cubic-bezier(.6, 0, 1, .45), ease;
+}
+.group-overlay.is-closing .group-thumb,
+.group-overlay.is-closing .group-center,
+.group-overlay.is-closing .group-overlay-close { pointer-events: none; }
+.group-overlay-header {
+  width: min(1060px, calc(100% - 2rem));
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; padding: 1.25rem 0 .5rem; z-index: 11;
+  opacity: 0; transform: translateY(-12px);
+  transition: opacity .28s ease, transform .4s ease;
+}
+.group-overlay.is-open .group-overlay-header { opacity: 1; transform: none; }
+.group-overlay.is-closing .group-overlay-header { opacity: 0; transform: translateY(-12px); }
+.group-overlay-eyebrow {
+  display: block; color: var(--violet-base); letter-spacing: .16em;
+  font-size: .68rem; font-weight: 600; text-transform: uppercase;
+}
+.group-overlay-header h2 { font-size: clamp(1.25rem, 4vw, 2rem); }
+.group-overlay-close, .group-preview-back {
+  flex: 0 0 auto; cursor: pointer; color: var(--text-primary);
+  border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.06);
+  border-radius: 40px; padding: .55rem .9rem;
+  font: 500 .85rem var(--font-mono);
+}
+.group-overlay-close:hover, .group-preview-back:hover {
+  border-color: var(--violet-base); background: rgba(183,138,255,.12);
+}
+.group-overlay-close:focus-visible, .group-preview-back:focus-visible,
+.group-thumb:focus-visible { outline: 2px solid var(--cyan-base); outline-offset: 4px; }
+.group-stage {
+  width: min(1060px, 100%); margin: auto; position: relative;
+  z-index: 1; padding: 0 1rem 1rem;
+}
+.group-orbit {
+  position: relative; width: 100%; height: clamp(345px, calc(100dvh - 165px), 650px);
+  /* Kein eigener Stacking-Context: angehobene Thumbs dürfen vor der Vorschau liegen. */
+}
+.group-orbit::before {
+  content: ''; position: absolute; width: min(64vw, 420px); aspect-ratio: 1;
+  left: 50%; top: 50%; transform: translate(-50%, -50%);
+  border: 1px dashed rgba(183,138,255,.16); border-radius: 50%; pointer-events: none;
+  opacity: 0; scale: .7;
+  transition: opacity .52s ease, scale .62s cubic-bezier(.16, 1, .3, 1);
+}
+.group-overlay.is-open .group-orbit::before { opacity: 1; scale: 1; }
+.group-center {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%)
+             translate(var(--group-from-x, 0px), var(--group-from-y, 0px)) scale(.22);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 174px; height: 174px; padding: .45rem;
+  border: 1px solid var(--violet-border); border-radius: 50%;
+  box-shadow: 0 0 55px rgba(183,138,255,.18), inset 0 0 35px rgba(183,138,255,.09);
+  background: radial-gradient(circle at center, #26203a, #101016 75%);
+  text-align: center; opacity: 0;
+  transition: transform .68s cubic-bezier(.16, 1, .3, 1), opacity .48s ease;
+}
+.group-overlay.is-open .group-center { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.group-center { cursor: pointer; color: var(--text-primary); font: inherit; }
+.group-center:hover { border-color: var(--violet-base); box-shadow: 0 0 65px rgba(183,138,255,.3), inset 0 0 35px rgba(183,138,255,.12); }
+.group-center:focus-visible { outline: 2px solid var(--cyan-base); outline-offset: 5px; }
+/* Die Orbit-Mitte zeigt ausschließlich das vergrößerte Gruppenbild. */
+.group-center > img,
+.group-center > .group-image-collage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  border-radius: 50%;
+  overflow: hidden;
+}
+.group-center > img { object-fit: cover; }
+.group-center > .group-image-collage { gap: 2px; }
+.group-center > .group-image-collage img {
+  width: 100%; height: 100%; min-width: 0; min-height: 0;
+  object-fit: cover; margin: 0; border-radius: 0;
+}
+.group-thumb {
+  --x: 0px; --y: 0px;
+  position: absolute; left: 50%; top: 50%; z-index: var(--orbit-z, 2);
+  transform: translate(-50%, -50%)
+             translate(var(--group-from-x, 0px), var(--group-from-y, 0px)) scale(.15);
+  opacity: 0; width: 148px; padding: .55rem;
+  display: flex; flex-direction: column; align-items: center; gap: .45rem;
+  border: none; border-radius: 15px;
+  background: rgba(20, 22, 29, .76); color: #f4f4f7;
+  font-family: var(--font-mono); font-size: .96rem; font-weight: 600;
+  cursor: pointer;
+  transition: transform .68s cubic-bezier(.16, 1, .3, 1), opacity .55s ease,
+              background .2s ease, box-shadow .2s ease;
+  transition-delay: var(--delay, 0ms);
+}
+.group-overlay.is-open .group-thumb {
+  opacity: 1;
+  transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(1);
+}
+.group-overlay.is-open .group-thumb:hover,
+.group-overlay.is-open .group-thumb.is-selected {
+  background: rgba(42, 30, 57, .96);
+  box-shadow: 0 0 0 1px var(--violet-border), 0 0 25px rgba(183,138,255,.23);
+}
+.group-thumb img {
+  display: block; width: 120px; height: 120px; object-fit: cover;
+  border-radius: 12px; background: #15141c;
+}
+.group-thumb span { overflow-wrap: anywhere; max-width: 100%; line-height: 1.2; }
+/* Vertikale Stapelung der Thumbs bleibt auch bei geöffneter Vorschau erhalten.
+   Hover/Fokus hebt den aktiven Thumb an, die Preview bleibt darüber. */
+.group-overlay.is-open .group-thumb:hover,
+.group-overlay.is-open .group-thumb.is-selected,
+.group-overlay.is-open .group-thumb:focus-visible {
+  z-index: var(--orbit-active-z, 12);
+  transform: translate(-50%, -50%) translate(var(--x), var(--y)) scale(1.065);
+}
+.group-preview[hidden] { display: none !important; }
+.group-preview {
+  position: absolute; left: 50%; top: 50%; z-index: var(--orbit-preview-z, 20);
+  width: min(var(--preview-width, 370px), calc(100vw - 2rem));
+  max-height: calc(100dvh - 110px);
+  transform: translate(-50%, -50%) scale(.75);
+  opacity: 0; pointer-events: none;
+  transition: transform .26s cubic-bezier(.2,.8,.2,1), opacity .24s ease;
+}
+.group-preview.is-visible {
+  opacity: 1; pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+.group-preview .card {
+  width: 100%; max-height: calc(100dvh - 130px);
+  overflow-y: auto; opacity: 1; transform: none !important;
+  box-shadow: 0 15px 65px rgba(0, 0, 0, .95), 0 0 0 1px var(--accent-glow);
+}
+.group-preview .card .card-content h3 { font-size: 1.5rem; }
+.group-preview .card.featured .card-content h3 { font-size: 2rem; }
+.group-preview .card:hover { transform: none !important; }
+.group-preview-back {
+  position: absolute; top: -.9rem; right: -.6rem; z-index: 15;
+  background: #1d1d24; padding: .4rem .65rem;
+}
+@media (max-width: 620px) {
+  .group-overlay-header { padding-top: .75rem; }
+  .group-center { width: 118px; height: 118px; padding: .35rem; }
+  .group-thumb { width: 114px; font-size: .84rem; padding: .4rem; gap: .35rem; }
+  .group-thumb img { width: 94px; height: 94px; }
+  .group-orbit { height: clamp(350px, calc(100dvh - 152px), 600px); }
+  .group-preview .card-content { padding: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .group-backdrop, .group-overlay, .group-overlay-header, .group-orbit::before,
+  .group-center, .group-thumb, .group-preview { transition: none !important; }
+}

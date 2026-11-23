@@ -1,0 +1,257 @@
+/* ---------- LISTEN-ANSICHT ---------- */
+.grid.view-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-bottom: 3rem;
+}
+.view-list .card {
+  flex-direction: row;
+  align-items: center;
+  padding: 0;
+  transform: none !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  opacity: 1;
+}
+.view-list .card:hover {
+  transform: translateX(4px) !important;
+  box-shadow: 0 4px 16px -4px var(--accent-dim), 0 0 0 1px var(--accent-glow);
+}
+.view-list .card::before {
+  width: 3px;
+}
+.view-list .card-image,
+.view-list .card-tooltip {
+  display: none;
+}
+.view-list .card-content {
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  width: 100%;
+}
+.view-list .card-content h3 {
+  font-size: 1rem;
+  min-width: 160px;
+}
+.view-list .card-content .description { display: none; }
+.view-list .card-meta { margin-top: 0; margin-left: auto; }
+.view-list .type-badge,
+.view-list .status-badge {
+  position: static;
+  transform: none;
+  box-shadow: none;
+  flex-shrink: 0;
+}
+
+/* Grip / Drag-Handle */
+/* Grip / Drag-Handle – nur noch visueller Hinweis.
+   Die eigentliche Drag-Fläche ist die komplette Zeile (.card). */
+.drag-handle {
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  padding: 0 0.6rem 0 0.85rem;
+  flex-shrink: 0;
+  user-select: none;
+  pointer-events: none;        /* Touches/Klicks gehen an die Karte */
+  letter-spacing: -2px;
+  opacity: 0.55;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+.view-list .card:hover .drag-handle {
+  opacity: 0.9;
+  color: #fff;
+}
+
+/* Ganze Zeile als Drag-Quelle */
+.view-list .card[draggable="true"] {
+  cursor: grab;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;  /* iOS: Callout beim Long-Press unterdrücken */
+}
+.view-list .card[draggable="true"]:active { cursor: grabbing; }
+
+/* „Gegriffen“-Zustand: leicht kippen, anheben, farbig hervorheben */
+.view-list .card.dragging {
+  opacity: 0.92;
+  transform: rotate(-2deg) scale(1.015) !important;
+  border-color: var(--accent-glow, var(--orange-glow)) !important;
+  box-shadow:
+    0 16px 34px -10px rgba(0, 0, 0, 0.85),
+    0 0 0 1px var(--accent-glow, var(--orange-glow)),
+    0 0 26px var(--accent-dim, var(--orange-dim)) !important;
+  z-index: 20;
+  cursor: grabbing;
+}
+.view-list .card.dragging .drag-handle {
+  opacity: 1;
+  color: var(--accent-glow, var(--orange-glow));
+}
+
+/* Drop-Ziel */
+.view-list .card.drag-over {
+  outline: 2px dashed var(--gold-base);
+}
+
+
+
+
+/* ---------- ICON-ANSICHT ---------- */
+.grid.view-icons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.75rem;
+}
+.view-icons .card {
+  transform: none !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  opacity: 1;
+}
+.view-icons .card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 6px 18px -4px var(--accent-dim), 0 0 0 1px var(--accent-glow);
+}
+.view-icons .card::before { width: 2px; }
+.view-icons .card-image,
+.view-icons .card-tooltip,
+.view-icons .card-meta,
+.view-icons .fav-btn { display: none; }
+.view-icons .card-content {
+  padding: 0.9rem 0.7rem;
+  align-items: center;
+  text-align: center;
+  gap: 0.35rem;
+}
+.view-icons .card-content h3 { font-size: 0.8rem; }
+.view-icons .card-content .description { display: none; }
+.view-icons .repo-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+.view-icons .type-badge,
+.view-icons .status-badge {
+  position: static;
+  transform: none;
+  font-size: 0.55rem;
+  padding: 0.15rem 0.4rem;
+  box-shadow: none;
+}
+
+/* Icon im Content (Card + Liste) */
+.repo-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 620px) {
+
+  .filter-chips { gap: 0.5rem; margin: auto; }
+  .search-wrap { margin: auto; min-width: 180px; width: 180px; flex: 0 1 180px; }
+  .view-dropdown { margin: auto; }
+  .chip {
+    font-size: 1.2rem;
+    font-weight: 400;
+    padding: 0.5rem 0.8rem;
+  }
+  .chip>.text { display: none; }
+  .chip>.label {font-size:0.8rem;}
+}
+
+@media (min-width: 640px) {
+  .grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* 2x2 featured */
+  .card.featured { grid-column: span 2; grid-row: span 1; }
+  /* 2x1 – breit */
+  .card.featured-wide { grid-column: span 2; grid-row: span 1; }
+  /* 1x2 – hoch */
+  .card.featured-tall { grid-column: span 1; grid-row: span 2; }
+  .card.featured-tall .card-image { aspect-ratio: 4 / 5; }
+}
+
+@media (min-width: 1024px) {
+  .container { padding: 0 2.5rem; }
+  .grid { grid-template-columns: repeat(3, 1fr); }
+
+  /* 2x2 */
+  .card.featured { grid-column: span 2; grid-row: span 2; }
+  /* 2x1 */
+  .card.featured-wide { grid-column: span 2; grid-row: span 1; }
+  /* 1x2 */
+  .card.featured-tall { grid-column: span 1; grid-row: span 2; }
+}
+
+@media (min-width: 1400px) {
+  .grid { grid-template-columns: repeat(4, 1fr); }
+  .card.featured { grid-column: span 2; grid-row: span 2; }
+  .card.featured-wide { grid-column: span 2; grid-row: span 1; }
+  .card.featured-tall { grid-column: span 1; grid-row: span 2; }
+}
+
+/* ---------- REDUCED MOTION ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .card { opacity: 1 !important; transform: none !important; }
+  body::after { animation: none; }
+}
+
+/* ---------- FOCUS ---------- */
+.card:focus-within,
+.search-input:focus-visible,
+a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(44, 212, 255, 0.85),
+              0 0 16px var(--cyan-dim);
+}
+
+/* Maus-Klick: keinen Fokusring zeigen, nur Tastatur */
+.chip:focus:not(:focus-visible) { outline: none; box-shadow: none; }
+.chip:focus { outline: none; box-shadow: none; }
+.chip:focus-visible { box-shadow: 0 0 0 2px rgba(44, 212, 255, 0.85); }
+
+/* #searchClear { display:none} */
+/* Natives Clear-X von type="search" ausblenden */
+.search-input::-webkit-search-cancel-button,
+.search-input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+/* Firefox/andere: gar keinen Dekorations-Button */
+.search-input::-moz-search-cancel-button {
+  display: none;
+}
+
+.view-icons, .view-list {
+  [data-label="Android Vollbild"], [data-label="Android Vollbild"] { display: none;}
+  .card.featured-wide .card-content h3 { font-size: 0.8rem; }
+  .card.featured-tall .card-content h3 { font-size: 0.8rem; }
+  .card.featured .card-content h3 { font-size: 0.8rem; }
+} 
+
+/* Fokus durch Scroll-Mitte */
+.card.in-focus {
+  transform: translateY(-6px) scale(1.005);
+  border-color: var(--accent-glow, var(--orange-glow));
+  box-shadow: 0 12px 32px -8px var(--accent-dim, var(--orange-dim)),
+              0 0 0 1px var(--accent-glow, var(--orange-glow)),
+              0 0 28px var(--accent-glow, var(--orange-glow));
+}
+.card.in-focus::before { opacity: 1; }
+.card.in-focus .card-image img {
+  transform: scale(1.04);
+  filter: brightness(1) contrast(1.1);
+}
+.card.in-focus .card-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-12px);
+}

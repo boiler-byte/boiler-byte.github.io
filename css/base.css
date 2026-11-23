@@ -1,0 +1,175 @@
+/* ---------- GLOBAL RESET & VARIABLES ---------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(../fonts/SpaceGrotesk-VariableFont_wght.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(../fonts/SpaceGrotesk-VariableFont_wght.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(../fonts/SpaceGrotesk-VariableFont_wght.ttf) format('truetype');
+}
+
+
+:root {
+  --bg-deep: #0a0a0c;
+  --text-primary: #eaeef2;
+  --text-muted: #9aa3b2;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --boiler-title-color: #91822b9c;
+
+  /* ====== 6 FARB-TYPEN (statt Game/Tool/Misc) ====== */
+  /* Orange – für Games / Action */
+  --orange-base: #ff7b2c;
+  --orange-dim: rgba(255, 123, 44, 0.4);
+  --orange-glow: #ff4d6d;
+  --orange-border: rgba(255, 123, 44, 0.35);
+
+  /* Cyan – für Tools / Utilities */
+  --cyan-base: #2cd4ff;
+  --cyan-dim: rgba(44, 212, 255, 0.4);
+  --cyan-glow: #4d7aff;
+  --cyan-border: rgba(44, 212, 255, 0.35);
+
+  /* Violett – für Experiments / Art */
+  --violet-base: #b78aff;
+  --violet-dim: rgba(183, 138, 255, 0.4);
+  --violet-glow: #d48aff;
+  --violet-border: rgba(183, 138, 255, 0.35);
+
+  /* NEU: Grün – für Libraries / Frameworks */
+  --green-base: #4ade80;
+  --green-dim: rgba(74, 222, 128, 0.4);
+  --green-glow: #22d3a0;
+  --green-border: rgba(74, 222, 128, 0.35);
+
+  /* NEU: Rot/Pink – für Featured / Specials */
+  --pink-base: #ff5c8a;
+  --pink-dim: rgba(255, 92, 138, 0.4);
+  --pink-glow: #ff2d6f;
+  --pink-border: rgba(255, 92, 138, 0.35);
+
+  /* NEU: Gold/Gelb – für Education / Docs */
+  --gold-base: #fbbf24;
+  --gold-dim: rgba(251, 191, 36, 0.4);
+  --gold-glow: #f59e0b;
+  --gold-border: rgba(251, 191, 36, 0.35);
+
+  --card-bg: rgba(18, 20, 24, 0.8);
+  --card-radius: 12px;
+  --transition-smooth: 0.25s cubic-bezier(0.2, 0, 0, 1);
+  --font-serif: 'Space Grotesk', 'Cormorant', Georgia, serif;
+  --font-mono: 'Space Grotesk', 'SF Mono', 'Fira Code', monospace;
+}
+
+/* Ein reservierter Scrollbar-Bereich verhindert horizontale Layoutsprünge,
+   wenn die Seite für die Repo-Gruppenansicht gesperrt wird. */
+html { scroll-behavior: smooth; scrollbar-gutter: stable; }
+
+body {
+  background-color: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  line-height: 1.5;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: 
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.01) 0px, rgba(255,255,255,0.01) 1px, transparent 1px, transparent 3px),
+    radial-gradient(circle at 30% 40%, rgba(255, 123, 44, 0.02) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(44, 212, 255, 0.02) 0%, transparent 45%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes noiseFlicker {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.45; }
+  100% { opacity: 0.4; }
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJmIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iLjc0IiBudW1PY3RhdmVzPSIzIiAvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNmKSIgb3BhY2l0eT0iMC4wMyIgLz48L3N2Zz4=');
+  pointer-events: none;
+  z-index: 2;
+  animation: noiseFlicker 8s infinite;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.container {
+  width: 100%;
+  min-width: 0;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  position: relative;
+  z-index: 10;
+}
+
+/* ---------- HERO ---------- */
+.hero {
+  min-height: 45vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3rem 0 2rem;
+  position: relative;
+}
+
+.hero h1 {
+  font-size: clamp(2.8rem, 10vw, 5.5rem);
+  line-height: 1.1;
+  color: var(--boiler-title-color);
+  font-weight: 700;
+  text-shadow: 0 0 30px rgba(255, 123, 44, 0.3), 0 0 60px rgba(44, 212, 255, 0.15);
+  max-width: 900px;
+}
+
+.hero .watermark {
+  position: absolute;
+  right: 1rem;
+  bottom: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(4rem, 15vw, 9rem);
+  font-weight: 700;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.05);
+  text-stroke: 1px rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+  user-select: none;
+  line-height: 1;
+  z-index: -1;
+  text-shadow: 0px 0px 39px #91822b25;
+}

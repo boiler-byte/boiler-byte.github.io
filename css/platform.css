@@ -1,0 +1,633 @@
+/* Boiler Room – Plattformnavigation, Entdecken, Bibliothek und Launcher. */
+[hidden] { display: none !important; }
+
+/* Neon Rail: eine durchgehende Linie, nur unter dem aktiven Bereich beleuchtet.
+   Die Navigation bleibt bewusst nicht sticky. */
+.platform-nav {
+  position: relative;
+  z-index: 15;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  border-bottom: 1px solid rgba(185,203,226,.22);
+  padding: 0;
+  margin: 0 0 1.8rem;
+}
+.platform-tab {
+  --rail-color: var(--text-muted);
+  --rail-dim: rgba(185,203,226,.25);
+  --rail-panel: rgba(185,203,226,.045);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+  min-width: 0;
+  min-height: 77px;
+  margin: 0 0 -1px;
+  border: 0;
+  border-radius: 3px 3px 0 0;
+  padding: .65rem .5rem .95rem;
+  background: transparent;
+  color: var(--text-muted);
+  font: 500 .8rem var(--font-mono);
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease;
+}
+/* Entdecken uebernimmt exakt die gedämpfte Titelfarbe aus .hero h1. */
+.platform-tab[data-section="discover"] {
+  --rail-color: var(--boiler-title-color);
+  --rail-dim: rgba(145,130,43,.3);
+  --rail-panel: rgba(145,130,43,.075);
+}
+.platform-tab[data-section="library"] {
+  --rail-color: var(--violet-base);
+  --rail-dim: var(--violet-dim);
+  --rail-panel: rgba(183,138,255,.07);
+}
+.platform-tab[data-section="launcher"] {
+  --rail-color: var(--cyan-base);
+  --rail-dim: var(--cyan-dim);
+  --rail-panel: rgba(44,212,255,.06);
+}
+.platform-tab[data-section="about"] {
+  --rail-color: var(--text-muted);
+  --rail-dim: rgba(185,203,226,.26);
+  --rail-panel: rgba(185,203,226,.05);
+}
+.platform-tab-icon {
+  display: block;
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.platform-tab-label { white-space: nowrap; }
+.platform-tab:hover { background: rgba(255,255,255,.035); color: var(--text-primary); }
+.platform-tab.is-active {
+  background: var(--rail-panel);
+  color: var(--rail-color);
+}
+/* Die Leuchtspur liegt direkt auf der vorhandenen Unterkante. */
+.platform-tab.is-active::before {
+  content: '';
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--rail-color) 9%, var(--rail-color) 91%, transparent 100%);
+  pointer-events: none;
+}
+/* Der weiche Schein strahlt ausschliesslich nach unten, nicht um den Tab. */
+.platform-tab.is-active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -9px;
+  height: 8px;
+  background: radial-gradient(ellipse at 50% 0%, var(--rail-dim), transparent 75%);
+  pointer-events: none;
+}
+.platform-tab:focus-visible,
+.shelf-arrow:focus-visible,
+.discover-thumb:focus-visible,
+.highlight-rail:focus-visible,
+.discover-rail:focus-visible {
+  outline: 2px solid var(--cyan-base);
+  outline-offset: 3px;
+}
+/* Ein dezenter Hinweis bleibt erhalten, wenn der Launcher noch leer ist. */
+.platform-tab[data-section="launcher"].needs-favorites:not(.is-active) .platform-tab-label::after {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  margin-left: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  vertical-align: middle;
+  opacity: .75;
+}
+
+/* Bibliothek: kompakte Sortierung mit exakt 60px Breite. */
+#libraryPage .filter-bar {
+  position: static;
+  z-index: 12;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  margin-bottom: 1.2rem;
+  padding: .9rem 1rem;
+}
+.library-summary { font-size: .8rem; color: var(--text-muted); margin: 0 0 1rem; }
+.library-sort-wrap {
+  position: relative;
+  flex: 0 0 60px;
+  width: 60px;
+  min-width: 60px;
+  max-width: 60px;
+}
+.library-sort-wrap #librarySort {
+  display: block;
+  width: 60px;
+  min-width: 60px;
+  max-width: 60px;
+  padding: .55rem 1rem .55rem .5rem;
+  white-space: nowrap;
+  text-overflow: clip;
+}
+.library-sort-wrap::after {
+  content: '⌄';
+  position: absolute;
+  top: 48%;
+  right: .38rem;
+  transform: translateY(-50%);
+  font-size: .85rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+/* Gemeinsam verwendete Entdecken-Elemente. */
+/* Wichtig: Flex-Mindestbreiten duerfen nicht durch Scroll-Inhalt wachsen. */
+#discoverPage,
+.discover-page { display: block; min-width: 0; max-width: 100%; padding-bottom: 3rem; }
+#discoverPage[hidden] { display: none !important; }
+.highlights-area,
+.discover-shelf { width: 100%; min-width: 0; max-width: 100%; }
+.discover-shelf-heading { min-width: 0; max-width: 100%; }
+
+.highlights-area { margin-bottom: clamp(2.1rem, 4vw, 3.8rem); }
+.discover-shelf { margin-bottom: clamp(2.3rem, 4.5vw, 3.6rem); }
+.discover-shelf-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.1rem;
+  margin-bottom: 1.05rem;
+}
+.discover-heading-copy { min-width: 0; }
+.discover-heading-title { display: flex; align-items: center; gap: .7rem; min-width: 0; }
+.discover-shelf-heading h2 { font-size: clamp(1.2rem, 2.6vw, 1.8rem); font-weight: 600; }
+.discover-heading-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(185,203,226,.075);
+  border: 1px solid rgba(185,203,226,.15);
+}
+.repo-attribute-icon { display: inline-block; flex: 0 0 auto; width: 1.05rem; height: 1.05rem; }
+.discover-heading-icon .repo-attribute-icon { width: 19px; height: 19px; }
+
+/* SVG-Metadaten für Typ, Gruppe und Tag – ein Designsystem in allen Entdecken-Reihen. */
+.discover-attributes,
+.discover-thumb-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .38rem; }
+.discover-attribute {
+  display: inline-flex;
+  align-items: center;
+  gap: .38rem;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid rgba(185,203,226,.12);
+  border-radius: 999px;
+  background: rgba(185,203,226,.055);
+  color: #c9d3e0;
+  padding: .28rem .56rem;
+  font-size: .73rem;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.discover-attribute-type { border-color: rgba(44,212,255,.18); }
+.discover-attribute-group { border-color: rgba(183,138,255,.21); }
+.discover-attribute-tag { border-color: rgba(251,191,36,.16); }
+
+/* Highlight-Karussell: Desktop 3 Karten, Tablet 2, Phone 1 + Peek. */
+.highlight-rail,
+.discover-rail {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.22) transparent;
+  scroll-padding-inline: .25rem;
+  padding: .35rem .25rem 1.1rem;
+}
+.highlight-rail {
+  --highlight-gap: clamp(.75rem, 1.5vw, 1.4rem);
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - var(--highlight-gap) - var(--highlight-gap)) / 3);
+  align-items: stretch;
+  gap: var(--highlight-gap);
+}
+.highlight-rail[data-count="1"] { grid-auto-columns: min(100%, 650px); }
+.highlight-rail[data-count="2"] { grid-auto-columns: calc((100% - var(--highlight-gap)) / 2); }
+.highlight-rail > .highlight-card {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  scroll-snap-align: start;
+  transform: none;
+}
+.highlight-card .card-image { aspect-ratio: 16 / 9; }
+.highlight-card .card-image .type-badge,
+.highlight-card .card-tooltip,
+.highlight-card .card-meta { display: none; }
+.highlight-card .card-content {
+  gap: .65rem;
+  padding: clamp(1rem, 1.5vw, 1.4rem);
+}
+.highlight-card .card-content h3 {
+  font-size: clamp(1.2rem, 1.65vw, 1.55rem);
+  line-height: 1.2;
+}
+.highlight-card .card-content .description {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  line-clamp: 2;
+  flex-grow: 0;
+  min-height: 2.8em;
+  font-size: .85rem;
+}
+.highlight-card .discover-attributes { margin-top: auto; padding-top: .15rem; }
+.highlight-card:hover { transform: translateY(-3px) !important; }
+.highlight-controls { display: flex; align-items: center; flex: 0 0 auto; gap: .42rem; }
+.shelf-controls { display: flex; gap: .4rem; flex: 0 0 auto; }
+.shelf-arrow {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  color: var(--text-primary);
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.04);
+  cursor: pointer;
+  font: 400 1.45rem/1 var(--font-mono);
+  transition: background .2s, border-color .2s;
+}
+.shelf-arrow:hover:not(:disabled) { border-color: var(--cyan-base); background: rgba(44,212,255,.085); }
+.shelf-arrow[hidden],
+.shelf-controls[hidden],
+.highlight-controls[hidden] { display: none !important; }
+
+/* Kompakte, separat horizontal scrollbare Thumbnail-Reihen. */
+.discover-rail { display: flex; gap: .75rem; }
+.discover-thumb {
+  display: flex;
+  flex: 0 0 clamp(146px, 13vw, 178px);
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: .5rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  scroll-snap-align: start;
+  border-radius: 12px;
+  padding: .35rem;
+  border: 1px solid transparent;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: background .2s, border-color .2s;
+}
+.discover-thumb:hover { border-color: var(--border-subtle); background: rgba(255,255,255,.04); }
+.discover-thumb-image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,.04);
+  border-radius: 9px;
+  overflow: hidden;
+  font-size: 2rem;
+}
+.discover-thumb-image img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
+.discover-thumb:hover .discover-thumb-image img { transform: scale(1.06); }
+.discover-thumb strong { font-size: .85rem; line-height: 1.3; overflow-wrap: anywhere; }
+.discover-thumb .discover-attribute { font-size: .67rem; padding: .22rem .4rem; gap: .22rem; }
+.discover-thumb .repo-attribute-icon { width: 13px; height: 13px; }
+.discover-thumb-meta { gap: .3rem; }
+
+/* Mit der Maus lassen sich Highlights und Regale direkt seitlich ziehen.
+   Touch und Trackpad behalten ihr natuerliches Scroll-Verhalten. */
+@media (hover: hover) and (pointer: fine) {
+  .highlight-rail, .discover-rail { cursor: grab; }
+}
+.highlight-rail.is-grab-scrolling,
+.discover-rail.is-grab-scrolling {
+  cursor: grabbing;
+  scroll-snap-type: none;
+  scroll-behavior: auto;
+}
+.is-grab-scrolling, .is-grab-scrolling * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  cursor: grabbing !important;
+}
+
+/* Mein Launcher: gemeinsame Sortierung, zwei Darstellungen. */
+.launcher-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .85rem 1.3rem;
+  margin-bottom: 1.25rem;
+}
+.launcher-hint { flex: 1 1 260px; min-width: 0; color: var(--text-muted); font-size: .85rem; }
+.launcher-toolbar { justify-content: flex-end; }
+.launcher-page .grid { padding-bottom: 1.4rem; }
+.launcher-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: .5rem 0 3.5rem;
+  flex-wrap: wrap;
+}
+.launcher-add-wrap { position: relative; margin-left: auto; flex: 0 0 auto; }
+.launcher-add-button {
+  border: 1px solid var(--cyan-border);
+  color: var(--text-primary);
+  background: rgba(44,212,255,.09);
+  border-radius: 999px;
+  padding: .63rem 1.08rem;
+  font: 600 .84rem var(--font-mono);
+  cursor: pointer;
+  white-space: nowrap;
+}
+/* Im leeren Launcher sitzt derselbe +App-Button direkt unter dem Hinweis. */
+#launcherGrid .empty-state .launcher-add-wrap.is-empty {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  margin: 1.55rem auto 0;
+}
+#launcherGrid .empty-state .launcher-add-wrap.is-empty .launcher-add-button {
+  min-width: 190px;
+  min-height: 58px;
+  padding: .9rem 2.1rem;
+  font-size: 1.15rem;
+  border-color: var(--cyan-base);
+  background: rgba(44,212,255,.14);
+  box-shadow: 0 0 22px rgba(44,212,255,.16);
+}
+#launcherGrid .empty-state .launcher-add-wrap.is-empty .launcher-add-menu {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+.launcher-add-button:hover:not(:disabled),
+.launcher-add-button[aria-expanded="true"] {
+  border-color: var(--cyan-base);
+  background: rgba(44,212,255,.18);
+  box-shadow: 0 0 18px var(--cyan-dim);
+}
+.launcher-add-button:disabled { opacity: .45; cursor: default; }
+.launcher-add-button:focus-visible, .launcher-add-option:focus-visible {
+  outline: 2px solid var(--cyan-base); outline-offset: 2px;
+}
+.launcher-add-menu {
+  position: absolute;
+  z-index: 80;
+  right: 0;
+  bottom: calc(100% + .55rem);
+  width: min(320px, calc(100vw - 2rem));
+  max-height: min(350px, 60dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: .35rem;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 14px;
+  background: #171a21;
+  box-shadow: 0 18px 45px rgba(0,0,0,.75);
+}
+.launcher-add-option {
+  display: flex; align-items: center; width: 100%; gap: .8rem;
+  padding: .47rem .55rem; border: none; border-radius: 9px;
+  font: 500 .85rem var(--font-mono); text-align: left;
+  color: var(--text-primary); background: transparent; cursor: pointer;
+}
+.launcher-add-option:hover, .launcher-add-option:focus-visible { background: rgba(44,212,255,.13); }
+.launcher-add-option-icon {
+  display: grid; place-items: center; flex: 0 0 36px;
+  width: 36px; height: 36px; border-radius: 50%;
+  overflow: hidden; background: #242938; font-size: 1rem;
+}
+.launcher-add-option-icon img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+.launcher-view-controls {
+  display: inline-flex;
+  padding: .25rem;
+  gap: .15rem;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 999px;
+  background: rgba(255,255,255,.03);
+}
+.launcher-view-btn {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: none;
+  padding: .45rem .82rem;
+  color: var(--text-muted);
+  font: 500 .82rem var(--font-mono);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.launcher-view-btn:hover { color: #fff; }
+.launcher-view-btn.is-active { color: #fff; background: rgba(44,212,255,.11); border-color: var(--cyan-border); }
+.launcher-view-btn:focus-visible { outline: 2px solid var(--cyan-base); outline-offset: 2px; }
+/* Abstand zum Footer entsteht unter der neuen Launcher-Aktionsleiste. */
+/* Keine unsichtbare card-image als Stern-Platzhalter: echte DOM-Reihenfolge. */
+.launcher-page .view-list .card { gap: 0; }
+.launcher-page .view-list .card > .fav-btn {
+  display: flex;
+  position: relative;
+  inset: auto;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  margin: 0 .8rem 0 auto;
+}
+/* Launcher-Liste: neutrales Loeschsymbol ohne Glow, auch bei Hover oder Fokus. */
+.launcher-page .view-list .card > .fav-btn.is-trash,
+.launcher-page .view-list .card > .fav-btn.is-trash:hover,
+.launcher-page .view-list .card > .fav-btn.is-trash:focus-visible {
+  color: var(--text-muted);
+  background: rgba(255,255,255,.035);
+  border-color: rgba(185,203,226,.22);
+  box-shadow: none;
+}
+.launcher-page .view-list .card > .fav-btn.is-trash:focus-visible {
+  outline-color: var(--text-muted);
+}
+.launcher-page .view-list .card > .fav-btn.is-trash svg {
+  fill: none;
+  filter: none;
+}
+.launcher-page .view-list .card .drag-handle { padding-left: .9rem; padding-right: .55rem; }
+.launcher-page .view-list .card-content { flex: 1 1 auto; min-width: 0; padding-left: .45rem; }
+.launcher-page .view-list .card-content h3 { min-width: 0; overflow-wrap: anywhere; }
+
+/* App-Ansicht: runde Repo-Bilder, klickbar und per Halten verschiebbar. */
+#launcherGrid.launcher-app-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(98px, 120px));
+  align-items: start;
+  justify-content: start;
+  gap: clamp(.6rem, 1.8vw, 1.15rem);
+}
+.launcher-app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .65rem;
+  min-width: 0;
+  padding: .8rem .35rem .9rem;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: center;
+  font: 500 .8rem/1.3 var(--font-mono);
+  cursor: pointer;
+  transition: background .2s, border-color .2s, transform .2s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.launcher-app:hover,
+.launcher-app:focus-visible { background: rgba(255,255,255,.045); border-color: rgba(255,255,255,.13); }
+.launcher-app:focus-visible { outline: 2px solid var(--cyan-base); outline-offset: 2px; }
+.launcher-app-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: clamp(64px, 7vw, 76px);
+  height: clamp(64px, 7vw, 76px);
+  overflow: hidden;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.13);
+  background: #171b24;
+  box-shadow: 0 5px 18px rgba(0,0,0,.35);
+  /* Touch-Scroll bleibt ueber App-Namen und Zwischenraeume moeglich. */
+  touch-action: none;
+  -webkit-touch-callout: none;
+  cursor: grab;
+}
+.launcher-app-icon img { display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.launcher-app-icon-fallback { font-size: 1.8rem; color: var(--cyan-base); }
+.launcher-app-label {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  max-width: 100%;
+  min-height: 2.6em;
+  overflow-wrap: anywhere;
+}
+#launcherGrid.launcher-app-grid.is-sorting .launcher-app { transition: none; }
+#launcherGrid.launcher-app-grid .launcher-app.is-dragging { opacity: .2; pointer-events: none; }
+.launcher-app-ghost {
+  position: fixed;
+  z-index: 3500;
+  margin: 0;
+  pointer-events: none;
+  background: rgba(30,35,46,.96);
+  border: 1px solid var(--cyan-border);
+  box-shadow: 0 14px 35px rgba(0,0,0,.65), 0 0 22px var(--cyan-dim);
+  transform: rotate(-3deg) scale(1.05);
+  cursor: grabbing;
+}
+
+/* Über: eigenständiger, bewusst schlichter Informationsbereich. */
+.about-page { padding: clamp(.65rem, 2vw, 1.5rem) 0 clamp(4rem, 8vw, 7rem); }
+.about-content {
+  max-width: 760px;
+  padding: clamp(1.35rem, 3vw, 2.6rem);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--card-radius);
+  background: var(--card-bg);
+}
+.about-content h2 { font-size: clamp(1.5rem, 3vw, 2rem); margin-bottom: 1.1rem; }
+.about-content .hero-claim {
+  max-width: 550px;
+  margin: 0 0 1.5rem;
+  padding-left: 1.2rem;
+  border-left: 3px solid var(--orange-base);
+  color: var(--text-muted);
+  font: 400 1.1rem/1.65 var(--font-mono);
+  letter-spacing: .02em;
+}
+.about-content p { max-width: 66ch; color: var(--text-muted); line-height: 1.8; }
+.about-content p + p { margin-top: 1rem; }
+.about-content strong { color: var(--text-primary); font-weight: 600; }
+
+/* Mittelgroße Screens: zwei sichtbare Highlights. */
+@media (max-width: 1100px) {
+  .highlight-rail { grid-auto-columns: calc((100% - var(--highlight-gap)) / 2); }
+  .highlight-rail[data-count="1"] { grid-auto-columns: min(100%, 650px); }
+}
+
+/* Kleine Screens: eine große Highlight-Card, nächste Card bleibt angeschnitten. */
+@media (max-width: 700px) {
+  .highlight-rail,
+  .highlight-rail[data-count="1"],
+  .highlight-rail[data-count="2"] { grid-auto-columns: min(86%, 410px); }
+  .highlight-rail[data-count="1"] { grid-auto-columns: 100%; }
+  .highlight-card .card-image { aspect-ratio: 16 / 10; }
+  .highlight-card .card-content { padding: 1rem; gap: .55rem; }
+  .highlight-card .card-content h3 { font-size: 1.24rem; }
+  .highlight-card .card-content .description { font-size: .82rem; }
+  .discover-shelf-heading { align-items: center; }
+  .shelf-arrow { width: 32px; height: 32px; }
+}
+@media (max-width: 620px) {
+  .hero { min-height: unset; padding: 2.4rem 0 1.5rem; }
+  .platform-nav { margin-bottom: 1.45rem; }
+  .platform-tab { min-height: 70px; padding: .6rem .2rem .85rem; font-size: .76rem; }
+  .platform-tab-icon { width: 19px; height: 19px; }
+  .discover-thumb { flex-basis: 138px; }
+  .discover-heading-icon { flex-basis: 30px; width: 30px; height: 30px; }
+  .library-sort-wrap { flex: 0 0 60px; min-width: 60px; }
+  .launcher-page .view-list .card-content { flex-wrap: wrap; }
+  #launcherGrid.launcher-app-grid { grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); }
+  .launcher-app { padding-inline: .2rem; }
+}
+@media (max-width: 390px) {
+  .highlight-rail,
+  .highlight-rail[data-count="1"],
+  .highlight-rail[data-count="2"] { grid-auto-columns: 90%; }
+  .highlight-rail[data-count="1"] { grid-auto-columns: 100%; }
+  .discover-shelf-heading h2 { font-size: 1.12rem; }
+  .platform-tab { padding-inline: .12rem; font-size: .7rem; }
+}
+@media (max-width: 350px) {
+  .platform-tab { font-size: .66rem; letter-spacing: -.015em; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .highlight-rail,
+  .discover-rail { scroll-behavior: auto; }
+  .discover-thumb-image img { transition: none; }
+}
+@media (min-width: 621px) {
+  .hero { min-height: 260px; }
+}
