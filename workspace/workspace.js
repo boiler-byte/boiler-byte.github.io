@@ -10,13 +10,13 @@
   const ui = Object.fromEntries([
     'workspace', 'sidebar', 'sidebarClose', 'sidebarToggle', 'backdrop', 'workspaceSelect',
     'workspaceLabel', 'appSearch', 'appSearchClear', 'appCount', 'appList', 'storageNotice', 'main', 'currentWorkspace', 'currentApp',
-    'reloadApp', 'fullscreenToggle', 'fullscreenEnterIcon', 'fullscreenExitIcon', 'fullscreenNotice', 'externalApp', 'emptyView', 'emptyTitle', 'emptyDescription', 'emptyLink',
+    'reloadApp', 'externalApp', 'emptyView', 'emptyTitle', 'emptyDescription', 'emptyLink',
     'frames', 'loading'
   ].map(id => [id, $(id)]));
   const mobile = window.matchMedia('(max-width: 700px)');
   const types = B.data.types;
   const repoMap = new Map();
-  const groups = new Map();
+  const groups = B.data.getGroups();
   const frames = new Map();
   // Keine Sandbox; notwendige Browser-Berechtigungen explizit an die App delegieren.
   // Die Berechtigungen des Top-Level-Dokuments und Browser-Abfragen gelten weiterhin.
@@ -27,21 +27,9 @@
     'screen-wake-lock', 'midi'
   ].map(feature => feature + ' *').join('; ');
 
-  function groupIds(repo) {
-    return [...new Set([repo.group, repo.groups].flat().filter(id => typeof id === 'string' && id.trim()))];
-  }
-
-  for (const [id, group] of Object.entries(B.data.repogroups || {})) {
-    if (!id.trim()) continue;
-    groups.set(id, { label: typeof group === 'string' ? group : group?.label || id, repos: [] });
-  }
   for (const repo of B.data.repos) {
     if (!repo || typeof repo.label !== 'string' || !repo.label.trim() || repoMap.has(repo.label)) continue;
     repoMap.set(repo.label, repo);
-    for (const id of groupIds(repo)) {
-      if (!groups.has(id)) groups.set(id, { label: id, repos: [] });
-      groups.get(id).repos.push(repo);
-    }
   }
 
   B.storage.init();
@@ -52,7 +40,6 @@
   let drawerPreviousFocus = null;
   let searchQuery = '';
   let searchTimer = null;
-  let fullscreenNoticeTimer = null;
 
   function resolveURL(value) {
     if (typeof value !== 'string' || !value.trim()) return null;
@@ -224,50 +211,6 @@
     });
   }
 
-  function fullscreenElement() {
-    return document.fullscreenElement || document.webkitFullscreenElement || null;
-  }
-
-  function fullscreenSupported() {
-    return Boolean((ui.workspace.requestFullscreen && document.fullscreenEnabled !== false)
-      || (ui.workspace.webkitRequestFullscreen && document.webkitFullscreenEnabled !== false));
-  }
-
-  function syncFullscreen() {
-    const active = Boolean(fullscreenElement());
-    const supported = fullscreenSupported();
-    const label = active ? 'Vollbild beenden' : supported ? 'Vollbild öffnen' : 'Vollbild in diesem Browser nicht verfügbar';
-    ui.fullscreenToggle.disabled = !active && !supported;
-    ui.fullscreenToggle.title = label;
-    ui.fullscreenToggle.setAttribute('aria-label', label);
-    ui.fullscreenToggle.setAttribute('aria-pressed', String(active));
-    ui.fullscreenEnterIcon.toggleAttribute("hidden", active);
-    ui.fullscreenExitIcon.toggleAttribute("hidden", !active);
-  }
-
-  function fullscreenFailed() {
-    clearTimeout(fullscreenNoticeTimer);
-    ui.fullscreenNotice.textContent = 'Vollbild konnte nicht umgeschaltet werden.';
-    ui.fullscreenNotice.hidden = false;
-    fullscreenNoticeTimer = setTimeout(() => { ui.fullscreenNotice.hidden = true; }, 4500);
-    syncFullscreen();
-  }
-
-  async function toggleFullscreen() {
-    try {
-      if (fullscreenElement()) {
-        const exit = document.exitFullscreen || document.webkitExitFullscreen;
-        if (!exit) throw new Error('Fullscreen exit not supported');
-        await exit.call(document);
-      } else {
-        const request = (document.fullscreenEnabled !== false && ui.workspace.requestFullscreen) || ui.workspace.webkitRequestFullscreen;
-        if (!request) throw new Error('Fullscreen not supported');
-        await request.call(ui.workspace);
-      }
-      syncFullscreen();
-    } catch (_) { fullscreenFailed(); }
-  }
-
   function setLoading(entry) {
     ui.loading.hidden = !entry || !entry.loading;
   }
@@ -421,19 +364,32 @@
     } else updateAppSelection();
   }
 
+  // Deep-Link hat beim Start Vorrang; ohne gueltige Gruppe gilt der gespeicherte Zustand.
+  const requestedGroup = new URLSearchParams(location.search).get('group');
+  const initialWorkspace = requestedGroup !== null && groups.has(requestedGroup)
+    ? GROUP_PREFIX + requestedGroup : state.selected;
+
+  function syncGroupURL() {
+    const url = new URL(location.href);
+    if (state.selected === FAVORITES) url.searchParams.delete('group');
+    else url.searchParams.set('group', state.selected.slice(GROUP_PREFIX.length));
+    // Dropdown-Wechsel soll beim Reload nicht zur urspruenglichen Deep-Link-Gruppe zurueckspringen.
+    // Keine zusaetzlichen History-Eintraege beim Wechsel innerhalb des Workspace.
+    if (url.href !== location.href) {
+      try { history.replaceState(history.state, '', url.href); }
+      catch (_) { /* z.B. restriktive file://-Umgebung */ }
+    }
+  }
+
   populatePicker();
   readFavorites();
-  selectWorkspace(state.selected, true);
+  selectWorkspace(initialWorkspace, true);
+  if (requestedGroup !== null) syncGroupURL();
   syncSidebar();
   setupSearch();
-  syncFullscreen();
-  ui.fullscreenToggle.addEventListener('click', toggleFullscreen);
-  document.addEventListener('fullscreenchange', syncFullscreen);
-  document.addEventListener('webkitfullscreenchange', syncFullscreen);
-  document.addEventListener('fullscreenerror', fullscreenFailed);
-  document.addEventListener('webkitfullscreenerror', fullscreenFailed);
   ui.workspaceSelect.addEventListener('change', () => {
     selectWorkspace(ui.workspaceSelect.value);
+    syncGroupURL();
     // Bei Touch bleibt der Drawer fuer die anschliessende App-Auswahl offen.
   });
   ui.sidebarToggle.addEventListener('click', () => setSidebar(ui.sidebar.hidden, false));

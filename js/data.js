@@ -24,8 +24,7 @@
     alpha: { label: 'Alpha', symbol: '🧪🧪🧪' }, //⚡
   };
 
-  // Gruppen liefern Sammlungsnamen und -Bilder fuer die Entdecken-Reihen.
-  // In der Bibliothek werden alle Repos immer einzeln dargestellt.
+  // Gruppen liefern Sammlungsnamen und -Bilder fuer Workspace und Bibliothek.
   // "img": Bildpfad oder "all" für eine dauerhaft sichtbare Bild-Collage.
   // "preview": Bildpfad oder "all" für eine Collage beim Hover/Fokus.
   // Raster für "all": 1–4 Repos = 2x2, 5–6 = 3x2, 7–9 = 3x3.
@@ -106,7 +105,7 @@
         label: "Clipwerk",
         img: 'img/clipwerk.png',
         status: 'alpha',
-        group: 'dev',
+        workspace: 'dev',
         description: 'Einfache Videobearbeitung.',
         type: 'tool',
         url: 'https://myprojectpages.github.io/Clipwerk/',
@@ -128,12 +127,38 @@
         status: 'beta',
         description: 'Zählen von Wörtern, Sätzen, Häufigkeiten uvm.',
         type: 'tool',
-        group: 'dev',
+        workspace: 'dev',
         url: 'https://myprojectpages.github.io/Textanalyse',
         year: 2026,
         tags: ['Texte', 'Keywords']
     },
   ];
 
-  B.data = { types, STATUS, repogroups, repos };
+  // repo.workspace is canonical (ID or array of IDs). Legacy fields are
+  // accepted only if workspace is absent, so [] or null can clear membership.
+  function groupIds(repo) {
+    const membership = Object.prototype.hasOwnProperty.call(repo, 'workspace')
+      ? [repo.workspace] : [repo.group, repo.groups];
+    return [...new Set(membership.flat().filter(id => typeof id === 'string' && id.trim()))];
+  }
+
+  function getGroups() {
+    const groups = new Map();
+    for (const [id, raw] of Object.entries(repogroups || {})) {
+      if (!id.trim()) continue;
+      const definition = raw && typeof raw === 'object' ? raw : {};
+      groups.set(id, { ...definition, id, label: typeof raw === 'string' ? raw || id : definition.label || id, repos: [] });
+    }
+    const seen = new Set();
+    for (const repo of repos) {
+      if (!repo || typeof repo.label !== 'string' || !repo.label.trim() || seen.has(repo.label)) continue;
+      seen.add(repo.label);
+      for (const id of groupIds(repo)) {
+        if (!groups.has(id)) groups.set(id, { id, label: id, repos: [] });
+        groups.get(id).repos.push(repo);
+      }
+    }
+    return groups;
+  }
+  B.data = { types, STATUS, repogroups, repos, groupIds, getGroups };
 })(window.BoilerRoom);

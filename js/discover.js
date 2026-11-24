@@ -1,14 +1,14 @@
-/* Entdecken: responsive Highlights und Regale aus Typen, Gruppen und Tags. */
+/* Entdecken: responsive Highlights und Regale aus Typen und Tags. */
 (function (B) {
   'use strict';
   const repos = B.data.repos;
   const types = B.data.types;
-  const groups = B.data.repogroups;
+  const groups = B.groups.catalog;
   let cleanupScrollControls = [];
 
   function addAttributes(container, repo, maxTags) {
     if (repo.type) container.appendChild(B.icons.attribute('type', types[repo.type]?.label || repo.type));
-    if (repo.group) container.appendChild(B.icons.attribute('group', groups[repo.group]?.label || repo.group));
+    B.data.groupIds(repo).forEach(id => container.appendChild(B.icons.attribute('group', groups.get(id)?.label || id)));
     if (Array.isArray(repo.tags)) {
       repo.tags.filter(tag => typeof tag === 'string' && tag.trim())
         .slice(0, maxTags)
@@ -46,7 +46,7 @@
     const meta = document.createElement('div');
     meta.className = 'discover-thumb-meta';
     // In Thumbnail-Reihen nur Tag und Gruppe, nicht den Typ anzeigen.
-    if (repo.group) meta.appendChild(B.icons.attribute('group', groups[repo.group]?.label || repo.group));
+    B.data.groupIds(repo).slice(0, 1).forEach(id => meta.appendChild(B.icons.attribute('group', groups.get(id)?.label || id)));
     if (Array.isArray(repo.tags)) {
       const tag = repo.tags.find(value => typeof value === 'string' && value.trim());
       if (tag) meta.appendChild(B.icons.attribute('tag', tag));
@@ -506,10 +506,6 @@
       const entries = repos.filter(repo => repo.type === type);
       if (entries.length) shelves.push({ key: 'type-' + type, title: meta.label, entries, priority: 0, kind: 'type' });
     });
-    Object.entries(groups).forEach(([id, group]) => {
-      const entries = repos.filter(repo => repo.group === id);
-      if (entries.length) shelves.push({ key: 'group-' + id, title: group.label || id, entries, priority: 1, kind: 'group' });
-    });
     const tags = new Map();
     repos.forEach(repo => (Array.isArray(repo.tags) ? repo.tags : []).forEach(tag => {
       if (typeof tag !== 'string' || !tag.trim()) return;
@@ -519,11 +515,11 @@
     Array.from(tags.entries()).filter(([, entries]) => entries.length >= 2)
       .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], 'de'))
       .slice(0, 8).forEach(([tag, entries]) => shelves.push({
-        key: 'tag-' + tag, title: tag, entries, priority: 2, kind: 'tag'
+        key: 'tag-' + tag, title: tag, entries, priority: 1, kind: 'tag'
       }));
 
-    // Typ, Gruppe und Tag bleiben abwechselnde Reihen.
-    const buckets = [0, 1, 2].map(priority => shelves.filter(shelf => shelf.priority === priority));
+    // Typ und Tag bleiben abwechselnde Reihen.
+    const buckets = [0, 1].map(priority => shelves.filter(shelf => shelf.priority === priority));
     while (buckets.some(bucket => bucket.length)) {
       buckets.forEach(bucket => {
         const next = bucket.shift();

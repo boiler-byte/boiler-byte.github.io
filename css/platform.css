@@ -7,7 +7,7 @@
   position: relative;
   z-index: 15;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0;
   border-bottom: 1px solid rgba(185,203,226,.22);
   padding: 0;
@@ -71,15 +71,6 @@
   --rail-marker: rgba(44,212,255,.37);
   --rail-dim: var(--cyan-dim);
   --rail-panel: rgba(44,212,255,.06);
-}
-/* Workspace ist ein eigenstaendiger Link, kein vierter interner UI-Zustand. */
-.platform-tab[data-section="workspace"] {
-  --rail-color: var(--green-base);
-  --rail-rest: #87a597;
-  --rail-selected: #9cc7af;
-  --rail-marker: rgba(74,222,128,.37);
-  --rail-dim: var(--green-dim);
-  --rail-panel: rgba(74,222,128,.06);
 }
 .platform-tab[data-section="about"] {
   --rail-panel: rgba(185,203,226,.05);
@@ -505,6 +496,22 @@
 }
 
 /* Mein Launcher: gemeinsame Sortierung, zwei Darstellungen. */
+/* Workspace und Sortierhinweis bleiben als linke Aktionsgruppe zusammen. */
+.launcher-start-actions { display: flex; align-items: center; gap: .5rem; flex: 0 0 auto; }
+.launcher-workspace-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
+  min-height: 44px; min-width: 44px; padding: 0 .85rem;
+  border: 1px solid rgba(255,255,255,.11); border-radius: 999px;
+  color: var(--text-muted); background: rgba(255,255,255,.03);
+  font: 500 .82rem var(--font-mono); text-decoration: none; white-space: nowrap;
+}
+.launcher-workspace-icon { width: 20px; height: 20px; flex: 0 0 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.launcher-workspace-button:hover { color: var(--text-primary); border-color: var(--cyan-border); background: rgba(44,212,255,.09); }
+.launcher-workspace-button:focus-visible { outline: 2px solid var(--cyan-base); outline-offset: 2px; }
+@media (max-width: 540px) {
+  .launcher-workspace-button { width: 44px; padding: 0; }
+  .launcher-workspace-button span { display: none; }
+}
 .launcher-info-wrap { position: relative; flex: 0 0 auto; }
 .launcher-info-button {
   display: grid;
@@ -563,7 +570,7 @@ body.launcher-touch-press, body.launcher-touch-press * {
   justify-content: space-between;
   gap: .5rem;
   margin: .5rem 0 3.5rem;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 .launcher-add-wrap {
   position: relative;
@@ -1031,7 +1038,7 @@ body.launcher-touch-press, body.launcher-touch-press * {
   .highlight-rail[data-count="2"] { grid-auto-columns: 90%; }
   .highlight-rail[data-count="1"] { grid-auto-columns: 100%; }
   .discover-shelf-heading h2 { font-size: 1.12rem; }
-  .platform-nav { grid-template-columns: 1.12fr 1.25fr 1.04fr 1.12fr .6fr; }
+  .platform-nav { grid-template-columns: 1.12fr 1.25fr 1.04fr .6fr; }
   .platform-tab { padding-inline: .08rem; font-size: .7rem; }
 }
 @media (max-width: 350px) {

@@ -1,4 +1,4 @@
-/* Bibliothek: alle Apps einzeln; Launcher: ausschliesslich sortierte Favoriten. */
+/* Bibliothek: Apps und Workspace-Gruppen; Launcher: sortierte Favoriten. */
 (function (B) {
   'use strict';
 
@@ -7,23 +7,47 @@
   const repoGrid = B.dom.repoGrid;
   const searchRelevance = (repo, query) => B.search.searchRelevance(repo, query);
 
-  function getFilteredRepos() {
+  function getFilteredEntries(includeGroups = true) {
     const searching = Boolean(s.activeSearch.trim());
-    const filtered = repos
-      .map((repo, index) => ({
-        repo,
-        index,
-        relevance: searching ? searchRelevance(repo, s.activeSearch) : 0
-      }))
-      .filter(({ repo, relevance }) =>
-        (s.activeFilter === 'all' || repo.type === s.activeFilter) &&
-        (!searching || relevance >= 0)
-      );
+    const groups = includeGroups ? [...B.groups.catalog.values()] : [];
+    const entries = [
+      ...groups.map(group => ({ group, repo: { label: group.label, type: 'group',
+        year: Math.max(0, ...group.repos.map(repo => Number(repo.year) || 0)),
+        description: group.description || '', tags: Array.isArray(group.tags) ? group.tags : [] } })),
+      ...repos.map(repo => ({ repo }))
+    ];
+    const filtered = entries.map((entry, index) => {
+      const { repo, group } = entry;
+      let relevance = searching ? searchRelevance(repo, s.activeSearch) : 0;
+      if (group && searching) {
+        // Gruppenname und eigene Metadaten zuerst; Mitgliedertreffer ergaenzen die Suche.
+        for (const member of group.repos) {
+          const score = searchRelevance(member, s.activeSearch);
+          if (score >= 0) relevance = Math.max(relevance, Math.min(450, score));
+        }
+      }
+      return { ...entry, index, relevance };
+    }).filter(({ repo, group, relevance }) =>
+      (s.activeFilter === 'all' || (group ? group.repos.some(member => member.type === s.activeFilter) : repo.type === s.activeFilter)) &&
+      (!searching || relevance >= 0));
 
     if (searching) {
-      // Relevanz vor Sortierung, bei Gleichstand die urspruengliche Reihenfolge.
       filtered.sort((a, b) => b.relevance - a.relevance || a.index - b.index);
-    } else if (s.librarySort !== 'original') {
+    } else if (s.librarySort === 'original') {
+      // Kuratierte App-Reihenfolge beibehalten; jede Gruppe genau einmal
+      // unmittelbar nach ihrem ersten sichtbaren Mitglied einfuegen.
+      const apps = filtered.filter(entry => !entry.group);
+      const firstByRepo = new Map(apps.map(entry => [entry.repo, []]));
+      const unplaced = [];
+      for (const entry of filtered) {
+        if (!entry.group) continue;
+        const members = new Set(entry.group.repos);
+        const first = apps.find(app => members.has(app.repo));
+        if (first) firstByRepo.get(first.repo).push(entry);
+        else unplaced.push(entry);
+      }
+      return [...apps.flatMap(entry => [entry, ...firstByRepo.get(entry.repo)]), ...unplaced];
+    } else {
       const collator = new Intl.Collator('de', { numeric: true, sensitivity: 'base' });
       filtered.sort((a, b) => {
         if (s.librarySort === 'name') return collator.compare(a.repo.label, b.repo.label) || a.index - b.index;
@@ -32,7 +56,11 @@
         return a.index - b.index;
       });
     }
-    return filtered.map(({ repo }) => repo);
+    return filtered;
+  }
+
+  function getFilteredRepos() {
+    return getFilteredEntries(false).map(({ repo }) => repo);
   }
 
   let observer = null;
@@ -56,21 +84,21 @@
   function renderRepos() {
     if (observer) { observer.disconnect(); observer = null; }
     repoGrid.replaceChildren();
-    const filtered = getFilteredRepos();
-    document.getElementById('librarySummary').textContent = `${filtered.length} von ${repos.length} Apps`;
+    const filtered = getFilteredEntries();
+    const groupCount = filtered.filter(entry => entry.group).length;
+    document.getElementById('librarySummary').textContent = `${filtered.length - groupCount} von ${repos.length} Apps · ${groupCount} von ${B.groups.catalog.size} Gruppen`;
 
     if (!filtered.length) {
       const empty = document.createElement('div');
       empty.className = 'empty-state';
-      empty.textContent = '— Keine Apps gefunden —';
+      empty.textContent = '— Keine Apps oder Gruppen gefunden —';
       repoGrid.appendChild(empty);
       return;
     }
 
     const searching = Boolean(s.activeSearch.trim());
-    filtered.forEach((repo, i) => {
-      // Gruppenattribute bleiben erhalten, werden hier aber nicht zusammengefasst.
-      const card = B.cards.createCard(repo, i);
+    filtered.forEach(({ repo, group }, i) => {
+      const card = group ? B.groups.createGroupCard(group, i) : B.cards.createCard(repo, i);
       if (searching) card.classList.remove('featured', 'featured-wide', 'featured-tall');
       repoGrid.appendChild(card);
     });

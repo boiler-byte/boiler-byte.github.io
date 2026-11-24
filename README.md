@@ -1,10 +1,10 @@
-# Boiler Room – App-Plattform v18
+# Boiler Room – App-Plattform v22
 
 Vanilla JavaScript mit **klassischen `<script src="...">`-Dateien**. Keine ES-Module, keine Abhaengigkeiten, kein Build-Prozess.
 
 ## Installation
 
-Inhalt des ZIPs ueber den bisherigen v17-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **unveraendert erhalten**. Sie wird von `index.html` weiterhin vor allen Modulen geladen:
+Inhalt des ZIPs ueber den bisherigen v21-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **erhalten** (die Workspace-Zuordnungen koennen wie unten beschrieben umbenannt werden). Sie wird von `index.html` weiterhin vor allen Modulen geladen:
 
 ```html
 <script src="repos.js"></script>
@@ -12,7 +12,55 @@ Inhalt des ZIPs ueber den bisherigen v17-Projektstand kopieren. Die produktive `
 
 Ihre `originrepos` und `originrepogroups` haben weiterhin Vorrang vor den Fallback-Daten in `js/data.js`. Die Datei `repos.js` sowie eigene `img/`, `fonts/`, `icons/` und `manifest.json` sind nicht Teil dieses ZIPs und duerfen auf dem Host nicht geloescht werden.
 
-## Neu in v18: Workspace-Sidebar und Vollbild
+## Neu in v22: repo.workspace
+
+- Die kanonische Workspace-Zuordnung eines Repos heisst `workspace` statt `group`.
+- Einzelne ID: `workspace: 'dev'`; mehrere IDs: `workspace: ['dev', 'cards']`.
+- In der produktiven `repos.js` die bisherigen Zuordnungen `group` bzw. `groups` in `workspace` uebertragen. Die Datei ist nicht Bestandteil des ZIPs.
+- Rueckwaertskompatibilitaet: Fehlt `workspace`, werden `group` und `groups` wie bisher ausgewertet. Ist `workspace` vorhanden, hat es Vorrang, auch bei `[]` oder `null` (keine Zuordnung).
+- `originrepogroups`, Gruppen-IDs, `workspace/index.html?group=dev`, `localStorage.boilerRoom` und die kuratierte Sortierung bleiben unveraendert. Die zentrale Funktion `B.data.groupIds` wird weiterhin von Bibliothek, Entdecken-Metadaten und Workspace verwendet.
+
+Geaendert: `js/data.js`, `README.md`.
+
+Pruefung v22: JavaScript-Syntax und Node.js-Datenmodelltests fuer einzelne/mehrere IDs, Altformat, Vorrang des neuen Feldes, leere Zuordnungen, nicht definierte Gruppen und Fallback-Repos bestanden. Kein erneuter Browsertest; die produktive `repos.js` liegt nicht vor.
+
+## Neu in v21 (historisch): Repo-Gruppen nur in der Bibliothek
+
+- Entdecken zeigt keine Repo-Gruppen-Karten, gruppenspezifischen Regale oder Workspace-Gruppenlinks mehr. Highlights, Typ- und Tag-Regale sowie Gruppenangaben als Metadaten einzelner Apps bleiben erhalten.
+- In der kuratierten Bibliothek bleibt die Reihenfolge der einzelnen Apps aus `originrepos` erhalten. Jede Gruppe erscheint genau einmal unmittelbar nach ihrer ersten sichtbaren Mitglieds-App. Bei mehreren Gruppen derselben App gilt die Reihenfolge des Gruppenkatalogs. Gruppen ohne sichtbare Mitglieds-App stehen am Ende (bei Typfiltern werden nicht passende Gruppen weiterhin ausgeblendet).
+- Die Regel gilt in Karten-, Listen- und Icon-Ansicht. Namens-, Typ- und Jahressortierung sowie Suchrelevanz bleiben unverändert. Gruppen öffnen weiterhin `workspace/index.html?group=<id>`.
+- Workspace, Launcher, produktive `repos.js` und `localStorage.boilerRoom` bleiben unverändert.
+
+Geändert: `js/discover.js`, `js/render.js`, `js/groups.js`, `css/groups.css`, `README.md`.
+
+Prüfung v21: JavaScript-Syntax und Chromium mit eingebetteten Projektdateien und Demo-Repos bei 320, 390, 768 und 1280 px. Kuratierte Reihenfolge, Mehrfachzugehörigkeit, leere Gruppen, Typfilter, Suche, Namenssortierung, drei Bibliotheksansichten, Entdecken ohne Gruppenregale, App-Vorschau, Workspace-Links, Deep-Link-Persistenz und iFrame-Keep-alive geprüft. Produktive Repos und echte URL-Navigation sind nicht Teil des Tests.
+
+## Neu in v20 (historisch): Repo-Gruppen als Workspace
+
+- Unter **Entdecken** gibt es nach den Highlights eine horizontal scrollbare Reihe „Repo-Gruppen“. Die vorhandenen App-Regale bleiben erhalten; auch die Titel der gruppenspezifischen Regale verlinken auf den jeweiligen Workspace.
+- In der **Bibliothek** stehen die Gruppenkarten wieder zur Verfügung, standardmäßig vor den einzelnen Apps, in allen drei Ansichten (Karten, Liste, Icons). Apps bleiben einzeln erreichbar. Die Karten zeigen Gruppenname, Anzahl der Apps und vorhandene Gruppenbilder bzw. Collagen (`img: 'all'`, `preview: 'all'`). Ohne Bild steht das Gruppensymbol als Fallback bereit.
+- Suche, Typfilter und Sortierung berücksichtigen auch Gruppen. Die Suche findet Gruppen anhand eigener Metadaten und ihrer enthaltenen Apps; Mitgliedertreffer stehen in der Relevanz unter direkten App-Titeltreffern. Ein Typfilter zeigt eine Gruppe, wenn sie mindestens eine App dieses Typs enthält. Beim Öffnen wird immer die vollständige Gruppe geladen. Gruppen erhalten keinen Favoritenstern; der Launcher bleibt unverändert.
+- Gruppen sind normale Links im selben Tab, z. B. `workspace/index.html?group=dev`. Das alte Kreis-/Orbit-Menü und dessen Styles sind entfernt. Die Vorschau einzelner Apps unter Entdecken bleibt erhalten.
+- Die Gruppen werden zentral aus den vorhandenen `originrepogroups`, `repo.group` und `repo.groups` gebildet; auch mehrere Gruppen pro Repo, leere Gruppen, nicht separat definierte Gruppen und IDs mit Sonderzeichen funktionieren.
+- Eine gültige Gruppen-ID im URL-Parameter `group` hat beim Start Vorrang vor `localStorage.boilerRoom.workspace.selected`. Die zuletzt geöffnete App dieser Gruppe wird wiederhergestellt, sonst die erste startbare App. Ohne gültigen Parameter gilt weiterhin der gespeicherte Workspace (beim ersten Start: Favoriten). Unbekannte Parameterwerte werden ignoriert und durch die gültige Auswahl ersetzt bzw. entfernt.
+- Die Gruppenauswahl im Workspace aktualisiert den URL-Parameter über `history.replaceState`, ohne zusätzliche Verlaufseinträge. Beim eigenen Favoriten-Workspace entfällt `group`. Die bisherige Persistenz und iFrame-Wiederverwendung bleiben erhalten.
+
+Geändert: `index.html`, `js/data.js`, `js/groups.js`, `js/render.js`, `js/discover.js`, `css/groups.css`, `workspace/workspace.js`, `README.md`. Die produktive `repos.js` bleibt unverändert.
+
+Prüfung v20: JavaScript-Syntax; Chromium mit eingebetteten Projektdateien und Demo-Repos bei 320, 390, 768 und 1280 px; Gruppenlinks per Maus/Tastatur, Scroll-Drag ohne unbeabsichtigtes Öffnen, Collagen, Suche, Filter, Namenssortierung, alle drei Bibliotheksansichten, unveränderte App-Vorschau und Launcher, Deep-Link-Priorität, Sonderzeichen, ungültige/leere Gruppen, Wiederherstellung der letzten App und iFrame-Keep-alive. Direkte URL-Navigation war administrativ gesperrt, deshalb wurden Linkaktivierung, URL/History und Storage simuliert. Produktive Repos und Assets wurden nicht getestet.
+
+## Neu in v19 (historisch): Workspace im Launcher
+
+- Der Workspace-Link befindet sich direkt rechts neben dem Info-Tooltip in der Launcher-Aktionsleiste. Auf schmalen Bildschirmen wird er als kompakter Icon-Link dargestellt; der zugängliche Name bleibt erhalten.
+- Die Hauptnavigation hat wieder vier Einträge. Der Workspace öffnet weiterhin seine eigenständige Seite im selben Tab.
+- Workspace-eigener Vollbild-Button, Fullscreen-Steuerung und zugehörige CSS-Regeln sind entfernt. Eingebettete Apps dürfen weiterhin selbst Vollbild anfordern.
+- Gruppenwahl, Suche, Favoriten, iFrame-Keep-alive und `localStorage.boilerRoom` bleiben unverändert.
+
+Geändert: `index.html`, `css/platform.css`, `workspace/index.html`, `workspace/workspace.css`, `workspace/workspace.js`, `README.md`.
+
+Prüfung v19: Chromium mit eingebetteten Projektdateien und Demo-Repos bei 320, 390, 540, 768 und 1280 px im Launcher; vier Navigationseinträge, Linkposition, Info-Tooltip, Verwalten und Abschnittswechsel. Workspace-Regression bei 320, 390, 700, 768 und 1280 px: Suche, Gruppen, Persistenz, iFrame-Keep-alive und erhaltene iFrame-Vollbildberechtigung. Keine Laufzeitfehler. Produktive Repos, Assets und echte URL-Navigation wurden nicht getestet.
+
+## Neu in v18 (historisch): Workspace-Sidebar und Vollbild
 
 - `db` als Brand-Mark für „der Boiler“, darunter der Untertitel „der Boiler Room“.
 - Der Sidebar-Header ist selbst die Workspace-Auswahl: aktueller Gruppenname, Brand-Mark und Chevron bilden die gesamte Klickfläche des nativen Dropdowns. Der separate Gruppen-Picker entfällt. Auf kleinen Bildschirmen bleibt der Schließen-Button neben dem Header erhalten; auf Desktop wird die Sidebar über die Toolbar gesteuert.
@@ -28,9 +76,9 @@ Neu: `js/search-relevance.js` (gemeinsame, aus der Bibliothek ausgelagerte Suchb
 - Regressionstest der v17-Funktionen (Gruppen, Favoriten, Persistenz, iFrame-Keep-alive, Reload und mobile Navigation) bei 320, 390, 700, 768 und 1280 px. JavaScript-Syntax und ZIP-Integrität geprüft.
 - Produktive `repos.js`, Assets, externe App-Aufrufe, Safari und reale Mobilgeräte sind nicht Bestandteil der Tests.
 
-## Neu in v17: Eigenständiger Workspace
+## Neu in v17 (historisch): Eigenständiger Workspace
 
-Der neue Menüpunkt **Workspace** öffnet `workspace/index.html` als eigene Seite. Alternativ ist die App direkt unter `boiler-room/workspace/` erreichbar. Die Oberfläche besteht aus `workspace/index.html`, `workspace/workspace.css` und `workspace/workspace.js`; sie benutzt wie die Plattform klassische Skripte ohne Framework oder Build.
+Der Workspace-Link (seit v19 im Launcher) öffnet `workspace/index.html` als eigene Seite. Alternativ ist die App direkt unter `boiler-room/workspace/` erreichbar. Die Oberfläche besteht aus `workspace/index.html`, `workspace/workspace.css` und `workspace/workspace.js`; sie benutzt wie die Plattform klassische Skripte ohne Framework oder Build.
 
 ### Workspace-Auswahl und Apps
 
@@ -291,7 +339,7 @@ Geändert: `js/launcher.js`, `js/render.js`, `js/drag.js`, `js/storage.js` und `
 
 - `localStorage.boilerRoom` bleibt der einzige persistente Datenspeicher fuer Favoriten, Favoritenreihenfolge, Typgruppen-Sortierung und -Oeffnungszustand, Bibliotheks- und Launcher-Ansicht sowie zuletzt geoeffneten Bereich.
 - Keine Migration und keine Aenderung der bestehenden Repo-Datenstruktur.
-- Die Bibliothek zeigt alle Apps einzeln; Gruppen sind nur Metadaten fuer Entdecken.
+- Die Bibliothek zeigt einzelne Apps und seit v20 auch Repo-Gruppen als Workspace-Links.
 - Horizontal scrollbare Highlights und Shelves inklusive Maus-Ziehen, Trägheit, Scroll-Snap und Scroll-Pfeilen.
 
 ## Pruefung
