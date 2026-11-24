@@ -104,12 +104,6 @@
     <main class="grid" id="repoGrid"></main>
     </div>
     <section id="launcherPage" class="launcher-page" hidden aria-label="Launcher">
-      <div class="launcher-toolbar">
-        <div class="launcher-view-controls" id="launcherViewControls" role="group" aria-label="Launcher-Ansicht">
-          <button type="button" class="launcher-view-btn is-active" data-launcher-view="apps" aria-pressed="true">▦ <span>Apps</span></button>
-          <button type="button" class="launcher-view-btn" data-launcher-view="list" aria-pressed="false">☰ <span>Liste</span></button>
-        </div>
-      </div>
       <p class="visually-hidden" id="launcherOrderStatus" aria-live="polite" aria-atomic="true"></p>
       <div class="grid launcher-app-grid" id="launcherGrid"></div>
       <div class="launcher-actions">
@@ -117,6 +111,7 @@
         <div class="launcher-add-wrap" id="launcherAddWrap">
           <button type="button" class="launcher-add-button" id="launcherAddButton"
                   aria-haspopup="dialog" aria-controls="launcherAddMenu" aria-expanded="false">+ App</button>
+          <button type="button" class="launcher-view-btn launcher-manage-btn" id="launcherManageButton" aria-controls="launcherGrid" aria-pressed="false">☰ <span>Verwalten</span></button>
           <div class="launcher-add-menu" id="launcherAddMenu" role="dialog"
                aria-label="App zum Launcher hinzufügen" hidden>
             <div class="launcher-add-search search-wrap" id="launcherAddSearchWrap">

@@ -3,18 +3,24 @@
   'use strict';
 
   const modes = new Set(['list', 'apps']);
-  const buttons = document.querySelectorAll('.launcher-view-btn');
+  const manageButton = document.getElementById('launcherManageButton');
   const hint = document.getElementById('launcherHint');
 
   function syncViewControls() {
-    buttons.forEach(button => {
-      const active = button.dataset.launcherView === B.state.launcherView;
-      button.classList.toggle('is-active', active);
-      button.setAttribute('aria-pressed', String(active));
-    });
-    if (hint) hint.textContent = B.state.launcherView === 'apps'
-      ? 'Gruppenüberschriften ziehen (Touch: Punktgriff) · Apps am Symbol sortieren · Alt + Pfeiltasten.'
-      : 'Gruppenüberschriften ziehen (Touch: Punktgriff) · App-Zeilen innerhalb der Gruppe sortieren.';
+    const managing = B.state.launcherView === 'list';
+    manageButton.classList.toggle('is-active', managing);
+    manageButton.setAttribute('aria-pressed', String(managing));
+    manageButton.title = managing ? 'Zur App-Ansicht wechseln' : 'Launcher verwalten';
+    if (hint) {
+      const ungrouped = B.dom.launcherGrid.classList.contains('launcher-ungrouped');
+      hint.textContent = ungrouped
+        ? (B.state.launcherView === 'apps'
+          ? 'App-Symbole gedrückt halten und verschieben, um die Reihenfolge anzupassen.'
+          : 'App-Zeilen ziehen, um die Reihenfolge anzupassen.')
+        : (B.state.launcherView === 'apps'
+          ? 'Gruppenüberschriften ziehen (Touch: Punktgriff) · Apps am Symbol sortieren · Alt + Pfeiltasten.'
+          : 'Gruppenüberschriften ziehen (Touch: Punktgriff) · App-Zeilen innerhalb der Gruppe sortieren.');
+    }
   }
 
   function loadView() {
@@ -284,14 +290,10 @@
   }
 
   function setup() {
-    const controls = document.getElementById('launcherViewControls');
-    if (!controls) return;
-    controls.addEventListener('click', e => {
-      const button = e.target.closest('[data-launcher-view]');
-      if (button && controls.contains(button)) {
-        closeAddMenu();
-        setView(button.dataset.launcherView);
-      }
+    manageButton.addEventListener('click', () => {
+      closeAddMenu();
+      setView(B.state.launcherView === 'list' ? 'apps' : 'list');
+      manageButton.focus({ preventScroll: true });
     });
     addButton.addEventListener('click', () => {
       if (addButton.disabled) return;

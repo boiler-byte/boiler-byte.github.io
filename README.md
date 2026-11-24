@@ -1,16 +1,52 @@
-# Boiler Room – App-Plattform v7
+# Boiler Room – App-Plattform v9
 
 Vanilla JavaScript mit **klassischen `<script src="...">`-Dateien**. Keine ES-Module, keine Abhaengigkeiten, kein Build-Prozess.
 
 ## Installation
 
-Inhalt des ZIPs ueber die bisherige v6-Version kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **unveraendert erhalten**. Sie wird von `index.html` weiterhin vor allen Modulen geladen:
+Inhalt des ZIPs ueber den bisherigen v8-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **unveraendert erhalten**. Sie wird von `index.html` weiterhin vor allen Modulen geladen:
 
 ```html
 <script src="repos.js"></script>
 ```
 
 Ihre `originrepos` und `originrepogroups` haben weiterhin Vorrang vor den Fallback-Daten in `js/data.js`. Die Datei `repos.js` sowie eigene `img/`, `fonts/`, `icons/` und `manifest.json` sind nicht Teil dieses ZIPs und duerfen auf dem Host nicht geloescht werden.
+
+## Neu in v9: Launcher – Verwalten-Toggle und mobiles Drag & Drop
+
+- Der bisherige separate Apps-Button oberhalb des Launchers entfällt. **Verwalten** bleibt rechts neben **+ App** und schaltet bei jedem Klick zwischen Symbol- und Listenansicht um. In der Listenansicht ist der Toggle hervorgehoben (`aria-pressed="true"`). Die zuletzt gewählte Ansicht bleibt gespeichert.
+- Auf Touch-Geräten wird die native Textmarkierung beziehungsweise das Long-Press-Menü bereits beim Aufsetzen des Fingers auf einem App-Symbol verhindert. Der Hinweistext unter den Apps ist nicht markierbar.
+- Ein kurzes Antippen des Symbols öffnet die App einmal; nach etwa 460 ms Gedrückthalten beginnt die Sortierung. Ein Abbruch der Touch-Geste stellt die vorherige Reihenfolge wieder her. Die Sortierung per Maus und Tastatur bleibt erhalten.
+- Über App-Namen und Zwischenräume kann weiterhin normal gescrollt werden. Die Sperre der Textauswahl außerhalb des Hinweises gilt nur während einer Touch-Sortiergeste. Favoriten, Gruppenzustände und Speicherstruktur bleiben unverändert.
+
+Geändert: `index.html`, `css/platform.css`, `js/launcher.js`, `js/drag.js`.
+
+### Prüfung v9
+
+- Syntaxprüfung aller JavaScript-Dateien mit `node --check`.
+- Chromium mit eingebetteten Projektdateien, fiktiven Demo-Repos und simuliertem Storage: 320, 390, 768 und 1280 px; leerer, ungruppierter und gruppierter Launcher. Geprüft: Toggle einschließlich gespeicherter Ansicht, Position neben + App, horizontale Breite, Maus- und Touch-Sortierung, gespeicherte Reihenfolge, kurzer Tap ohne Doppelklick, Abbruch und zu frühe Bewegung bei Touch. Keine JavaScript-Laufzeitfehler in diesen Tests.
+- Navigation zu lokalen HTTP-/Datei-URLs ist in der Testumgebung gesperrt. Wiederherstellung wurde durch Neuinitialisierung mit dem gespeicherten Storage-JSON geprüft. Physische Android-/iOS-Geräte und Safari konnten nicht getestet werden.
+
+## Neu in v8: Entdecken – Highlight-Autoplay und horizontales Scrollen
+
+### Highlight-Karussell
+
+- Die Highlights wechseln automatisch etwa **alle 6 Sekunden** um eine Karte weiter. Nach der letzten erreichbaren Karte beginnt die Anzeige wieder bei der ersten.
+- Der automatische Wechsel pausiert bei **Maus-Hover**, **Tastatur-/Element-Fokus**, **Pointer-/Touch-Kontakt** und **Scrollen**. Auch ein vertikaler Seiten-Scroll oder das Scrollen eines anderen Regals pausiert das Karussell.
+- Nach Ende aller aktiven Pausen beginnt ein **voller neuer 6-Sekunden-Zeitraum**; das bisherige Restintervall wird nicht fortgesetzt. Nachlauf und Scroll-Animationen werden abgewartet.
+- Das Karussell pausiert auch, wenn es nicht ausreichend sichtbar ist, wenn der Browser-Tab nicht aktiv ist oder wenn eine App-Vorschau geöffnet ist.
+- Bei der Systemeinstellung **reduzierte Bewegung** ist Autoplay deaktiviert.
+- Sind alle Highlights gleichzeitig sichtbar, ist kein automatischer Scroll nötig. Pfeile und manuelles Scrollen bleiben davon unabhängig.
+
+### Horizontales Scrollen und Snap
+
+- Auf Mobilgeräten bleibt **natives Touch-Swiping** mit eigener Bewegungsenergie erhalten; vertikales Seitenscrollen bleibt möglich.
+- Auf dem Desktop erhalten die Highlight- und App-Regale beim **Ziehen mit der Maus** einen kurzen kinetischen Nachlauf. Dabei verhindert die bestehende Klick-Unterdrueckung versehentliches Oeffnen von Karten.
+- **Kein vertikales Mausrad-Mapping**: Ein normales Mausrad scrollt weiterhin die Seite, Trackpad-Gesten können nativ horizontal scrollen.
+- Highlight-Karten und kleinere App-Karten verwenden **horizontales CSS Scroll-Snap (`x mandatory`, `start`)** an der linken Kante. Snap pausiert waehrend Maus-Drag und Nachlauf und wird anschließend wieder aktiv.
+- Scroll-Pfeile, App-Vorschau und alle anderen v7-Funktionen bleiben erhalten.
+
+Geändert: `js/discover.js`, `css/platform.css`. Keine neuen Abhaengigkeiten und keine Aenderungen an `repos.js`.
 
 ## Neu in v7
 
@@ -76,10 +112,12 @@ Angepasst: `css/cards.css`.
 
 ## Launcher: Apps nach Typ gruppiert und dauerhaft sortierbar
 
-- Die Hauptansicht **Apps** und die **Liste** zeigen Favoriten getrennt nach Typ (Games, Tools, Misc); eigene Typen aus `repos.js` werden ebenfalls automatisch eingeordnet. Leere Typgruppen werden nicht angezeigt.
+- Die Hauptansicht **Apps** und die **Liste** gruppieren Favoriten erst bei **mindestens 9 Apps und mindestens 2 belegten Typen**. Darunter erscheinen Apps ohne Überschriften in ihrer individuellen Favoriten-Reihenfolge.
+- Wenn beide Bedingungen erfüllt sind, werden die Apps nach Typ (Games, Tools, Misc) gruppiert; eigene Typen aus `repos.js` werden ebenfalls automatisch berücksichtigt. Leere Typgruppen werden nicht angezeigt.
 - Alle Gruppen sind bei der ersten Nutzung **aufgeklappt**. Ein Klick auf den Gruppentitel klappt die Gruppe ein oder aus. Der Zustand bleibt beim Wechsel zwischen Apps/Liste sowie nach einem Reload erhalten.
 - Die **Typ-Überschriften lassen sich per Drag & Drop verschieben** (Desktop: Ueberschrift greifen; Touch: Punktgriff links ziehen). Mit **Alt + Pfeil hoch/runter** lässt sich eine fokussierte Überschrift auch per Tastatur verschieben.
 - Gruppenreihenfolge und eingeklappte Gruppen werden unter `launcherTypeOrder` und `launcherTypeClosed` innerhalb des bestehenden `localStorage.boilerRoom` gespeichert. Die Favoritenreihenfolge (`favoriteOrder`) bleibt eine eigene Einstellung.
+- Unterschreitet die Anzahl Apps oder belegten Typen die Schwelle, werden Gruppen nur vorübergehend ausgeblendet: gespeicherte Gruppenreihenfolge und Offen-/Geschlossen-Zustände bleiben für das erneute Aktivieren erhalten.
 - Einzelne Apps lassen sich weiterhin **innerhalb ihrer Typgruppe** sortieren: Listenzeilen ziehen; in der App-Ansicht Icons gedrückt halten oder Alt + Pfeiltasten nutzen.
 - Auch Typen, die vorübergehend keine Favoriten besitzen, behalten ihre gespeicherte Position. Neu auftauchende Typen werden ergänzt, ohne die vorhandene Sortierung zu überschreiben.
 - Das +App-Menü mit anfänglich **geschlossenen** Typen sowie Bibliothekssuche bleibt unabhängig davon unverändert.
@@ -91,7 +129,7 @@ Geändert: `js/launcher.js`, `js/render.js`, `js/drag.js`, `js/storage.js` und `
 - `localStorage.boilerRoom` bleibt der einzige persistente Datenspeicher fuer Favoriten, Favoritenreihenfolge, Typgruppen-Sortierung und -Oeffnungszustand, Bibliotheks- und Launcher-Ansicht sowie zuletzt geoeffneten Bereich.
 - Keine Migration und keine Aenderung der bestehenden Repo-Datenstruktur.
 - Die Bibliothek zeigt alle Apps einzeln; Gruppen sind nur Metadaten fuer Entdecken.
-- Horizontal scrollbare Highlights und Shelves inklusive Maus-Ziehen und Scroll-Pfeilen.
+- Horizontal scrollbare Highlights und Shelves inklusive Maus-Ziehen, Trägheit, Scroll-Snap und Scroll-Pfeilen.
 
 ## Pruefung
 
@@ -108,3 +146,11 @@ Geändert: `js/launcher.js`, `js/render.js`, `js/drag.js`, `js/storage.js` und `
 - Initial offene Gruppen, Einklappen und Wiederherstellen, Desktop-Drag & Drop, Touch-Griff, Tastatur-Sortierung, Reload und Ansicht-Wechsel geprueft.
 - Weiterhin funktionsfaehig: einzelne Apps per Alt + Pfeil bzw. Listen-Drag sortieren, Entfernen und erneutes Hinzufuegen ueber die +App-Suche, Ausschluss von Repos ohne URL im Dropdown.
 - Das Testdokument ist isoliert; die produktive `repos.js` wird nicht eingebunden oder veraendert.
+
+### Pruefung v8
+
+- JavaScript-Syntax aller Dateien mit `node --check` geprueft.
+- Chromium-Browsertests mit separaten Demo-Apps: 320, 390, 754 und 1280 px. Kein horizontaler Ueberlauf oder JavaScript-Laufzeitfehler.
+- Highlight-Intervall von 6 Sekunden geprueft; zusaetzlich Ablauf-/Pause-Tests mit einem beschleunigten Testintervall fuer Hover, Fokus, Kontakt, Scroll, Abschnittswechsel und reduzierte Bewegung.
+- Native mobile Touch-Swipes, CSS-Snap, Maus-Drag mit Nachlauf und unveraendertes vertikales Mausrad-Verhalten geprueft.
+- Die QA verwendet lokal eingebettete Projektdateien und rein fiktive Test-Repos. Die produktive `repos.js` ist nicht Bestandteil des ZIPs.

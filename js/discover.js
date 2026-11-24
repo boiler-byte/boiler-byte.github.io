@@ -129,25 +129,64 @@
     });
   }
 
-  // Maus-Drag-to-Scroll fuer beide Entdecken-Rail-Typen. Auf Touchgeraeten
-  // bleibt das native Swipen unangetastet. Ein echter Drag darf weder Links
-  // oeffnen noch die Favoriten-Buttons versehentlich aktivieren.
+  // Desktop: Drag-to-Scroll mit kurzem, natuerlichem Nachlauf (wie ein Swipe).
+  // Touch/Trackpad bleiben nativ; Wheel-Events werden NICHT umgelenkt.
   function enableMouseDrag(rail) {
     let gesture = null;
+    let coastFrame = 0;
     let suppressClick = false;
     let suppressTimer = null;
     const threshold = 7;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    function stopCoasting() {
+      if (coastFrame) cancelAnimationFrame(coastFrame);
+      coastFrame = 0;
+      rail.classList.remove('is-coasting');
+    }
+
+    function settle() {
+      stopCoasting();
+      // Browser-Snap uebernimmt das Ausrichten an der linken Kartenkante.
+      // Auch nach Maus-Drags greift damit dieselbe Regel wie beim Touch-Swipe.
+      rail.classList.remove('is-grab-scrolling');
+    }
+
+    function coast(velocity) {
+      if (reduceMotion.matches || Math.abs(velocity) < .28) {
+        settle();
+        return;
+      }
+      // Geschwindigkeit in px/ms; Drosselung macht den Nachlauf vorhersagbar.
+      let speed = Math.max(-1.8, Math.min(1.8, velocity)) * 16.667;
+      let last = 0;
+      rail.classList.add('is-coasting');
+      rail.classList.remove('is-grab-scrolling');
+      function frame(time) {
+        const delta = last ? Math.min(32, time - last) : 16.667;
+        last = time;
+        const before = rail.scrollLeft;
+        rail.scrollLeft += speed * (delta / 16.667);
+        speed *= Math.pow(.94, delta / 16.667);
+        if (Math.abs(speed) < .45 || Math.abs(rail.scrollLeft - before) < .1) {
+          settle();
+          return;
+        }
+        coastFrame = requestAnimationFrame(frame);
+      }
+      coastFrame = requestAnimationFrame(frame);
+    }
 
     function pointerDown(event) {
-      if (event.pointerType !== 'mouse' || event.button !== 0 ||
+      if (event.pointerType !== 'mouse') { stopCoasting(); return; }
+      if (event.button !== 0 ||
           event.target.closest('button, input, select, textarea, [contenteditable]') ||
           rail.scrollWidth - rail.clientWidth <= 2) return;
+      stopCoasting();
       gesture = {
-        pointerId: event.pointerId,
-        x: event.clientX,
-        y: event.clientY,
-        scrollLeft: rail.scrollLeft,
-        dragging: false
+        pointerId: event.pointerId, x: event.clientX, y: event.clientY,
+        scrollLeft: rail.scrollLeft, dragging: false,
+        samples: [{ x: event.clientX, time: performance.now() }]
       };
     }
 
@@ -162,24 +201,34 @@
       }
       event.preventDefault();
       rail.scrollLeft = gesture.scrollLeft - dx;
+      const now = performance.now();
+      gesture.samples.push({ x: event.clientX, time: now });
+      gesture.samples = gesture.samples.filter(sample => now - sample.time <= 110);
     }
 
     function pointerEnd(event) {
       if (!gesture || event.pointerId !== gesture.pointerId) return;
-      const dragged = gesture.dragging;
+      const current = gesture;
       gesture = null;
-      rail.classList.remove('is-grab-scrolling');
-      if (dragged && event.type === 'pointerup') {
-        suppressClick = true;
-        clearTimeout(suppressTimer);
-        // Der zugehoerige Click folgt unmittelbar auf pointerup.
-        suppressTimer = setTimeout(() => { suppressClick = false; }, 0);
+      if (!current.dragging || event.type === 'pointercancel') {
+        settle();
+        return;
       }
+      // Den nach dem Pointerup generierten Link-Klick sicher unterdruecken.
+      suppressClick = true;
+      clearTimeout(suppressTimer);
+      suppressTimer = setTimeout(() => { suppressClick = false; }, 0);
+      const first = current.samples[0];
+      const last = current.samples[current.samples.length - 1];
+      const age = performance.now() - last.time;
+      const velocity = age < 110 && last.time > first.time
+        ? -(last.x - first.x) / (last.time - first.time) : 0;
+      coast(velocity);
     }
 
     function cancelDrag() {
       gesture = null;
-      rail.classList.remove('is-grab-scrolling');
+      settle();
     }
 
     function clickCapture(event) {
@@ -190,15 +239,16 @@
     }
 
     function preventNativeDrag(event) { event.preventDefault(); }
+    function onWheel() { stopCoasting(); } // Keine wheel.preventDefault()/Delta-Umleitung.
 
     rail.addEventListener('pointerdown', pointerDown);
-    // Die Maus darf beim Ziehen ausserhalb der Rail landen.
     window.addEventListener('pointermove', pointerMove, { passive: false });
     window.addEventListener('pointerup', pointerEnd);
     window.addEventListener('pointercancel', pointerEnd);
     window.addEventListener('blur', cancelDrag);
     rail.addEventListener('click', clickCapture, true);
     rail.addEventListener('dragstart', preventNativeDrag);
+    rail.addEventListener('wheel', onWheel, { passive: true });
 
     cleanupScrollControls.push(() => {
       rail.removeEventListener('pointerdown', pointerDown);
@@ -208,8 +258,150 @@
       window.removeEventListener('blur', cancelDrag);
       rail.removeEventListener('click', clickCapture, true);
       rail.removeEventListener('dragstart', preventNativeDrag);
+      rail.removeEventListener('wheel', onWheel);
       clearTimeout(suppressTimer);
       cancelDrag();
+    });
+  }
+
+  // Highlights rotieren nur, solange sie sichtbar und nicht in Benutzung sind.
+  // Jede Unterbrechung beginnt nach ihrem Ende einen NEUEN 6-Sekunden-Takt.
+  function enableHighlightAutoplay(area, rail) {
+    const INTERVAL = 6000;
+    const SCROLL_IDLE = 260;
+    const blocked = new Set();
+    const pressedPointers = new Set();
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let timer = 0;
+    let scrollIdleTimer = 0;
+
+    function canPlay() {
+      return !blocked.size && !document.hidden &&
+        !document.documentElement.classList.contains('discover-preview-active') &&
+        rail.scrollWidth - rail.clientWidth > 2 && rail.children.length > 1;
+    }
+
+    function clearTimer() {
+      if (timer) clearTimeout(timer);
+      timer = 0;
+    }
+
+    function nextPosition() {
+      const max = Math.max(0, rail.scrollWidth - rail.clientWidth);
+      const railRect = rail.getBoundingClientRect();
+      const inset = parseFloat(getComputedStyle(rail).scrollPaddingLeft) || 0;
+      const candidates = Array.from(rail.children, item => {
+        const left = rail.scrollLeft + item.getBoundingClientRect().left - railRect.left - rail.clientLeft - inset;
+        return Math.min(max, Math.max(0, left));
+      });
+      // Auf dem letzten erreichbaren Snap-Punkt zur ersten Karte zurueck.
+      return candidates.find(x => x > rail.scrollLeft + 2) ?? 0;
+    }
+
+    function schedule() {
+      clearTimer();
+      if (!canPlay()) return;
+      timer = setTimeout(() => {
+        timer = 0;
+        if (!canPlay()) return;
+        const position = nextPosition();
+        if (Math.abs(rail.scrollLeft - position) < 2) {
+          schedule();
+          return;
+        }
+        markScrolling();
+        rail.scrollTo({ left: position, behavior: 'smooth' });
+      }, INTERVAL);
+    }
+
+    function block(reason, active) {
+      if (active) {
+        blocked.add(reason);
+        clearTimer();
+      } else if (blocked.delete(reason)) {
+        schedule();
+      }
+    }
+
+    function markScrolling() {
+      block('scroll', true);
+      clearTimeout(scrollIdleTimer);
+      scrollIdleTimer = setTimeout(() => block('scroll', false), SCROLL_IDLE);
+    }
+
+    function onPointerDown(event) {
+      pressedPointers.add(event.pointerId);
+      block('contact', true);
+    }
+    function onPointerEnd(event) {
+      pressedPointers.delete(event.pointerId);
+      if (!pressedPointers.size) block('contact', false);
+    }
+    function onPointerEnter(event) {
+      if (event.pointerType === 'mouse') block('hover', true);
+    }
+    function onPointerLeave(event) {
+      if (event.pointerType === 'mouse') block('hover', false);
+    }
+    function onFocusIn() { block('focus', true); }
+    function onFocusOut(event) {
+      if (!area.contains(event.relatedTarget)) block('focus', false);
+    }
+    function onVisibility() { block('hidden', document.hidden); }
+    function onMotionChange() { block('motion', reduceMotion.matches); }
+    function onResize() { schedule(); }
+    function onWindowBlur() { block('window', true); }
+    function onWindowFocus() { block('window', false); }
+
+    area.addEventListener('pointerenter', onPointerEnter);
+    area.addEventListener('pointerleave', onPointerLeave);
+    area.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointerup', onPointerEnd);
+    window.addEventListener('pointercancel', onPointerEnd);
+    area.addEventListener('focusin', onFocusIn);
+    area.addEventListener('focusout', onFocusOut);
+    // Auch das Scrollen anderer Entdecken-Regale unterbricht den Autoplay-Takt.
+    document.addEventListener('scroll', markScrolling, { capture: true, passive: true });
+    window.addEventListener('scroll', markScrolling, { passive: true });
+    window.addEventListener('blur', onWindowBlur);
+    window.addEventListener('focus', onWindowFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    reduceMotion.addEventListener('change', onMotionChange);
+
+    const resizeObserver = typeof ResizeObserver === 'function'
+      ? new ResizeObserver(onResize) : null;
+    if (resizeObserver) resizeObserver.observe(rail);
+    const intersectionObserver = typeof IntersectionObserver === 'function'
+      ? new IntersectionObserver(entries => {
+        const visible = entries[0]?.intersectionRatio >= .25;
+        block('offscreen', !visible);
+      }, { threshold: [0, .25, .5] }) : null;
+    if (intersectionObserver) {
+      blocked.add('offscreen');
+      intersectionObserver.observe(area);
+    }
+    onMotionChange();
+    onVisibility();
+    schedule();
+
+    cleanupScrollControls.push(() => {
+      clearTimer();
+      clearTimeout(scrollIdleTimer);
+      area.removeEventListener('pointerenter', onPointerEnter);
+      area.removeEventListener('pointerleave', onPointerLeave);
+      area.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointerup', onPointerEnd);
+      window.removeEventListener('pointercancel', onPointerEnd);
+      area.removeEventListener('focusin', onFocusIn);
+      area.removeEventListener('focusout', onFocusOut);
+      document.removeEventListener('scroll', markScrolling, true);
+      window.removeEventListener('scroll', markScrolling);
+      window.removeEventListener('blur', onWindowBlur);
+      window.removeEventListener('focus', onWindowFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+      reduceMotion.removeEventListener('change', onMotionChange);
+      resizeObserver?.disconnect();
+      intersectionObserver?.disconnect();
     });
   }
 
@@ -291,6 +483,7 @@
     highlightControls(heading, rail);
     enableMouseDrag(rail);
     area.append(heading, rail);
+    enableHighlightAutoplay(area, rail);
     return area;
   }
 

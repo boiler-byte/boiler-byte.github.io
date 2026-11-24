@@ -93,7 +93,7 @@
     const addWrap = document.getElementById('launcherAddWrap');
     const actions = document.querySelector('.launcher-actions');
     B.drag.cancelIconDrag();
-    // Den einen +App-Button vor dem Leeren des Grids zurueckholen.
+    // +App und Verwalten vor dem Leeren des Grids zurueckholen.
     // So bleiben Dropdown und alle Event-Handler beim Ansichtswechsel erhalten.
     if (addWrap && actions && addWrap.parentElement !== actions) actions.appendChild(addWrap);
     addWrap?.classList.remove('is-empty');
@@ -101,11 +101,22 @@
     const appView = s.launcherView === 'apps';
     grid.classList.toggle('view-list', !appView);
     grid.classList.toggle('launcher-app-grid', appView);
-    B.launcher.syncViewControls();
     B.launcher.refreshAddMenu();
     const order = B.favorites.getOrder();
     const entries = repos.filter(repo => B.favorites.isFavorite(repo.label))
       .sort((a, b) => order.indexOf(a.label) - order.indexOf(b.label));
+
+    const groups = new Map();
+    entries.forEach(repo => {
+      const type = (typeof repo.type === 'string' && repo.type.trim()) ? repo.type : 'misc';
+      if (!groups.has(type)) groups.set(type, []);
+      groups.get(type).push(repo);
+    });
+    // Typgruppen nur ab 9 Launcher-Apps UND mindestens 2 belegten Typen.
+    // Die gespeicherten Gruppen-Einstellungen bleiben unterhalb der Schwelle erhalten.
+    const grouped = entries.length >= 9 && groups.size >= 2;
+    grid.classList.toggle('launcher-ungrouped', !grouped);
+    B.launcher.syncViewControls();
 
     if (!entries.length) {
       const empty = document.createElement('div');
@@ -113,7 +124,7 @@
       const message = document.createElement('p');
       message.textContent = 'Noch keine Favoriten. Markiere Apps in Entdecken oder der Bibliothek mit ★.';
       empty.appendChild(message);
-      // Der bestehende Dropdown-Button steht direkt unter dem Leerzustandstext.
+      // +App und Verwalten stehen direkt unter dem Leerzustandstext.
       // Keine zweite Schaltflaeche, keine duplizierten IDs oder Listener.
       if (addWrap) {
         addWrap.classList.add('is-empty');
@@ -122,32 +133,37 @@
       grid.appendChild(empty);
       return;
     }
-    const groups = new Map();
-    entries.forEach(repo => {
-      const type = (typeof repo.type === 'string' && repo.type.trim()) ? repo.type : 'misc';
-      if (!groups.has(type)) groups.set(type, []);
-      groups.get(type).push(repo);
-    });
+
     let index = 0;
-    B.launcher.getTypeOrder([...groups.keys()]).forEach(type => {
-      const groupRepos = groups.get(type);
-      if (!groupRepos?.length) return;
-      const { section, items } = B.launcher.makeTypeGroup(type, groupRepos.length, appView);
-      groupRepos.forEach(repo => {
-        if (appView) { items.appendChild(B.launcher.makeIcon(repo)); return; }
-        const card = B.cards.createCard(repo, index++, { favoriteVariant: 'trash' });
-        card.classList.add('visible');
-        // Der Entfernen-Button kommt ganz rechts hinter den App-Namen.
-        const image = card.querySelector('.card-image');
-        const favorite = image?.querySelector('.fav-btn');
-        if (favorite) card.appendChild(favorite);
-        image?.remove();
-        card.querySelector('.card-tooltip')?.remove();
-        card.querySelector('.card-meta')?.remove();
-        items.appendChild(card);
+    function appendApp(repo, container) {
+      if (appView) {
+        container.appendChild(B.launcher.makeIcon(repo));
+        return;
+      }
+      const card = B.cards.createCard(repo, index++, { favoriteVariant: 'trash' });
+      card.classList.add('visible');
+      // Der Entfernen-Button kommt ganz rechts hinter den App-Namen.
+      const image = card.querySelector('.card-image');
+      const favorite = image?.querySelector('.fav-btn');
+      if (favorite) card.appendChild(favorite);
+      image?.remove();
+      card.querySelector('.card-tooltip')?.remove();
+      card.querySelector('.card-meta')?.remove();
+      container.appendChild(card);
+    }
+
+    if (grouped) {
+      B.launcher.getTypeOrder([...groups.keys()]).forEach(type => {
+        const groupRepos = groups.get(type);
+        if (!groupRepos?.length) return;
+        const { section, items } = B.launcher.makeTypeGroup(type, groupRepos.length, appView);
+        groupRepos.forEach(repo => appendApp(repo, items));
+        grid.appendChild(section);
       });
-      grid.appendChild(section);
-    });
+    } else {
+      // Ohne Gruppen bleibt die individuelle Favoriten-Reihenfolge sichtbar.
+      entries.forEach(repo => appendApp(repo, grid));
+    }
     if (!appView) B.drag.enableList();
   }
 

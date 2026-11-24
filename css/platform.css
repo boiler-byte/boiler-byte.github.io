@@ -251,6 +251,9 @@
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,.22) transparent;
+  /* Native Touch-Trägheit und Gesten in beiden Achsen erhalten.
+     Das Mausrad scrollt weiter die Seite, horizontales Trackpad nativ die Rail. */
+  touch-action: pan-x pan-y;
   scroll-padding-inline: .25rem;
   padding: .35rem .25rem 1.1rem;
 }
@@ -355,13 +358,15 @@
 .discover-thumb .repo-attribute-icon { width: 13px; height: 13px; }
 .discover-thumb-meta { gap: .3rem; }
 
-/* Mit der Maus lassen sich Highlights und Regale direkt seitlich ziehen.
-   Touch und Trackpad behalten ihr natuerliches Scroll-Verhalten. */
+/* Mausdrag plus Nachlauf; nur waehrend der Geste/Nachlauf Snap pausieren.
+   Kein Wheel-Mapping: ein klassisches Mausrad scrollt weiter vertikal. */
 @media (hover: hover) and (pointer: fine) {
   .highlight-rail, .discover-rail { cursor: grab; }
 }
 .highlight-rail.is-grab-scrolling,
-.discover-rail.is-grab-scrolling {
+.discover-rail.is-grab-scrolling,
+.highlight-rail.is-coasting,
+.discover-rail.is-coasting {
   cursor: grabbing;
   scroll-snap-type: none;
   scroll-behavior: auto;
@@ -373,16 +378,18 @@
 }
 
 /* Mein Launcher: gemeinsame Sortierung, zwei Darstellungen. */
-.launcher-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: .85rem 1.3rem;
-  margin-bottom: 1.25rem;
+.launcher-hint {
+  flex: 1 1 260px; min-width: 0; color: var(--text-muted); font-size: .85rem;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
-.launcher-hint { flex: 1 1 260px; min-width: 0; color: var(--text-muted); font-size: .85rem; }
-.launcher-toolbar { justify-content: flex-end; }
+/* Nur während einer Touch-Sortiergeste die native Textauswahl unterbinden. */
+body.launcher-touch-press, body.launcher-touch-press * {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
 .launcher-page .grid { padding-bottom: 1.4rem; }
 .launcher-actions {
   display: flex;
@@ -392,7 +399,15 @@
   margin: .5rem 0 3.5rem;
   flex-wrap: wrap;
 }
-.launcher-add-wrap { position: relative; margin-left: auto; flex: 0 0 auto; }
+.launcher-add-wrap {
+  position: relative;
+  margin-left: auto;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  max-width: 100%;
+}
 .launcher-add-button {
   border: 1px solid var(--cyan-border);
   color: var(--text-primary);
@@ -403,17 +418,18 @@
   cursor: pointer;
   white-space: nowrap;
 }
-/* Im leeren Launcher sitzt derselbe +App-Button direkt unter dem Hinweis. */
+/* Im leeren Launcher bleiben +App und Verwalten direkt unter dem Hinweis. */
 #launcherGrid .empty-state .launcher-add-wrap.is-empty {
-  display: block;
+  display: inline-flex;
   width: max-content;
   max-width: 100%;
   margin: 1.55rem auto 0;
 }
 #launcherGrid .empty-state .launcher-add-wrap.is-empty .launcher-add-button {
-  min-width: 190px;
+  width: 190px;
+  min-width: 0;
   min-height: 58px;
-  padding: .9rem 2.1rem;
+  padding: .9rem clamp(.65rem, 3vw, 2.1rem);
   font-size: 1.15rem;
   border-color: var(--cyan-base);
   background: rgba(44,212,255,.14);
@@ -518,14 +534,6 @@
 }
 .launcher-add-option-icon img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
-.launcher-view-controls {
-  display: inline-flex;
-  padding: .25rem;
-  gap: .15rem;
-  border: 1px solid rgba(255,255,255,.11);
-  border-radius: 999px;
-  background: rgba(255,255,255,.03);
-}
 .launcher-view-btn {
   border: 1px solid transparent;
   border-radius: 999px;
@@ -535,6 +543,12 @@
   font: 500 .82rem var(--font-mono);
   cursor: pointer;
   white-space: nowrap;
+}
+.launcher-manage-btn {
+  flex: 0 0 auto;
+  border-color: rgba(255,255,255,.11);
+  background: rgba(255,255,255,.03);
+  padding: .63rem .75rem;
 }
 .launcher-view-btn:hover { color: #fff; }
 .launcher-view-btn.is-active { color: #fff; background: rgba(44,212,255,.11); border-color: var(--cyan-border); }
@@ -572,13 +586,25 @@
 .launcher-page .view-list .card-content h3 { min-width: 0; overflow-wrap: anywhere; }
 
 /* App-Ansicht: runde Repo-Bilder, klickbar und per Halten verschiebbar. */
-/* Typgruppen strukturieren beide Launcher-Ansichten; die App-Raster liegen innen. */
+/* Je nach App-Anzahl liegen die Kacheln in Typgruppen oder direkt im Launcher-Raster. */
 #launcherGrid.launcher-app-grid,
 #launcherGrid.view-list {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: clamp(1.2rem, 2.8vw, 2rem);
+}
+/* Weniger als 9 Apps oder nur ein Typ: ein gemeinsames Raster ohne Überschriften. */
+#launcherGrid.launcher-app-grid.launcher-ungrouped {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(98px, 120px));
+  align-items: start;
+  justify-content: start;
+  gap: clamp(.6rem, 1.8vw, 1.15rem);
+}
+#launcherGrid.launcher-ungrouped > .empty-state {
+  grid-column: 1 / -1;
+  width: 100%;
 }
 .launcher-type-group { min-width: 0; }
 .launcher-type-heading {
@@ -666,6 +692,7 @@
   transition: background .2s, border-color .2s, transform .2s;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 .launcher-app:hover,
 .launcher-app:focus-visible { background: rgba(255,255,255,.045); border-color: rgba(255,255,255,.13); }
@@ -763,6 +790,7 @@
   .library-sort-wrap { flex: 0 0 60px; min-width: 60px; }
   .launcher-page .view-list .card-content { flex-wrap: wrap; }
   .launcher-type-items.launcher-type-apps { grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); }
+  #launcherGrid.launcher-app-grid.launcher-ungrouped { grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); }
   .launcher-app { padding-inline: .2rem; }
 }
 @media (max-width: 390px) {
