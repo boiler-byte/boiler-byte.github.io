@@ -91,11 +91,9 @@
   function renderLauncher() {
     const grid = B.dom.launcherGrid;
     const addWrap = document.getElementById('launcherAddWrap');
-    const actions = document.querySelector('.launcher-actions');
     B.drag.cancelIconDrag();
-    // +App und Verwalten vor dem Leeren des Grids zurueckholen.
-    // So bleiben Dropdown und alle Event-Handler beim Ansichtswechsel erhalten.
-    if (addWrap && actions && addWrap.parentElement !== actions) actions.appendChild(addWrap);
+    B.launcher.closeInfo();
+    // Alle drei Bedienelemente bleiben in einer gemeinsamen Aktionsleiste.
     addWrap?.classList.remove('is-empty');
     grid.replaceChildren();
     const appView = s.launcherView === 'apps';
@@ -124,12 +122,7 @@
       const message = document.createElement('p');
       message.textContent = 'Noch keine Favoriten. Markiere Apps in Entdecken oder der Bibliothek mit ★.';
       empty.appendChild(message);
-      // +App und Verwalten stehen direkt unter dem Leerzustandstext.
-      // Keine zweite Schaltflaeche, keine duplizierten IDs oder Listener.
-      if (addWrap) {
-        addWrap.classList.add('is-empty');
-        empty.appendChild(addWrap);
-      }
+      addWrap?.classList.add('is-empty');
       grid.appendChild(empty);
       return;
     }

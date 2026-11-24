@@ -1,22 +1,31 @@
 /* Boiler Room – Plattformnavigation, Entdecken, Bibliothek und Launcher. */
 [hidden] { display: none !important; }
 
-/* Neon Rail: eine durchgehende Linie, nur unter dem aktiven Bereich beleuchtet.
-   Die Navigation bleibt bewusst nicht sticky. */
+/* Neon Rail: ruhige Grundfarben, Licht nur bei Interaktion mit inaktiven Tabs.
+   Die aktive Seite behaelt eine matte Markierung. Die Navigation ist nicht sticky. */
 .platform-nav {
   position: relative;
   z-index: 15;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0;
   border-bottom: 1px solid rgba(185,203,226,.22);
   padding: 0;
   margin: 0 0 1.8rem;
 }
 .platform-tab {
-  --rail-color: var(--text-muted);
-  --rail-dim: rgba(185,203,226,.25);
+  --rail-color: var(--text-primary);
+  --rail-rest: var(--text-muted);
+  --rail-selected: #aeb7c5;
+  --rail-marker: rgba(185,203,226,.42);
+  --rail-dim: rgba(185,203,226,.28);
   --rail-panel: rgba(185,203,226,.045);
+  --rail-line: var(--rail-marker);
+  --rail-line-opacity: 0;
+  --rail-glow-opacity: 0;
+  --rail-icon-glow: none;
+  --rail-label-glow: none;
+  --rail-time: 250ms;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -30,30 +39,49 @@
   border-radius: 3px 3px 0 0;
   padding: .65rem .5rem .95rem;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--rail-rest);
   font: 500 .8rem var(--font-mono);
   cursor: pointer;
-  transition: background .2s ease, color .2s ease;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: background-color var(--rail-time) ease, color var(--rail-time) ease;
 }
-/* Entdecken uebernimmt exakt die gedämpfte Titelfarbe aus .hero h1. */
+/* Entdecken bleibt mattgolden, mit lesbarer Schrift und der bisherigen Titelfarbe als Markierung. */
 .platform-tab[data-section="discover"] {
-  --rail-color: var(--boiler-title-color);
-  --rail-dim: rgba(145,130,43,.3);
+  --rail-color: var(--gold-base);
+  --rail-rest: #a29770;
+  --rail-selected: #ada176;
+  --rail-marker: var(--boiler-title-color);
+  --rail-dim: var(--gold-dim);
   --rail-panel: rgba(145,130,43,.075);
 }
 .platform-tab[data-section="library"] {
   --rail-color: var(--violet-base);
+  --rail-rest: #9b8eac;
+  --rail-selected: #a795bc;
+  --rail-marker: rgba(183,138,255,.40);
   --rail-dim: var(--violet-dim);
   --rail-panel: rgba(183,138,255,.07);
 }
 .platform-tab[data-section="launcher"] {
   --rail-color: var(--cyan-base);
+  --rail-rest: #79959f;
+  --rail-selected: #83a7b2;
+  --rail-marker: rgba(44,212,255,.37);
   --rail-dim: var(--cyan-dim);
   --rail-panel: rgba(44,212,255,.06);
 }
+/* Workspace ist ein eigenstaendiger Link, kein vierter interner UI-Zustand. */
+.platform-tab[data-section="workspace"] {
+  --rail-color: var(--green-base);
+  --rail-rest: #87a597;
+  --rail-selected: #9cc7af;
+  --rail-marker: rgba(74,222,128,.37);
+  --rail-dim: var(--green-dim);
+  --rail-panel: rgba(74,222,128,.06);
+}
 .platform-tab[data-section="about"] {
-  --rail-color: var(--text-muted);
-  --rail-dim: rgba(185,203,226,.26);
   --rail-panel: rgba(185,203,226,.05);
 }
 .platform-tab-icon {
@@ -66,24 +94,32 @@
   stroke-width: 1.7;
   stroke-linecap: round;
   stroke-linejoin: round;
+  filter: var(--rail-icon-glow);
+  transition: filter var(--rail-time) ease;
 }
-.platform-tab-label { white-space: nowrap; }
-.platform-tab:hover { background: rgba(255,255,255,.035); color: var(--text-primary); }
+.platform-tab-label {
+  white-space: nowrap;
+  text-shadow: var(--rail-label-glow);
+  transition: text-shadow var(--rail-time) ease;
+}
 .platform-tab.is-active {
   background: var(--rail-panel);
-  color: var(--rail-color);
+  color: var(--rail-selected);
+  --rail-line-opacity: 1;
 }
-/* Die Leuchtspur liegt direkt auf der vorhandenen Unterkante. */
-.platform-tab.is-active::before {
+/* Matte Auswahlmarkierung bzw. helle Interaktionsspur auf derselben Unterkante. */
+.platform-tab::before {
   content: '';
   position: absolute;
   inset: auto 0 -1px;
   height: 2px;
-  background: linear-gradient(90deg, transparent 0%, var(--rail-color) 9%, var(--rail-color) 91%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, var(--rail-line) 9%, var(--rail-line) 91%, transparent 100%);
+  opacity: var(--rail-line-opacity);
+  transition: opacity var(--rail-time) ease;
   pointer-events: none;
 }
-/* Der weiche Schein strahlt ausschliesslich nach unten, nicht um den Tab. */
-.platform-tab.is-active::after {
+/* Der Schein nach unten ist im Ruhezustand und bei aktiver Seite aus. */
+.platform-tab::after {
   content: '';
   position: absolute;
   left: 0;
@@ -91,9 +127,43 @@
   bottom: -9px;
   height: 8px;
   background: radial-gradient(ellipse at 50% 0%, var(--rail-dim), transparent 75%);
+  opacity: var(--rail-glow-opacity);
+  transition: opacity var(--rail-time) ease;
   pointer-events: none;
 }
-.platform-tab:focus-visible,
+/* Hover nur auf Geraeten mit echtem Hover, damit Touch kein Licht festhaelt. */
+@media (hover: hover) and (pointer: fine) {
+  .platform-tab:not(.is-active):hover {
+    color: var(--rail-color);
+    background: var(--rail-panel);
+    --rail-line: var(--rail-color);
+    --rail-line-opacity: 1;
+    --rail-glow-opacity: 1;
+    --rail-icon-glow: drop-shadow(0 0 5px var(--rail-dim));
+    --rail-label-glow: 0 0 9px var(--rail-dim);
+    --rail-time: 150ms;
+  }
+}
+/* Kurzes Licht waehrend des Antippens/Drueckens, kein dauerhafter Touch-Hover. */
+.platform-tab:not(.is-active):active,
+.platform-tab:not(.is-active).is-touch-pressed {
+  color: var(--rail-color);
+  background: var(--rail-panel);
+  --rail-line: var(--rail-color);
+  --rail-line-opacity: 1;
+  --rail-glow-opacity: 1;
+  --rail-icon-glow: drop-shadow(0 0 5px var(--rail-dim));
+  --rail-label-glow: 0 0 9px var(--rail-dim);
+  --rail-time: 60ms;
+}
+/* Tastaturfokus bleibt auch auf der aktiven Seite sichtbar, ohne Neonlicht. */
+.platform-tab:focus-visible {
+  outline: 2px solid var(--rail-selected);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .platform-tab { --rail-time: 0ms !important; }
+}
 .shelf-arrow:focus-visible,
 .discover-thumb:focus-visible,
 .highlight-rail:focus-visible,
@@ -114,7 +184,7 @@
   opacity: .75;
 }
 
-/* Bibliothek: kompakte Sortierung mit exakt 60px Breite. */
+/* Bibliothek: einheitliche Filter-Leiste, 36px. */
 #libraryPage .filter-bar {
   position: static;
   z-index: 12;
@@ -126,18 +196,56 @@
   margin-bottom: 1.2rem;
   padding: .9rem 1rem;
 }
-/* Alle verwendet dasselbe unaufdringliche Neutralgrau wie der Ueber-Tab. */
-#libraryPage .chip[data-type="all"].active {
-  color: var(--text-muted);
-  background: rgba(185,203,226,.05);
-  border-color: var(--text-muted);
-  box-shadow: none;
+/* Neutraler Grundzustand; Akzent ohne Glow bei Nicht-Standardwerten. */
+#libraryPage .filter-inner { gap: .65rem; }
+#libraryPage .filter-chips { gap: .5rem; }
+#libraryPage .chip,
+#libraryPage .library-dropdown-button,
+#libraryPage #searchWrap {
+  --control-accent: var(--violet-base);
+  --control-border: var(--violet-border);
+  --control-glow: var(--violet-dim);
 }
-#libraryPage .chip-type {
+#libraryPage .chip[data-type="game"] {
+  --control-accent: var(--orange-base);
+  --control-border: var(--orange-border);
+  --control-glow: var(--orange-dim);
+}
+#libraryPage .chip[data-type="tool"] {
+  --control-accent: var(--cyan-base);
+  --control-border: var(--cyan-border);
+  --control-glow: var(--cyan-dim);
+}
+#libraryPage .chip[data-type="misc"] {
+  --control-accent: var(--green-base);
+  --control-border: var(--green-border);
+  --control-glow: var(--green-dim);
+}
+#libraryPage .chip,
+#libraryPage .library-dropdown-button,
+#libraryPage #searchInput {
+  height: 36px;
+  min-height: 36px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 40px;
+  background: rgba(255,255,255,.03);
+  color: var(--text-muted);
+  box-shadow: none;
+  transition: color var(--transition-smooth), border-color var(--transition-smooth),
+    background var(--transition-smooth), box-shadow var(--transition-smooth);
+}
+#libraryPage .chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: .48rem;
+  gap: .4rem;
+  padding: 0 .85rem;
+  font: 500 .85rem var(--font-mono);
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 #libraryPage .filter-type-icon {
   display: block;
@@ -145,40 +253,59 @@
   width: 18px;
   height: 18px;
   fill: none;
-  stroke: var(--text-muted);
+  stroke: currentColor;
   stroke-width: 1.65;
   stroke-linecap: round;
   stroke-linejoin: round;
-  filter: none;
+}
+#libraryPage .library-control-icon { width: 20px; height: 20px; flex-basis: 20px; }
+#libraryPage .library-option-check { width: 16px; height: 16px; flex-basis: 16px; }
+#libraryPage #searchInput { padding: 0 2.4rem 0 1rem; }
+#libraryPage .chip:hover,
+#libraryPage .library-dropdown-button:hover,
+#libraryPage #searchInput:hover { border-color: rgba(255,255,255,.25); }
+/* Die Standardauswahl bleibt erkennbar, aber neutral. */
+#libraryPage .chip[data-type="all"].active { border-color: rgba(154,163,178,.5); }
+#libraryPage .chip.active:not([data-type="all"]),
+#libraryPage .library-dropdown-button[data-non-default="true"],
+#libraryPage #searchWrap.has-value #searchInput {
+  color: var(--control-accent);
+  border-color: var(--control-border);
+}
+#libraryPage #searchWrap.has-value .search-clear { color: var(--control-accent); }
+/* Fokus (Maus, Touch, Tastatur) und geoeffnetes Dropdown: Neon. */
+#libraryPage .chip:focus,
+#libraryPage .chip.active:focus,
+#libraryPage .library-dropdown-button:focus,
+#libraryPage .library-dropdown-button[aria-expanded="true"],
+#libraryPage #searchWrap:focus-within #searchInput {
+  outline: none;
+  color: var(--control-accent);
+  border-color: var(--control-accent);
+  box-shadow: 0 0 0 1px var(--control-border), 0 0 16px var(--control-glow);
+}
+#libraryPage #searchWrap:focus-within .search-icon,
+#libraryPage #searchWrap:focus-within .search-clear { color: var(--control-accent); opacity: 1; }
+#libraryPage #searchClear:focus-visible { outline: 1px solid var(--control-accent); outline-offset: 3px; border-radius: 3px; }
+#libraryPage .library-dropdown-option:focus {
+  outline: 1px solid var(--violet-base);
+  outline-offset: -1px;
+  color: var(--violet-base);
+  box-shadow: inset 0 0 12px var(--violet-border);
+}
+@media (max-width: 860px) {
+  #libraryPage .filter-inner { gap: .55rem; }
+  #libraryPage .filter-chips { flex: 1 0 100%; justify-content: center; }
+  #libraryPage .library-dropdowns { gap: .4rem; }
+  #libraryPage #searchWrap { margin: 0; min-width: 0; width: auto; flex: 1 1 0; }
+}
+@media (max-width: 620px) {
+  #libraryPage .filter-chips { gap: .4rem; }
+  #libraryPage .chip { padding: 0 .75rem; min-width: 44px; }
+  #libraryPage .chip > .text { display: none; }
+  #libraryPage #searchInput { font-size: 16px; padding-left: .75rem; padding-right: 2rem; }
 }
 .library-summary { font-size: .8rem; color: var(--text-muted); margin: 0 0 1rem; }
-.library-sort-wrap {
-  position: relative;
-  flex: 0 0 60px;
-  width: 60px;
-  min-width: 60px;
-  max-width: 60px;
-}
-.library-sort-wrap #librarySort {
-  display: block;
-  width: 60px;
-  min-width: 60px;
-  max-width: 60px;
-  padding: .55rem 1rem .55rem .5rem;
-  white-space: nowrap;
-  text-overflow: clip;
-}
-.library-sort-wrap::after {
-  content: '⌄';
-  position: absolute;
-  top: 48%;
-  right: .38rem;
-  transform: translateY(-50%);
-  font-size: .85rem;
-  color: var(--text-muted);
-  pointer-events: none;
-}
-
 /* Gemeinsam verwendete Entdecken-Elemente. */
 /* Wichtig: Flex-Mindestbreiten duerfen nicht durch Scroll-Inhalt wachsen. */
 #discoverPage,
@@ -378,12 +505,51 @@
 }
 
 /* Mein Launcher: gemeinsame Sortierung, zwei Darstellungen. */
-.launcher-hint {
-  flex: 1 1 260px; min-width: 0; color: var(--text-muted); font-size: .85rem;
+.launcher-info-wrap { position: relative; flex: 0 0 auto; }
+.launcher-info-button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 50%;
+  color: var(--text-muted);
+  background: rgba(255,255,255,.03);
+  cursor: pointer;
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
 }
+.launcher-info-button:hover,
+.launcher-info-button[aria-expanded="true"] {
+  color: var(--text-primary);
+  border-color: var(--cyan-border);
+  background: rgba(44,212,255,.09);
+}
+.launcher-info-button:focus-visible { outline: 2px solid var(--cyan-base); outline-offset: 2px; }
+.launcher-hint {
+  position: absolute;
+  z-index: 81;
+  left: 0;
+  bottom: calc(100% + .55rem);
+  width: min(320px, calc(100vw - 3rem));
+  padding: .75rem .9rem;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 12px;
+  background: #171a21;
+  box-shadow: 0 12px 30px rgba(0,0,0,.6);
+  color: var(--text-primary);
+  font-size: .85rem;
+  line-height: 1.55;
+  text-align: left;
+  overflow-wrap: anywhere;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+/* Hover-Bruecke: der Tooltip bleibt auch beim Wechsel vom Button zum Text offen. */
+.launcher-hint::after { content: ''; position: absolute; top: 100%; left: 0; width: 100%; height: .55rem; }
+
 /* Nur während einer Touch-Sortiergeste die native Textauswahl unterbinden. */
 body.launcher-touch-press, body.launcher-touch-press * {
   -webkit-user-select: none !important;
@@ -395,9 +561,9 @@ body.launcher-touch-press, body.launcher-touch-press * {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: .5rem;
   margin: .5rem 0 3.5rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 .launcher-add-wrap {
   position: relative;
@@ -418,27 +584,23 @@ body.launcher-touch-press, body.launcher-touch-press * {
   cursor: pointer;
   white-space: nowrap;
 }
-/* Im leeren Launcher bleiben +App und Verwalten direkt unter dem Hinweis. */
-#launcherGrid .empty-state .launcher-add-wrap.is-empty {
-  display: inline-flex;
-  width: max-content;
-  max-width: 100%;
-  margin: 1.55rem auto 0;
-}
-#launcherGrid .empty-state .launcher-add-wrap.is-empty .launcher-add-button {
-  width: 190px;
-  min-width: 0;
-  min-height: 58px;
-  padding: .9rem clamp(.65rem, 3vw, 2.1rem);
-  font-size: 1.15rem;
+/* Auch im leeren Launcher bleibt die gemeinsame Aktionsleiste unter dem Text. */
+#launcherGrid > .empty-state { padding-bottom: .15rem; }
+.launcher-add-wrap.is-empty .launcher-add-button {
   border-color: var(--cyan-base);
   background: rgba(44,212,255,.14);
   box-shadow: 0 0 22px rgba(44,212,255,.16);
 }
-#launcherGrid .empty-state .launcher-add-wrap.is-empty .launcher-add-menu:not(.is-viewport-positioned) {
-  left: 50%;
-  right: auto;
-  transform: translateX(-50%);
+@media (min-width: 480px) {
+  .launcher-add-wrap.is-empty .launcher-add-button {
+    width: 190px;
+    min-height: 58px;
+    font-size: 1.15rem;
+  }
+}
+@media (max-width: 350px) {
+  .launcher-actions .launcher-add-button { padding-inline: .65rem; }
+  .launcher-actions .launcher-manage-btn { padding-inline: .55rem; }
 }
 .launcher-add-button:hover:not(:disabled),
 .launcher-add-button[aria-expanded="true"] {
@@ -590,11 +752,13 @@ body.launcher-touch-press, body.launcher-touch-press * {
   white-space: nowrap;
 }
 .launcher-manage-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .35rem;
   flex: 0 0 auto;
   border-color: rgba(255,255,255,.11);
   background: rgba(255,255,255,.03);
   padding: .63rem .75rem;
 }
+.launcher-manage-icon { width: 16px; height: 16px; flex: 0 0 16px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .launcher-view-btn:hover { color: #fff; }
 .launcher-view-btn.is-active { color: #fff; background: rgba(44,212,255,.11); border-color: var(--cyan-border); }
 .launcher-view-btn:focus-visible { outline: 2px solid var(--cyan-base); outline-offset: 2px; }
@@ -626,7 +790,31 @@ body.launcher-touch-press, body.launcher-touch-press * {
   fill: none;
   filter: none;
 }
-.launcher-page .view-list .card .drag-handle { padding-left: .9rem; padding-right: .55rem; }
+.launcher-page .view-list .card .drag-handle {
+  padding-left: .9rem;
+  padding-right: .55rem;
+  pointer-events: auto;
+  touch-action: none;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  cursor: grab;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+#launcherGrid.is-list-touch-sorting .card { transition: none; }
+#launcherGrid .card.is-list-touch-dragging { opacity: .25; pointer-events: none; }
+.launcher-list-ghost {
+  position: fixed;
+  z-index: 3500;
+  pointer-events: none;
+  margin: 0;
+}
+.launcher-list-ghost .card.dragging { transition: none; margin: 0; }
+.launcher-list-ghost * { pointer-events: none !important; }
 .launcher-page .view-list .card-content { flex: 1 1 auto; min-width: 0; padding-left: .45rem; }
 .launcher-page .view-list .card-content h3 { min-width: 0; overflow-wrap: anywhere; }
 
@@ -832,7 +1020,6 @@ body.launcher-touch-press, body.launcher-touch-press * {
   .platform-tab-icon { width: 19px; height: 19px; }
   .discover-thumb { flex-basis: 138px; }
   .discover-heading-icon { flex-basis: 30px; width: 30px; height: 30px; }
-  .library-sort-wrap { flex: 0 0 60px; min-width: 60px; }
   .launcher-page .view-list .card-content { flex-wrap: wrap; }
   .launcher-type-items.launcher-type-apps { grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); }
   #launcherGrid.launcher-app-grid.launcher-ungrouped { grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); }
@@ -844,10 +1031,11 @@ body.launcher-touch-press, body.launcher-touch-press * {
   .highlight-rail[data-count="2"] { grid-auto-columns: 90%; }
   .highlight-rail[data-count="1"] { grid-auto-columns: 100%; }
   .discover-shelf-heading h2 { font-size: 1.12rem; }
-  .platform-tab { padding-inline: .12rem; font-size: .7rem; }
+  .platform-nav { grid-template-columns: 1.12fr 1.25fr 1.04fr 1.12fr .6fr; }
+  .platform-tab { padding-inline: .08rem; font-size: .7rem; }
 }
 @media (max-width: 350px) {
-  .platform-tab { font-size: .66rem; letter-spacing: -.015em; }
+  .platform-tab { font-size: .62rem; letter-spacing: -.015em; }
 }
 @media (prefers-reduced-motion: reduce) {
   .highlight-rail,

@@ -5,21 +5,72 @@
   const modes = new Set(['list', 'apps']);
   const manageButton = document.getElementById('launcherManageButton');
   const hint = document.getElementById('launcherHint');
+  const infoWrap = document.getElementById('launcherInfoWrap');
+  const infoButton = document.getElementById('launcherInfoButton');
+  let infoPinned = false;
+  let infoHovered = false;
+  let infoFocused = false;
+
+  function syncInfo() {
+    const open = infoPinned || infoHovered || infoFocused;
+    hint.hidden = !open;
+    infoButton.setAttribute('aria-expanded', String(open));
+  }
+
+  function closeInfo() {
+    infoPinned = infoHovered = infoFocused = false;
+    syncInfo();
+  }
+
+  function setupInfo() {
+    infoWrap.addEventListener('pointerenter', e => {
+      if (e.pointerType !== 'mouse' || !addMenu.hidden) return;
+      infoHovered = true;
+      syncInfo();
+    });
+    infoWrap.addEventListener('pointerleave', e => {
+      if (e.pointerType !== 'mouse') return;
+      infoHovered = false;
+      syncInfo();
+    });
+    infoButton.addEventListener('focus', () => {
+      infoFocused = infoButton.matches(':focus-visible');
+      syncInfo();
+    });
+    infoButton.addEventListener('blur', closeInfo);
+    infoButton.addEventListener('click', () => {
+      if (infoPinned) { closeInfo(); return; }
+      closeAddMenu();
+      infoPinned = true;
+      syncInfo();
+    });
+    document.addEventListener('pointerdown', e => {
+      if (!infoWrap.contains(e.target)) closeInfo();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && !hint.hidden) {
+        e.preventDefault();
+        closeInfo();
+      }
+    });
+  }
 
   function syncViewControls() {
     const managing = B.state.launcherView === 'list';
     manageButton.classList.toggle('is-active', managing);
     manageButton.setAttribute('aria-pressed', String(managing));
+    manageButton.querySelector('span').textContent = managing ? 'Zurück' : 'Verwalten';
+    manageButton.querySelector('svg path').setAttribute('d', managing ? 'M19 12H5m7-7-7 7 7 7' : 'M4 6h16M4 12h16M4 18h16');
     manageButton.title = managing ? 'Zur App-Ansicht wechseln' : 'Launcher verwalten';
     if (hint) {
       const ungrouped = B.dom.launcherGrid.classList.contains('launcher-ungrouped');
       hint.textContent = ungrouped
         ? (B.state.launcherView === 'apps'
           ? 'App-Symbole gedrückt halten und verschieben, um die Reihenfolge anzupassen.'
-          : 'App-Zeilen ziehen, um die Reihenfolge anzupassen.')
+          : 'App-Zeilen ziehen (Touch: am Punktgriff), um die Reihenfolge anzupassen.')
         : (B.state.launcherView === 'apps'
           ? 'Gruppenüberschriften ziehen (Touch: Punktgriff) · Apps am Symbol sortieren · Alt + Pfeiltasten.'
-          : 'Gruppenüberschriften ziehen (Touch: Punktgriff) · App-Zeilen innerhalb der Gruppe sortieren.');
+          : 'Gruppenüberschriften ziehen (Touch: Punktgriff) · App-Zeilen am Punktgriff innerhalb der Gruppe sortieren.');
     }
   }
 
@@ -331,6 +382,7 @@
   }
 
   function setup() {
+    setupInfo();
     manageButton.addEventListener('click', () => {
       closeAddMenu();
       setView(B.state.launcherView === 'list' ? 'apps' : 'list');
@@ -338,6 +390,7 @@
     });
     addButton.addEventListener('click', () => {
       if (addButton.disabled) return;
+      closeInfo();
       if (!addMenu.hidden) { closeAddMenu(); return; }
       resetAddSearch();
       refreshAddMenu();
@@ -423,5 +476,5 @@
   }
 
   B.launcher = { makeIcon, makeTypeGroup, getTypeOrder, persistTypeOrder,
-    loadView, setView, syncViewControls, refreshAddMenu, closeAddMenu, setup };
+    loadView, setView, syncViewControls, refreshAddMenu, closeAddMenu, closeInfo, setup };
 })(window.BoilerRoom);

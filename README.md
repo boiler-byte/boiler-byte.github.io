@@ -1,16 +1,163 @@
-# Boiler Room – App-Plattform v10
+# Boiler Room – App-Plattform v18
 
 Vanilla JavaScript mit **klassischen `<script src="...">`-Dateien**. Keine ES-Module, keine Abhaengigkeiten, kein Build-Prozess.
 
 ## Installation
 
-Inhalt des ZIPs ueber den bisherigen v9-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **unveraendert erhalten**. Sie wird von `index.html` weiterhin vor allen Modulen geladen:
+Inhalt des ZIPs ueber den bisherigen v17-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **unveraendert erhalten**. Sie wird von `index.html` weiterhin vor allen Modulen geladen:
 
 ```html
 <script src="repos.js"></script>
 ```
 
 Ihre `originrepos` und `originrepogroups` haben weiterhin Vorrang vor den Fallback-Daten in `js/data.js`. Die Datei `repos.js` sowie eigene `img/`, `fonts/`, `icons/` und `manifest.json` sind nicht Teil dieses ZIPs und duerfen auf dem Host nicht geloescht werden.
+
+## Neu in v18: Workspace-Sidebar und Vollbild
+
+- `db` als Brand-Mark für „der Boiler“, darunter der Untertitel „der Boiler Room“.
+- Der Sidebar-Header ist selbst die Workspace-Auswahl: aktueller Gruppenname, Brand-Mark und Chevron bilden die gesamte Klickfläche des nativen Dropdowns. Der separate Gruppen-Picker entfällt. Auf kleinen Bildschirmen bleibt der Schließen-Button neben dem Header erhalten; auf Desktop wird die Sidebar über die Toolbar gesteuert.
+- Die App-Suche verwendet dieselbe Relevanzbewertung wie die Bibliothek. Titel haben Vorrang vor Tags, Beschreibung, Typ, Status und Jahr. Umlaute, Groß-/Kleinschreibung, mehrfacher Leerraum und kombinierte Suchbegriffe werden wie in der Bibliothek berücksichtigt. Treffer werden nach Relevanz sortiert, bei Gleichstand gilt die bisherige Workspace-Reihenfolge. Die Suche filtert nur die aktuelle Gruppe bzw. Favoriten; der Zähler zeigt Treffer/Gesamtanzahl. Die geöffnete App bleibt dabei erhalten. X oder Escape löschen den Suchbegriff, Enter übernimmt die Suche. Beim Gruppenwechsel wird die temporäre Suche zurückgesetzt.
+- Der neue Toolbar-Button schaltet den gesamten Workspace über die native Fullscreen API ins Vollbild und zurück. Sidebar und Toolbar bleiben verfügbar; Symbol, Tooltip und ARIA-Status werden bei Änderungen (auch externem Vollbildende) synchronisiert. Bei fehlender API oder blockiertem Vollbild gilt die Browserbeschränkung; es wird kein Vollbild vorgetäuscht.
+- `localStorage.boilerRoom`, Favoriten, Workspace-Persistenz und iFrame-Keep-alive bleiben unverändert. Suchtext und Vollbild sind bewusst nicht persistent.
+
+Neu: `js/search-relevance.js` (gemeinsame, aus der Bibliothek ausgelagerte Suchbewertung). Geändert: `index.html`, `js/search.js`, `workspace/index.html`, `workspace/workspace.css`, `workspace/workspace.js`, `README.md`. Beim Update auch die geänderten Dateien im Stammverzeichnis und `js/` übernehmen, nicht nur `workspace/`.
+
+### Prüfung v18
+
+- Chromium mit lokal eingebettetem App-Testinhalt und simuliertem Storage: Suche nach Titel, Tags, Jahr, Status und mehreren Begriffen, Relevanz, Umlaute, Trefferzählung, kein Treffer, Gruppenwechsel, Such-Reset und mobile Escape-Behandlung. Vollbild-Eintritt und -Austritt über die echte Fullscreen API geprüft.
+- Regressionstest der v17-Funktionen (Gruppen, Favoriten, Persistenz, iFrame-Keep-alive, Reload und mobile Navigation) bei 320, 390, 700, 768 und 1280 px. JavaScript-Syntax und ZIP-Integrität geprüft.
+- Produktive `repos.js`, Assets, externe App-Aufrufe, Safari und reale Mobilgeräte sind nicht Bestandteil der Tests.
+
+## Neu in v17: Eigenständiger Workspace
+
+Der neue Menüpunkt **Workspace** öffnet `workspace/index.html` als eigene Seite. Alternativ ist die App direkt unter `boiler-room/workspace/` erreichbar. Die Oberfläche besteht aus `workspace/index.html`, `workspace/workspace.css` und `workspace/workspace.js`; sie benutzt wie die Plattform klassische Skripte ohne Framework oder Build.
+
+### Workspace-Auswahl und Apps
+
+- Beim ersten Start ist **Mein Workspace** aktiv: die vorhandenen Favoriten in ihrer gespeicherten `favoriteOrder` (weitere Favoriten folgen am Ende). Keine zweite Favoritenliste.
+- Das Dropdown übernimmt alle Gruppen aus `originrepogroups` bzw. `B.data.repogroups`. Die Mitgliedschaft folgt dem vorhandenen `repo.group`; zusätzlich werden Gruppen-Arrays unter `repo.group` oder `repo.groups` unterstützt. Zugeordnete, aber nicht definierte Gruppen erscheinen unter ihrer ID.
+- Die Sidebar listet alle Repos der gewählten Gruppe mit Namen, Bild bzw. Symbol und Typ. Repos ohne URL zeigen ihre Beschreibung statt eines iFrames. Leere Gruppen und leere Favoriten erhalten eigene Leerzustände.
+- App-Wechsel ohne Neuladen des Workspace: Ein iFrame wird erst beim ersten Öffnen angelegt und beim Wechsel nur ausgeblendet. Dadurch bleiben laufende App-Zustände während dieser Sitzung erhalten. Die Toolbar bietet ein manuelles Neuladen der App (Start-URL) und Öffnen der Start-URL in einem separaten Tab.
+- Desktop: ein- und ausblendbare Sidebar. Bis 700 px: seitlicher Drawer mit Schließen per Hintergrund, Escape oder App-Auswahl. Die App belegt dann die gesamte verfügbare Inhaltsbreite.
+- Relative URLs und Bilder werden wie auf der Hauptseite relativ zum Boiler-Room-Stammverzeichnis aufgelöst. App-URLs müssen HTTP(S) sein; lokale `file:`-URLs sind für die lokale Entwicklung ebenfalls akzeptiert.
+
+### Gemeinsame Persistenz
+
+`localStorage.boilerRoom` bleibt der einzige Persistenzschlüssel der Plattform. Der zusätzliche Untereintrag ist beispielsweise:
+
+```json
+{
+  "workspace": {
+    "selected": "group:dev",
+    "app": "Clipwerk",
+    "lastApps": { "favorites": "Wetter", "group:dev": "Clipwerk" },
+    "sidebarCollapsed": false
+  }
+}
+```
+
+`selected` ist `favorites` oder `group:<Gruppen-ID>`. Die gespeicherte App wird beim Start wieder geöffnet; pro Gruppe wird die letzte Auswahl separat gespeichert. Ohne gültige Auswahl öffnet sich die erste startbare App (sonst der erste Informationseintrag bzw. der Leerzustand). Entfernte Gruppen fallen auf die Favoriten zurück. Desktop-Sidebar-Zustand wird gespeichert; der mobile Drawer bleibt beim Seitenstart geschlossen. Favoritenänderungen aus anderen Tabs werden im Workspace übernommen. `js/storage.js` liest vor Zugriffen den aktuellen Speicherstand, damit Änderungen an Workspace und Plattform-Einstellungen nicht durch eine alte Kopie des Gesamtobjekts verloren gehen. Gleichzeitige konkurrierende Schreibvorgänge sind damit nicht transaktional abgesichert. Vorhandene weitere Felder bleiben erhalten, der frühere `launcherView`-Eintrag und die alten Einzel-Schlüssel werden weiterhin entfernt.
+
+Der Workspace und die Hauptseite müssen unter derselben Origin (Schema, Host, Port) laufen, damit beide auf denselben Storage zugreifen. Bitte über einen Webserver betreiben, nicht direkt per `file://`. Beim Neuladen werden Auswahl und Sidebar wiederhergestellt; der interne App-Zustand nach einem Seitenreload hängt weiterhin von der App selbst ab.
+
+### iFrame-Berechtigungen
+
+Die iFrames besitzen bewusst **kein `sandbox`-Attribut**. `allow` delegiert u.a. Vollbild, Autoplay, Kamera, Mikrofon, Geolocation, Zwischenablage, Gamepad und Sensoren; `allowfullscreen` ist zusätzlich gesetzt. Nur eigene bzw. vertrauenswürdige Apps in den Repo-Katalog aufnehmen. Browser-Sicherheitsregeln, Nutzerfreigaben, HTTPS-Anforderungen, Same-Origin-Policy, übergeordnete Permissions-Policy und Drittanbieter-Speicherregeln bleiben wirksam. Insbesondere können `X-Frame-Options` oder CSP `frame-ancestors` auf dem Zielserver die Einbettung verhindern. In diesem Fall können Apps über das Toolbar-Symbol separat geöffnet werden. Cross-Origin-Apps können nicht automatisch den Boiler-Room-Storage lesen. Es wird kein Sicherheitsmechanismus umgangen.
+
+Geändert: `index.html`, `css/platform.css`, `js/storage.js`. Neu: `workspace/index.html`, `workspace/workspace.css`, `workspace/workspace.js`.
+
+### Prüfung v17
+
+- JavaScript-Syntax und ZIP-Integrität geprüft.
+- Chromium offline mit eingebetteten Test-Apps und simuliertem Storage bei 320, 390, 700, 768 und 1280 px: Favoritenreihenfolge, alle Gruppenauswahlen, leere Gruppen, Informationseinträge, letzte App pro Gruppe, Wiederherstellung des Workspace, Erhalt von App-Eingaben beim Wechsel, expliziter Reload, iFrame-Attribute, Drawer, Storage-Änderungsereignisse und Erhalt anderer Einstellungen geprüft. Hauptnavigation auf 320 px auf Überlauf geprüft.
+- Direkte URL-Navigation wurde von der Browserumgebung blockiert. Produktive `repos.js`, Bilder und produktive iFrame-Serverheader waren nicht verfügbar. Echte Cross-Origin-Aufrufe, Berechtigungsdialoge, Safari und physische Mobilgeräte wurden nicht getestet.
+
+## Neu in v16: Bibliothek – violette Filter-Akzente
+
+- Ansicht, Sortierung, Suche und der Alle-Chip beim Fokus verwenden die vorhandene Bibliotheksfarbe `--violet-base` (#b78aff) sowie die zugehörigen Rahmen- und Glow-Variablen.
+- Auch aktive Nicht-Standardoptionen und der Fokus innerhalb der Dropdowns sowie das Suchsymbol und Löschsymbol folgen dem violetten Akzent.
+- Die Typ-Chips behalten ihre Farben: Games orange, Tools cyan, Misc grün. Standardwerte bleiben neutral und alle Filter bleiben 36 px hoch.
+- Keine Änderungen an Filterlogik, Persistenz, Hauptmenü oder Launcher.
+
+Geändert: `css/controls.css`, `css/platform.css`.
+
+Prüfung: Chromium mit Demo-Daten bei 320, 390, 768 und 1280 px: Farbzustände, Dropdown-Optionen, Typfarben, 36-px-Höhe, Suche und Rücksetzen erfolgreich getestet. Physische Mobilgeräte und Safari wurden nicht getestet.
+
+## Neu in v15: Bibliothek – Filter-Akzente
+
+- Chips, Ansichts- und Sortierbuttons sowie Suche sind exakt 36 px hoch und haben denselben dezenten grauen Hintergrund, abgerundete Rahmen und neutrale Grundfarbe.
+- Standardwerte: Alle, Karten, kuratierte Reihenfolge und leere Suche. Diese sind ohne Farbakzent; der ausgewählte Alle-Chip hat eine neutrale Markierung.
+- Abweichende Werte werden ohne Leuchtschein farbig markiert: Games orange, Tools cyan, Misc grün; Ansicht, Sortierung und Suche cyan. Die Chip-SVGs übernehmen die Textfarbe.
+- Bei Fokus oder geöffnetem Dropdown leuchtet der jeweilige Akzent; nach Fokusverlust bleibt nur die normale Farbanzeige abweichender Werte. Die Standardwerte erscheinen wieder neutral. Die Suche färbt auch das Löschsymbol ein.
+- Bis 860 px stehen die Chips in einer eigenen Zeile, die beiden Dropdowns und die Suche gemeinsam darunter. Bis 620 px bleiben die Typ-Chips wie bisher reine Icons und die Suche nutzt 16 px Schriftgröße gegen iOS-Eingabezoom.
+- Die bisherige Filterlogik und Persistenz bleiben unverändert. Die Launcher-Suche ist nicht von den neuen Bibliotheksstilen betroffen.
+
+Geändert: `css/controls.css`, `css/views.css`, `css/platform.css`, `js/views.js`.
+
+### Prüfung v15
+
+- Chromium mit Demo-Repos, simuliertem Storage und Bildschirmbreiten 320, 390, 768 und 1280 px: exakte Höhe und Grundfarbe aller Filter, Fokus/Glow, Nicht-Standardwerte, Rücksetzen, Suchtreffer und automatische Chip-Rücksetzung geprüft. Zusätzlich v14-Regressionstests für Ansicht, Sortierung, Menüs, Tastaturbedienung und Launcher-Zurück-Icon bestanden.
+- JavaScript-Syntax und ZIP-Integrität geprüft. Physische Mobilgeräte und Safari wurden nicht getestet.
+
+## Neu in v14: Launcher-Zurück-Pfeil und Bibliotheks-Dropdowns
+
+- Der Verwalten-Toggle zeigt in der Listenansicht einen SVG-Linkspfeil neben **Zurück**. Beim Wechsel zur App-Ansicht erscheint wieder das Listen-Symbol neben **Verwalten**.
+- Die bisherigen Selects `viewSelect` und `librarySort` sind jetzt zwei kompakte Icon-Buttons. Das SVG des aktuellen Werts ist das einzige sichtbare Element im geschlossenen Zustand.
+- Die Menüs zeigen SVG-Icons, ausgeschriebene Optionen und ein Häkchen am aktiven Eintrag. Karten, Liste, Icons sowie kuratierte Reihenfolge, Name A–Z, neueste zuerst und Typ A–Z bleiben erhalten.
+- Die beiden Buttons bleiben zusammen. Die Dropdowns werden am Bildschirmrand horizontal begrenzt und bei Bedarf oberhalb des Buttons geöffnet. Bei wenig Platz scrollt das Menü intern.
+- Maus, Touch und Tastatur (Pfeile, Home/End, Enter, Escape, Tab) werden unterstützt. Außerhalb antippen oder den Bereich wechseln schließt das Menü. Die Bibliotheksansicht bleibt wie bisher gespeichert; die Sortierung bleibt flüchtig.
+
+Geändert: `index.html`, `css/controls.css`, `css/views.css`, `css/platform.css`, `js/views.js`, `js/platform.js`, `js/launcher.js`.
+
+### Prüfung v14
+
+- Chromium mit Demo-Repos und simuliertem Storage: 320, 390, 768 und 1280 px. Alle Ansichts- und Sortieroptionen, SVG-Status, Reihenfolge, gespeicherte Ansicht, Menüposition, Maus-/Touch-Auswahl, Tastaturbedienung, Schließen und Launcher-Toggle inklusive Iconwechsel geprüft. JavaScript-Syntax geprüft.
+- Physische Mobilgeräte und Safari wurden nicht getestet.
+
+## Neu in v13: Launcher – Verwalten / Zurück und mobiles Listen-Drag&Drop
+
+- Der Verwalten-Toggle heißt in der Listenansicht **Zurück**, in der App-Ansicht **Verwalten**. Der flüchtige Zustand aus v10 bleibt unverändert.
+- Auf Touch-Geräten ist der Punktgriff in jeder Listenzeile eine eigene, mindestens 44 px breite Drag-Fläche. Bereits bei `touchstart` wird die native Textauswahl bzw. Scrollgeste am Griff unterbunden; außerhalb des Griffs bleibt normales Scrollen möglich.
+- Direktes Ziehen ab 8 px Bewegung oder Gedrückthalten für 460 ms startet die Sortierung mit einer schwebenden Zeilenvorschau. Am Bildschirmrand scrollt die Seite während des aktiven Ziehens kontrolliert mit.
+- Die Reihenfolge wird beim Loslassen gespeichert. Bei Abbruch wird die ursprüngliche Reihenfolge wiederhergestellt. Sortierung bleibt wie bisher auf die jeweilige Typgruppe beschränkt; Desktop-Drag&Drop bleibt nativ.
+- Der Info-Tooltip erläutert den Punktgriff. Beim Verlassen des Launchers wird eine laufende Geste beendet.
+
+Geändert: `js/launcher.js`, `js/drag.js`, `js/platform.js`, `css/platform.css`.
+
+### Prüfung v13
+
+- Chromium mit Demo-Repos und simuliertem Storage: 320, 390, 768 und 1280 px, leerer Launcher sowie Listen mit 4, 10 und 12 Apps. Toggle-Beschriftung, direkte Touch-Sortierung, Long-Press, Textauswahl, Abbruch, Persistenz, normale Scrollgeste und automatisches Scrollen am Rand, Gruppengrenzen, App-Öffnen und Entfernen geprüft. Bestehende App-Symbol-Sortierung und natives Desktop-Listen-Drag&Drop ebenfalls geprüft.
+- JavaScript-Syntax aller Module geprüft. Physische Mobilgeräte und Safari wurden nicht getestet.
+
+## Neu in v12: Hauptnavigation – Neon nur bei Interaktion
+
+- Alle vier Menüpunkte haben im Ruhezustand gedämpfte Akzentfarben. Entdecken bleibt goldfarben, Bibliothek violett, Launcher cyan und Über neutralgrau.
+- Nur ein nicht selektierter Menüpunkt leuchtet beim Maus-Hover auf: Symbol, Beschriftung, untere Lichtspur und weicher Schein. Einblenden in 150 ms, Ausblenden in 250 ms.
+- Die selektierte Seite behält eine matte Unterkante und dezente Hintergrundtönung, auch beim Hover. Der Neon-Effekt erlischt bei Auswahl.
+- Auf Touch-Geräten leuchtet ein inaktiver Menüpunkt beim Drücken kurz auf (60 ms Einblendzeit), ohne dauerhaftes Hover. Tastaturfokus bleibt mit einem matten Rahmen erkennbar. Die Einstellung für reduzierte Bewegung schaltet die Übergänge ab.
+- Die Farbwerte im Ruhezustand sind auf lesbare, gedämpfte Akzente abgestimmt; die bisherige Titelfarbe bleibt als Auswahlmarkierung für Entdecken erhalten. Navigation, Persistenz und Launcher-Funktionen bleiben unverändert.
+
+Geändert: `css/platform.css`, `js/platform.js`.
+
+### Prüfung v12
+
+- Chromium mit eingebetteten Projektdateien, Fallback-Repos und simuliertem Storage: Ruhezustand, Hover, Auswahl, Tastaturfokus und Navigation bei 320, 390, 768 und 1280 px geprüft. Touch-Drücken, Loslassen und Antippen in der Touch-Emulation sowie Abbruch über ein synthetisches pointercancel-Ereignis geprüft. Reduzierte Bewegung und JavaScript-Syntax geprüft.
+- Physische Mobilgeräte und Safari wurden nicht getestet.
+
+## Neu in v11: Launcher – Info-Tooltip
+
+- Ein runder Info-Button steht links in der unteren Aktionsleiste, auf einer Höhe mit **+ App** und **Verwalten**. Auch im leeren Launcher bleiben alle drei Buttons in derselben Zeile.
+- Der bisherige `launcherHint` erscheint oberhalb des Info-Buttons als Tooltip statt dauerhaft sichtbarer Text. Die bestehenden Hinweise wechseln weiterhin passend zur App-/Listenansicht und zur Gruppierung.
+- Maus-Hover, Tastaturfokus oder Antippen zeigen den Tooltip an; Klick/Antippen hält ihn offen, erneutes Antippen, Klick außerhalb oder Escape schließen ihn. Beim Ansichts- oder Bereichswechsel wird er geschlossen.
+- Die bisherige große +App-Schaltfläche im leeren Launcher bleibt ab 480 px erhalten; bei schmaleren Displays wird sie kompakter, damit die drei Buttons nebeneinander passen.
+
+Geändert: `index.html`, `css/platform.css`, `js/launcher.js`, `js/render.js`, `js/platform.js`.
+
+### Prüfung v11
+
+- Chromium mit Demo-Repos und simuliertem Storage: 320, 390, 768 und 1280 px. Geprüft wurden die gemeinsame Aktionsleiste im leeren, ungruppierten und gruppierten Launcher, Maus-Hover, Tastaturfokus, Escape, Touch-Antippen, Schließen außerhalb, Kontextwechsel und beide Launcher-Ansichten.
+- Regressionstests für v10 (flüchtiger Verwalten-Toggle, App-Auswahl ohne Autofokus, simulierte Tastaturfläche, Suche und Hinzufügen) bestanden. JavaScript-Syntax aller Module geprüft.
+- Physische Android-/iOS-Geräte und Safari wurden nicht getestet.
 
 ## Neu in v10: Launcher – flüchtiger Toggle und mobile App-Auswahl
 
@@ -97,8 +244,8 @@ Angepasst: `css/cards.css`.
 
 ## Navigation und Layout (Neon Rail)
 
-- Die Hauptnavigation zeigt vier kompakte SVG-Symbole mit Beschriftung ueber einer durchgehenden Linie. Der aktive Bereich erhaelt einen dezenten unteren Lichtstreifen; die anderen Bereiche bleiben neutral.
-- Die Akzentfarben kommen aus den vorhandenen Variablen: Entdecken in der gedämpften Titelfarbe von „der Boiler Room“, Bibliothek violett, Launcher cyan und Ueber neutralgrau. Der Leuchteffekt bleibt unterhalb der Navigationslinie.
+- Die Hauptnavigation zeigt vier kompakte SVG-Symbole mit Beschriftung ueber einer durchgehenden Linie. Seit v12 erhaelt der aktive Bereich eine matte untere Markierung; die anderen Bereiche zeigen gedämpfte Farbakzente. Nur inaktive Menüpunkte leuchten bei Interaktion.
+- Die Akzentfarben kommen aus den vorhandenen Variablen: Entdecken mattgolden (Auswahlmarkierung in der Titelfarbe von „der Boiler Room“), Bibliothek violett, Launcher cyan und Ueber neutralgrau. Beim Hover leuchten Symbol, Beschriftung und untere Lichtspur.
 - Entdecken zeigt in den Regal-Ueberschriften nur noch Titel (und gegebenenfalls das Metadaten-Symbol); die bisher dynamisch eingefuegten Untertitel-`p`-Elemente entfallen.
 - Der einleitende Claim steht jetzt unter **Ueber den Boiler Room** statt im globalen Hero.
 - Der Entfernen-Button in der Launcher-Liste ist neutralgrau und besitzt auch bei Hover keinen Glow.

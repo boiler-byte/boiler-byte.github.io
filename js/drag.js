@@ -6,6 +6,7 @@
   const HOLD_MS = 460;
   const MOVE_TOLERANCE = 10;
   let draggedCard = null;
+  let touchList = null;
   let draggedGroup = null;
   let groupDragOriginal = null;
   let touchGroup = null;
@@ -66,7 +67,7 @@
       (icons.indexOf(tile) + 1) + ' von ' + icons.length + ' verschoben.';
   }
 
-  // Die Liste verwendet wie zuvor natives HTML5-Drag-and-drop.
+  // Desktop: natives HTML5-Drag-and-drop. Touch: eigener Pfad am Punktgriff.
   function enableListDrag() {
     if (B.state.section !== 'launcher' || B.state.launcherView !== 'list') return;
     grid.querySelectorAll('.card').forEach(card => {
@@ -81,7 +82,7 @@
       const fav = card.querySelector('.fav-btn');
       if (fav) fav.draggable = false;
       card.addEventListener('dragstart', e => {
-        if (B.state.launcherView !== 'list' || !grid.contains(card)) { e.preventDefault(); return; }
+        if (touchList || B.state.launcherView !== 'list' || !grid.contains(card)) { e.preventDefault(); return; }
         draggedCard = card;
         card.classList.add('dragging');
         if (e.dataTransfer) {
@@ -97,6 +98,129 @@
         B.favorites.setOrder(getLabels('.card'));
       });
     });
+  }
+
+  // Touch-DnD der Liste. Nur der Griff blockiert die native Scroll-/Auswahlgeste.
+  // Sofortiges Ziehen ab einer kleinen Schwelle oder Halten wie in der App-Ansicht.
+  function onListTouchStart(e) {
+    if (touchList) {
+      if (e.touches.length !== 1) finishListTouch(false);
+      return;
+    }
+    if (B.state.section !== 'launcher' || B.state.launcherView !== 'list' ||
+        e.touches.length !== 1 || !e.cancelable) return;
+    const card = e.target.closest('.drag-handle')?.closest('.card');
+    if (!card || !grid.contains(card)) return;
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    const state = { card, container: card.parentElement, pointerId: t.identifier,
+      startX: t.clientX, startY: t.clientY, x: t.clientX, y: t.clientY,
+      original: Array.from(card.parentElement.children), active: false,
+      timer: null, frame: null, ghost: null };
+    touchList = state;
+    document.body.classList.add('launcher-touch-press');
+    state.timer = setTimeout(() => startListTouch(state), HOLD_MS);
+  }
+
+  function startListTouch(state) {
+    if (touchList !== state || state.active || !grid.contains(state.card)) return;
+    clearTimeout(state.timer);
+    state.active = true;
+    const rect = state.card.getBoundingClientRect();
+    state.offsetY = state.startY - rect.top;
+    const preview = document.createElement('div');
+    preview.className = 'launcher-page launcher-list-ghost';
+    preview.setAttribute('aria-hidden', 'true');
+    preview.inert = true;
+    const list = document.createElement('div');
+    list.className = 'view-list';
+    const clone = state.card.cloneNode(true);
+    clone.classList.add('dragging');
+    list.appendChild(clone);
+    preview.appendChild(list);
+    preview.style.left = rect.left + 'px';
+    preview.style.width = rect.width + 'px';
+    state.ghost = preview;
+    document.body.appendChild(preview);
+    state.card.classList.add('is-list-touch-dragging');
+    grid.classList.add('is-list-touch-sorting');
+    positionListGhost(state);
+  }
+
+  function positionListGhost(state) {
+    if (state.ghost) state.ghost.style.top = (state.y - state.offsetY) + 'px';
+  }
+
+  function moveListTouch(state) {
+    positionListGhost(state);
+    const target = document.elementFromPoint(state.x, state.y)?.closest('.card');
+    if (!target || target === state.card || target.parentElement !== state.container) return;
+    const rect = target.getBoundingClientRect();
+    const cards = Array.from(state.container.children);
+    const from = cards.indexOf(state.card), to = cards.indexOf(target);
+    // Erst nach Ueberschreiten der Zeilenmitte umsortieren; kein Flackern.
+    if (from < to && state.y < rect.top + rect.height / 2) return;
+    if (from > to && state.y > rect.top + rect.height / 2) return;
+    state.container.insertBefore(state.card, from < to ? target.nextSibling : target);
+  }
+
+  // Bei langen Listen nur waehrend eines aktiven Zugs am Bildschirmrand scrollen.
+  function scrollListEdge(state) {
+    if (touchList !== state || !state.active) return;
+    const height = window.visualViewport?.height || window.innerHeight;
+    const edge = Math.min(64, height / 5);
+    let dy = 0;
+    if (state.y < edge) dy = -Math.ceil(14 * (edge - state.y) / edge);
+    else if (state.y > height - edge) dy = Math.ceil(14 * (state.y - height + edge) / edge);
+    if (dy) {
+      window.scrollBy({ top: Math.max(-14, Math.min(14, dy)), behavior: 'instant' });
+      moveListTouch(state);
+    }
+    state.frame = requestAnimationFrame(() => scrollListEdge(state));
+  }
+
+  function onListTouchMove(e) {
+    const state = touchList;
+    if (!state) return;
+    const t = findChangedTouch(e, state);
+    if (!t) return;
+    if (e.cancelable) e.preventDefault();
+    state.x = t.clientX;
+    state.y = t.clientY;
+    if (!state.active && Math.hypot(state.x - state.startX, state.y - state.startY) >= 8) startListTouch(state);
+    if (!state.active) return;
+    moveListTouch(state);
+    if (state.frame === null) state.frame = requestAnimationFrame(() => scrollListEdge(state));
+  }
+
+  function finishListTouch(commit) {
+    const state = touchList;
+    if (!state) return;
+    touchList = null;
+    clearTimeout(state.timer);
+    if (state.frame !== null) cancelAnimationFrame(state.frame);
+    document.body.classList.remove('launcher-touch-press');
+    state.card.classList.remove('is-list-touch-dragging');
+    grid.classList.remove('is-list-touch-sorting');
+    state.ghost?.remove();
+    if (!state.active) return;
+    if (!commit) state.original.forEach(card => state.container.appendChild(card));
+    else if (state.original.some((card, i) => state.container.children[i] !== card)) {
+      B.favorites.setOrder(getLabels('.card'));
+      const status = document.getElementById('launcherOrderStatus');
+      if (status) status.textContent = '„' + state.card.dataset.label + '“ auf Position ' +
+        (Array.from(state.container.children).indexOf(state.card) + 1) + ' verschoben.';
+    }
+  }
+
+  function onListTouchEnd(e) {
+    if (!touchList || !findChangedTouch(e, touchList)) return;
+    if (e.cancelable) e.preventDefault();
+    finishListTouch(true);
+  }
+
+  function onListTouchCancel(e) {
+    if (touchList && findChangedTouch(e, touchList)) finishListTouch(false);
   }
 
   function removeGhost() {
@@ -140,6 +264,7 @@
 
   function cancelIconDrag() {
     finishIconDrag(false);
+    finishListTouch(false);
     draggedCard = null;
     finishNativeGroupDrag();
     finishTouchGroupDrag(false);
@@ -406,13 +531,17 @@
     document.addEventListener('pointermove', onIconPointerMove, { passive: false });
     document.addEventListener('pointerup', onIconPointerUp);
     document.addEventListener('pointercancel', onIconPointerCancel);
+    document.addEventListener('touchstart', onListTouchStart, { passive: false });
+    document.addEventListener('touchmove', onListTouchMove, { passive: false });
+    document.addEventListener('touchend', onListTouchEnd, { passive: false });
+    document.addEventListener('touchcancel', onListTouchCancel);
     document.addEventListener('touchstart', onIconTouchStart, { passive: false });
     document.addEventListener('touchmove', onIconTouchMove, { passive: false });
     document.addEventListener('touchend', onIconTouchEnd, { passive: false });
     document.addEventListener('touchcancel', onIconTouchCancel);
     grid.addEventListener('keydown', onIconKeyDown);
     grid.addEventListener('contextmenu', e => {
-      if (e.target.closest('.launcher-app-icon')) e.preventDefault();
+      if (touchList || e.target.closest('.launcher-app-icon, .drag-handle')) e.preventDefault();
     });
     window.addEventListener('blur', cancelIconDrag);
     document.addEventListener('visibilitychange', () => {

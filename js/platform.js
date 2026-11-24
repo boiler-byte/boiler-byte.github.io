@@ -6,8 +6,13 @@
 
   function switchTo(section) {
     if (!sections.has(section)) return;
+    if (section !== 'library') B.views.closeMenus();
     if (section !== 'discover') B.discoverPreview.close();
-    if (section !== 'launcher') B.launcher.closeAddMenu();
+    if (section !== 'launcher') {
+      if (s.section === 'launcher') B.drag.cancelIconDrag();
+      B.launcher.closeAddMenu();
+      B.launcher.closeInfo();
+    }
     s.section = section;
     B.storage.set('lastSection', section);
     B.dom.discoverPage.hidden = section !== 'discover';
@@ -33,19 +38,31 @@
   }
 
   function init() {
-    const sort = document.getElementById('librarySort');
-    const names = {
-      original: 'Kuratierte Reihenfolge',
-      name: 'Name A–Z',
-      newest: 'Neueste zuerst',
-      type: 'Typ A–Z'
-    };
-    sort.addEventListener('change', () => {
-      s.librarySort = sort.value;
-      sort.title = 'Sortierung: ' + names[sort.value];
-      B.renderer.renderRepos();
+    const nav = document.querySelector('.platform-nav');
+    // Touch-Pointer explizit behandeln: :active allein ist auf Mobilbrowsern
+    // nicht immer schon beim Aufsetzen des Fingers sichtbar.
+    let pressedTab = null;
+    let pressedPointer = null;
+    function clearTouchPress(e) {
+      if (e && e.type !== 'blur' && e.pointerId !== pressedPointer) return;
+      if (pressedTab) pressedTab.classList.remove('is-touch-pressed');
+      pressedTab = null;
+      pressedPointer = null;
+    }
+    nav.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse' || !e.isPrimary) return;
+      const tab = e.target.closest('.platform-tab');
+      if (!tab || tab.classList.contains('is-active')) return;
+      clearTouchPress();
+      pressedTab = tab;
+      pressedPointer = e.pointerId;
+      tab.classList.add('is-touch-pressed');
     });
-    document.querySelector('.platform-nav').addEventListener('click', e => {
+    window.addEventListener('pointerup', clearTouchPress, true);
+    window.addEventListener('pointercancel', clearTouchPress, true);
+    nav.addEventListener('lostpointercapture', clearTouchPress);
+    window.addEventListener('blur', clearTouchPress);
+    nav.addEventListener('click', e => {
       const tab = e.target.closest('[data-section]');
       if (tab) switchTo(tab.dataset.section);
     });

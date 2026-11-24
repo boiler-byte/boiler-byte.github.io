@@ -50,6 +50,13 @@
         </svg>
         <span class="platform-tab-label">Launcher</span>
       </button>
+      <a class="platform-tab" data-section="workspace" href="workspace/index.html">
+        <svg class="platform-tab-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+          <path d="M9 4v16M13 9h4M13 13h4"></path>
+        </svg>
+        <span class="platform-tab-label">Workspace</span>
+      </a>
       <button type="button" class="platform-tab" data-section="about">
         <svg class="platform-tab-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <circle cx="12" cy="12" r="9"></circle>
@@ -67,22 +74,15 @@
         <div class="filter-chips" id="filterChips">
           <!-- Chips werden per JS injiziert -->
         </div>
-        <div class="view-dropdown">
-          <label for="viewSelect" class="visually-hidden">Ansicht</label>
-          <select id="viewSelect" class="view-select" aria-label="Ansicht">
-            <option value="cards">⊞</option>
-            <option value="list">☰</option>
-            <option value="icons">▦</option>
-          </select>
-        </div>
-        <div class="library-sort-wrap">
-          <label for="librarySort" class="visually-hidden">Sortieren</label>
-          <select id="librarySort" class="view-select" aria-label="Bibliothek sortieren" title="Sortierung: Kuratierte Reihenfolge">
-            <option value="original">↕ · Kuratierte Reihenfolge</option>
-            <option value="name">A–Z · Name</option>
-            <option value="newest">↓ · Neueste zuerst</option>
-            <option value="type">▦ · Typ</option>
-          </select>
+        <div class="library-dropdowns">
+          <div class="view-dropdown library-dropdown">
+            <button type="button" id="viewSelect" class="library-dropdown-button" aria-label="Ansicht: Karten" aria-haspopup="menu" aria-expanded="false" aria-controls="viewSelectMenu"></button>
+            <div id="viewSelectMenu" class="library-dropdown-menu" role="menu" aria-label="Ansicht" hidden></div>
+          </div>
+          <div class="library-sort-wrap library-dropdown">
+            <button type="button" id="librarySort" class="library-dropdown-button" aria-label="Sortierung: Kuratierte Reihenfolge" aria-haspopup="menu" aria-expanded="false" aria-controls="librarySortMenu"></button>
+            <div id="librarySortMenu" class="library-dropdown-menu" role="menu" aria-label="Sortierung" hidden></div>
+          </div>
         </div>
         <div class="search-wrap" id="searchWrap">
           <input
@@ -107,11 +107,20 @@
       <p class="visually-hidden" id="launcherOrderStatus" aria-live="polite" aria-atomic="true"></p>
       <div class="grid launcher-app-grid" id="launcherGrid"></div>
       <div class="launcher-actions">
-        <p class="launcher-hint" id="launcherHint">App-Symbole gedrückt halten und verschieben, um die Reihenfolge anzupassen.</p>
+        <div class="launcher-info-wrap" id="launcherInfoWrap">
+          <button type="button" class="launcher-info-button" id="launcherInfoButton"
+                  aria-label="Hinweise zur Launcher-Sortierung" aria-describedby="launcherHint"
+                  aria-controls="launcherHint" aria-expanded="false">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" focusable="false">
+              <circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.5" r=".7" fill="currentColor" stroke="none"/>
+            </svg>
+          </button>
+          <p class="launcher-hint" id="launcherHint" role="tooltip" hidden>App-Symbole gedrückt halten und verschieben, um die Reihenfolge anzupassen.</p>
+        </div>
         <div class="launcher-add-wrap" id="launcherAddWrap">
           <button type="button" class="launcher-add-button" id="launcherAddButton"
                   aria-haspopup="dialog" aria-controls="launcherAddMenu" aria-expanded="false">+ App</button>
-          <button type="button" class="launcher-view-btn launcher-manage-btn" id="launcherManageButton" aria-controls="launcherGrid" aria-pressed="false">☰ <span>Verwalten</span></button>
+          <button type="button" class="launcher-view-btn launcher-manage-btn" id="launcherManageButton" aria-controls="launcherGrid" aria-pressed="false"><svg class="launcher-manage-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Verwalten</span></button>
           <div class="launcher-add-menu" id="launcherAddMenu" role="dialog"
                aria-label="App zum Launcher hinzufügen" hidden>
             <div class="launcher-add-header">
@@ -160,6 +169,7 @@
   <script src="js/toast.js"></script>
   <script src="js/favorites.js"></script>
   <script src="js/filters.js"></script>
+  <script src="js/search-relevance.js"></script>
   <script src="js/search.js"></script>
   <script src="js/cards.js"></script>
   <script src="js/discover-preview.js"></script>
