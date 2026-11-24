@@ -10,7 +10,6 @@
     launcherTypeOrder: ['game', 'tool', 'misc'],
     launcherTypeClosed: [],
     libraryView: 'cards',
-    launcherView: 'apps',
     lastSection: 'discover'
   };
   const OLD_KEYS = [
@@ -58,9 +57,6 @@
             }
             if (['cards', 'list', 'icons'].includes(data.libraryView)) {
               values.libraryView = data.libraryView;
-            }
-            if (['list', 'apps'].includes(data.launcherView)) {
-              values.launcherView = data.launcherView;
             }
             if (['discover', 'library', 'launcher', 'about'].includes(data.lastSection)) {
               values.lastSection = data.lastSection;

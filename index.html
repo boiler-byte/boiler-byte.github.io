@@ -114,13 +114,17 @@
           <button type="button" class="launcher-view-btn launcher-manage-btn" id="launcherManageButton" aria-controls="launcherGrid" aria-pressed="false">☰ <span>Verwalten</span></button>
           <div class="launcher-add-menu" id="launcherAddMenu" role="dialog"
                aria-label="App zum Launcher hinzufügen" hidden>
-            <div class="launcher-add-search search-wrap" id="launcherAddSearchWrap">
-              <input type="search" class="search-input" id="launcherAddSearch"
-                     placeholder="Apps suchen…" aria-label="Apps zum Hinzufügen durchsuchen"
-                     aria-controls="launcherAddGroups" enterkeyhint="search" autocomplete="off">
-              <span class="search-icon" aria-hidden="true">⌕</span>
-              <button type="button" class="search-clear" id="launcherAddSearchClear"
-                      aria-label="Suche leeren">✕</button>
+            <div class="launcher-add-header">
+              <div class="launcher-add-search search-wrap" id="launcherAddSearchWrap">
+                <input type="search" class="search-input" id="launcherAddSearch"
+                       placeholder="Apps suchen…" aria-label="Apps zum Hinzufügen durchsuchen"
+                       aria-controls="launcherAddGroups" enterkeyhint="search" autocomplete="off">
+                <span class="search-icon" aria-hidden="true">⌕</span>
+                <button type="button" class="search-clear" id="launcherAddSearchClear"
+                        aria-label="Suche leeren">✕</button>
+              </div>
+              <button type="button" class="launcher-add-close" id="launcherAddClose"
+                      aria-label="App-Auswahl schließen">×</button>
             </div>
             <div id="launcherAddGroups" class="launcher-add-groups"></div>
           </div>

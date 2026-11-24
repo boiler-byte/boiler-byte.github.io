@@ -1,10 +1,10 @@
-# Boiler Room – App-Plattform v9
+# Boiler Room – App-Plattform v10
 
 Vanilla JavaScript mit **klassischen `<script src="...">`-Dateien**. Keine ES-Module, keine Abhaengigkeiten, kein Build-Prozess.
 
 ## Installation
 
-Inhalt des ZIPs ueber den bisherigen v8-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **unveraendert erhalten**. Sie wird von `index.html` weiterhin vor allen Modulen geladen:
+Inhalt des ZIPs ueber den bisherigen v9-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **unveraendert erhalten**. Sie wird von `index.html` weiterhin vor allen Modulen geladen:
 
 ```html
 <script src="repos.js"></script>
@@ -12,9 +12,25 @@ Inhalt des ZIPs ueber den bisherigen v8-Projektstand kopieren. Die produktive `r
 
 Ihre `originrepos` und `originrepogroups` haben weiterhin Vorrang vor den Fallback-Daten in `js/data.js`. Die Datei `repos.js` sowie eigene `img/`, `fonts/`, `icons/` und `manifest.json` sind nicht Teil dieses ZIPs und duerfen auf dem Host nicht geloescht werden.
 
+## Neu in v10: Launcher – flüchtiger Toggle und mobile App-Auswahl
+
+- **Verwalten** bleibt nur bis zum Neuladen aktiv. Beim Start erscheint immer die App-Ansicht. Ein alter `launcherView`-Eintrag wird beim Initialisieren des bestehenden Speicherobjekts entfernt; Favoriten, Sortierung, Typgruppen und Bibliotheksansicht bleiben gespeichert.
+- **+ App** öffnet ohne automatischen Suchfeld-Fokus, damit die Bildschirmtastatur erst nach bewusstem Antippen erscheint.
+- Auf kleinen oder Touch-Bildschirmen erscheint das Menü unabhängig vom Button mittig im sichtbaren Browserbereich. `VisualViewport`-Resize-/Scroll-Ereignisse passen Position und Höhe bei einer Bildschirmtastatur an (Fallback: Fensterabmessungen). Die Menügröße bleibt bei wenigen oder null Treffern stabil; nur die Trefferliste scrollt, das Suchfeld bleibt sichtbar.
+- Mobiler Schließen-Button neben der Suche; 16px Eingabeschrift zur Vermeidung des automatischen iOS-Eingabezooms. Auf Desktop bleibt das Dropdown am Button verankert.
+
+Geändert: `js/storage.js`, `js/launcher.js`, `js/platform.js`, `index.html`, `css/platform.css`.
+
+### Prüfung v10
+
+- JavaScript-Syntax aller Module mit `node --check` geprüft.
+- Chromium mit Demo-Repos und simuliertem Storage: 320, 390, 768 und 1280 px, leerer, ungruppierter und gruppierter Launcher. Geprüft: alter Toggle-Eintrag entfernt, Reload in App-Ansicht, sonstige gespeicherte Einstellungen unverändert, Öffnen ohne Suchfeld-Fokus, Suchtreffer und Null-Treffer, Scrollen der Ergebnisliste, Schließen und Hinzufügen von Apps.
+- Tastaturfläche simuliert durch verkleinerten und verschobenen Visual Viewport (240 bzw. 180 px sichtbare Höhe) sowie durch tatsächliches Verkleinern des Browserfensters. Menü und Suchfeld blieben im sichtbaren Bereich; keine JavaScript-Laufzeitfehler in diesen Tests.
+- Physische Android-/iOS-Geräte und Safari wurden nicht getestet.
+
 ## Neu in v9: Launcher – Verwalten-Toggle und mobiles Drag & Drop
 
-- Der bisherige separate Apps-Button oberhalb des Launchers entfällt. **Verwalten** bleibt rechts neben **+ App** und schaltet bei jedem Klick zwischen Symbol- und Listenansicht um. In der Listenansicht ist der Toggle hervorgehoben (`aria-pressed="true"`). Die zuletzt gewählte Ansicht bleibt gespeichert.
+- Der bisherige separate Apps-Button oberhalb des Launchers entfällt. **Verwalten** bleibt rechts neben **+ App** und schaltet bei jedem Klick zwischen Symbol- und Listenansicht um. In der Listenansicht ist der Toggle hervorgehoben (`aria-pressed="true"`). In v9 wurde die zuletzt gewählte Ansicht gespeichert (ab v10 nicht mehr).
 - Auf Touch-Geräten wird die native Textmarkierung beziehungsweise das Long-Press-Menü bereits beim Aufsetzen des Fingers auf einem App-Symbol verhindert. Der Hinweistext unter den Apps ist nicht markierbar.
 - Ein kurzes Antippen des Symbols öffnet die App einmal; nach etwa 460 ms Gedrückthalten beginnt die Sortierung. Ein Abbruch der Touch-Geste stellt die vorherige Reihenfolge wieder her. Die Sortierung per Maus und Tastatur bleibt erhalten.
 - Über App-Namen und Zwischenräume kann weiterhin normal gescrollt werden. Die Sperre der Textauswahl außerhalb des Hinweises gilt nur während einer Touch-Sortiergeste. Favoriten, Gruppenzustände und Speicherstruktur bleiben unverändert.

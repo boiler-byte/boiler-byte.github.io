@@ -7,6 +7,7 @@
   function switchTo(section) {
     if (!sections.has(section)) return;
     if (section !== 'discover') B.discoverPreview.close();
+    if (section !== 'launcher') B.launcher.closeAddMenu();
     s.section = section;
     B.storage.set('lastSection', section);
     B.dom.discoverPage.hidden = section !== 'discover';

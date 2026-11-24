@@ -24,8 +24,8 @@
   }
 
   function loadView() {
-    const stored = B.storage.get('launcherView');
-    if (modes.has(stored)) B.state.launcherView = stored;
+    // Verwalten ist nur ein fluechtiger UI-Zustand (kein localStorage).
+    B.state.launcherView = 'apps';
     syncViewControls();
   }
 
@@ -34,7 +34,6 @@
     if (B.state.launcherView !== view) {
       B.drag.cancelIconDrag();
       B.state.launcherView = view;
-      B.storage.set('launcherView', view);
       B.renderer.renderLauncher();
     }
     syncViewControls();
@@ -176,7 +175,45 @@
   const addSearch = document.getElementById('launcherAddSearch');
   const addSearchWrap = document.getElementById('launcherAddSearchWrap');
   const addSearchClear = document.getElementById('launcherAddSearchClear');
+  const addCloseButton = document.getElementById('launcherAddClose');
+  const compactAddMenu = window.matchMedia('(max-width: 768px), (pointer: coarse)');
   let addSearchDebounceTimer = null;
+  let addMenuFrame = null;
+
+  // Android und iOS verkleinern/verschieben beim Einblenden der Tastatur
+  // oft nur den Visual Viewport, nicht den Layout-Viewport. Das mobile
+  // Menue bleibt deshalb unabhaengig vom +App-Button im sichtbaren Bereich.
+  function positionAddMenu() {
+    if (addMenu.hidden) return;
+    const viewport = window.visualViewport;
+    const width = viewport?.width || window.innerWidth;
+    const height = viewport?.height || window.innerHeight;
+    const left = viewport?.offsetLeft || 0;
+    const top = viewport?.offsetTop || 0;
+    const compact = compactAddMenu.matches || width <= 768 ||
+      height < window.innerHeight - 80;
+    addMenu.classList.toggle('is-viewport-positioned', compact);
+    if (!compact) {
+      ['--add-menu-left', '--add-menu-top', '--add-menu-width', '--add-menu-height']
+        .forEach(name => addMenu.style.removeProperty(name));
+      return;
+    }
+    const gap = Math.min(12, width / 8, height / 8);
+    const menuWidth = Math.max(0, Math.min(320, width - 2 * gap));
+    const menuHeight = Math.max(0, Math.min(350, height - 2 * gap));
+    addMenu.style.setProperty('--add-menu-left', `${left + (width - menuWidth) / 2}px`);
+    addMenu.style.setProperty('--add-menu-top', `${top + (height - menuHeight) / 2}px`);
+    addMenu.style.setProperty('--add-menu-width', `${menuWidth}px`);
+    addMenu.style.setProperty('--add-menu-height', `${menuHeight}px`);
+  }
+
+  function scheduleAddMenuPosition() {
+    if (addMenu.hidden || addMenuFrame !== null) return;
+    addMenuFrame = requestAnimationFrame(() => {
+      addMenuFrame = null;
+      positionAddMenu();
+    });
+  }
 
   // Wie bisher keine Favoriten, zusaetzlich nur Apps mit nichtleerer URL.
   // Relative URLs aus einer produktiven repos.js bleiben zulaessig.
@@ -197,9 +234,12 @@
     if (!addMenu) return;
     clearTimeout(addSearchDebounceTimer);
     addSearchDebounceTimer = null;
+    if (addMenuFrame !== null) cancelAnimationFrame(addMenuFrame);
+    addMenuFrame = null;
+    if (addMenu.contains(document.activeElement)) document.activeElement.blur();
     addMenu.hidden = true;
     addButton.setAttribute('aria-expanded', 'false');
-    if (returnFocus && !addButton.disabled) addButton.focus();
+    if (returnFocus && !addButton.disabled) addButton.focus({ preventScroll: true });
   }
 
   function refreshAddMenu() {
@@ -209,6 +249,7 @@
     addButton.title = entries.length ? 'App zum Launcher hinzufügen' : 'Keine weiteren Apps mit URL verfügbar';
     const query = addSearch.value.trim();
     addGroups.replaceChildren();
+    addGroups.scrollTop = 0;
 
     // Identische Relevanzsuche wie in der Bibliothek: Titel, Tags,
     // Beschreibung, Typ und Metadaten, inklusive Umlaut-Normalisierung.
@@ -302,8 +343,15 @@
       refreshAddMenu();
       addMenu.hidden = false;
       addButton.setAttribute('aria-expanded', 'true');
-      addSearch.focus();
+      positionAddMenu();
+      // Kein automatischer Fokus: die Bildschirmtastatur bleibt geschlossen.
     });
+    addCloseButton.addEventListener('click', () => closeAddMenu(true));
+    window.addEventListener('resize', scheduleAddMenuPosition);
+    window.visualViewport?.addEventListener('resize', scheduleAddMenuPosition);
+    window.visualViewport?.addEventListener('scroll', scheduleAddMenuPosition);
+    addSearch.addEventListener('focus', scheduleAddMenuPosition);
+    addSearch.addEventListener('blur', scheduleAddMenuPosition);
     addSearch.addEventListener('input', () => {
       addSearchWrap.classList.toggle('has-value', addSearch.value.length > 0);
       clearTimeout(addSearchDebounceTimer);
@@ -331,7 +379,7 @@
       B.favorites.toggleFavorite(label);
       closeAddMenu();
       B.renderer.renderLauncher();
-      if (!addButton.disabled) addButton.focus();
+      if (!addButton.disabled) addButton.focus({ preventScroll: true });
     });
     addWrap.addEventListener('keydown', e => {
       if (addMenu.hidden) return;

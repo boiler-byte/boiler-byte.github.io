@@ -435,7 +435,7 @@ body.launcher-touch-press, body.launcher-touch-press * {
   background: rgba(44,212,255,.14);
   box-shadow: 0 0 22px rgba(44,212,255,.16);
 }
-#launcherGrid .empty-state .launcher-add-wrap.is-empty .launcher-add-menu {
+#launcherGrid .empty-state .launcher-add-wrap.is-empty .launcher-add-menu:not(.is-viewport-positioned) {
   left: 50%;
   right: auto;
   transform: translateX(-50%);
@@ -456,29 +456,74 @@ body.launcher-touch-press, body.launcher-touch-press * {
   right: 0;
   bottom: calc(100% + .55rem);
   width: min(320px, calc(100vw - 2rem));
+  max-height: min(350px, 60vh);
   max-height: min(350px, 60dvh);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-color: rgba(154,163,178,.48) transparent;
-  scrollbar-width: thin;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   padding: .35rem;
   border: 1px solid rgba(255,255,255,.22);
   border-radius: 14px;
   background: #171a21;
   box-shadow: 0 18px 45px rgba(0,0,0,.75);
 }
-/* Fixiertes Suchfeld als erster Eintrag im +App-Menue. Suchstil wie Bibliothek. */
-.launcher-add-search {
-  position: sticky;
-  top: -.35rem;
-  z-index: 2;
-  width: 100%;
-  min-width: 0;
-  flex: none;
+/* Mobil bleibt das Menue auch bei Tastatur und null Treffern gleich gross.
+   Die Koordinaten folgen dem sichtbaren (Visual) Viewport. */
+.launcher-add-menu.is-viewport-positioned {
+  position: fixed;
+  z-index: 100;
+  left: var(--add-menu-left);
+  top: var(--add-menu-top);
+  right: auto;
+  bottom: auto;
+  transform: none;
+  width: var(--add-menu-width);
+  height: var(--add-menu-height);
+  max-height: none;
+}
+/* Suchfeld bleibt sichtbar; ausschliesslich die Ergebnisliste scrollt. */
+.launcher-add-header {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  flex: 0 0 auto;
   padding: .35rem .35rem .65rem;
   background: #171a21;
 }
+.launcher-add-search {
+  position: relative;
+  width: auto;
+  min-width: 0;
+  flex: 1 1 0;
+  margin: 0;
+}
 .launcher-add-search .search-input { min-height: 38px; }
+.launcher-add-groups {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: rgba(154,163,178,.48) transparent;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.launcher-add-close {
+  display: none;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 50%;
+  color: var(--text-muted);
+  background: transparent;
+  font: 500 1.4rem var(--font-mono);
+  cursor: pointer;
+}
+.launcher-add-close:hover { color: var(--text-primary); }
+.launcher-add-close:focus-visible { outline: 2px solid var(--cyan-base); }
+.launcher-add-menu.is-viewport-positioned .launcher-add-close { display: grid; place-items: center; }
+/* 16px verhindert das automatische Eingabefeld-Zooming in iOS Safari. */
+.launcher-add-menu.is-viewport-positioned .search-input { font-size: 16px; min-height: 44px; }
 .launcher-add-search .search-clear:focus-visible {
   outline: 2px solid var(--cyan-base);
   outline-offset: 3px;
