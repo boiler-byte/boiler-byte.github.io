@@ -14,7 +14,7 @@ Ihre `originrepos` und `originrepogroups` haben weiterhin Vorrang vor den Fallba
 
 ## Neu in v24: Workspace Offline-Manager
 
-Der Offline-Manager (`workspace/offline.html`) ist aus der Workspace-Sidebar und dem Launcher erreichbar. Er erweitert die installierbare Workspace-PWA aus v23, ohne den Service-Worker-Scope zu ändern.
+Der Offline-Manager (`workspace/offline.html`) ist aus der Workspace-Sidebar erreichbar. Im Launcher bleibt nur der Workspace-Link; eine direkte Verknüpfung zum Offline-Manager entfällt. Er erweitert die installierbare Workspace-PWA aus v23, ohne den Service-Worker-Scope zu ändern.
 
 - Zentraler Katalog mit Auswahl **Alle Apps**, **Mein Workspace** (Favoriten in Launcher-Reihenfolge) und den bestehenden Repo-Workspaces. Die Sidebar verlinkt direkt zur Verwaltung des aktuell geöffneten Workspaces. Suche und responsive Darstellung sind unabhängig von der Workspace-App-Suche.
 - Einzelne Apps bereitstellen, aktualisieren, reparieren und entfernen; alle noch fehlenden oder zu aktualisierenden Pakete eines Workspaces mit einer Aktion bereitstellen. Fortschritt pro Datei und pro App, Fehler je App. Bereits installierte Pakete werden nicht erneut geladen, sofern kein Update bzw. keine Reparatur erforderlich ist. Ein einzelnes Paket kann ausdrücklich neu heruntergeladen werden.
