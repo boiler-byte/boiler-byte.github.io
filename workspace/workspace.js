@@ -11,7 +11,7 @@
     'workspace', 'sidebar', 'sidebarClose', 'sidebarToggle', 'backdrop', 'workspaceSelect',
     'workspaceLabel', 'appSearch', 'appSearchClear', 'appCount', 'appList', 'storageNotice', 'main', 'currentWorkspace', 'currentApp',
     'reloadApp', 'externalApp', 'emptyView', 'emptyTitle', 'emptyDescription', 'emptyLink',
-    'frames', 'loading'
+    'frames', 'loading', 'offlineManagerLink'
   ].map(id => [id, $(id)]));
   const mobile = window.matchMedia('(max-width: 700px)');
   const types = B.data.types;
@@ -40,6 +40,20 @@
   let drawerPreviousFocus = null;
   let searchQuery = '';
   let searchTimer = null;
+  let offlineRecords = new Map();
+  let openToken = 0;
+  let offlineRevision = 0;
+  let offlineInitial = refreshOffline();
+
+  async function refreshOffline(render = true) {
+    const revision = ++offlineRevision;
+    try {
+      const records = await B.offline.snapshot();
+      if (revision !== offlineRevision) return;
+      offlineRecords = new Map(records.map(record => [record.id, record]));
+      if (render) renderList();
+    } catch (_) { /* online URLs remain usable if browser storage is unavailable */ }
+  }
 
   function resolveURL(value) {
     if (typeof value !== 'string' || !value.trim()) return null;
@@ -123,6 +137,11 @@
     type.className = 'app-type';
     type.dataset.type = repo.type || '';
     type.textContent = resolveURL(repo.url) ? (types[repo.type]?.label || repo.type || 'App') : 'Information';
+    const offlineEntry = B.offline.localEntry(repo, offlineRecords.get(repo.label));
+    if (offlineEntry) {
+      type.textContent += ' · Offline';
+      button.title = repo.label + ' · Offline-Paket vorhanden';
+    }
     copy.append(name, type);
     const dot = document.createElement('span');
     dot.className = 'active-dot';
@@ -267,7 +286,8 @@
     }
   }
 
-  function openApp(label, save = true) {
+  async function openApp(label, save = true) {
+    const token = ++openToken;
     const repo = activeRepos.find(item => item.label === label) || null;
     state.app = repo?.label || null;
     if (save) persist();
@@ -275,11 +295,21 @@
     ui.currentApp.textContent = repo?.label || 'Workspace';
     document.title = (repo ? repo.label + ' · ' : '') + workspaceLabel(state.selected) + ' · Boiler Room';
     for (const entry of frames.values()) entry.frame.hidden = true;
-    const url = resolveURL(repo?.url);
-    if (!repo || !url) {
+    const originalURL = resolveURL(repo?.url);
+    if (!repo || !originalURL) {
       showEmpty(repo);
       return;
     }
+    // Resolve the saved package before creating an iframe (including cold offline starts).
+    ui.emptyView.hidden = true;
+    ui.frames.hidden = false;
+    ui.loading.hidden = false;
+    ui.reloadApp.disabled = true;
+    ui.externalApp.hidden = true;
+    let pending;
+    do { pending = offlineInitial; await pending; } while (pending !== offlineInitial && token === openToken);
+    if (token !== openToken) return;
+    const url = B.offline.localEntry(repo, offlineRecords.get(repo.label)) || originalURL;
     let entry = frames.get(repo.label);
     if (entry && entry.url !== url) {
       removeFrame(repo.label);
@@ -304,6 +334,9 @@
     ui.workspaceSelect.value = state.selected;
     ui.workspaceLabel.textContent = workspaceLabel(state.selected);
     ui.currentWorkspace.textContent = workspaceLabel(state.selected);
+    const managerURL = new URL('offline.html', location.href);
+    managerURL.searchParams.set('workspace', state.selected);
+    ui.offlineManagerLink.href = managerURL.href;
     if (!same) resetSearch(false);
     const wanted = (same ? state.app : null) || state.lastApps[state.selected];
     const repo = activeRepos.find(item => item.label === wanted)
@@ -366,11 +399,13 @@
 
   // Deep-Link hat beim Start Vorrang; ohne gueltige Gruppe gilt der gespeicherte Zustand.
   const requestedGroup = new URLSearchParams(location.search).get('group');
-  const initialWorkspace = requestedGroup !== null && groups.has(requestedGroup)
+  const requestedFavorites = new URLSearchParams(location.search).get('favorites') === '1';
+  const initialWorkspace = requestedFavorites ? FAVORITES : requestedGroup !== null && groups.has(requestedGroup)
     ? GROUP_PREFIX + requestedGroup : state.selected;
 
   function syncGroupURL() {
     const url = new URL(location.href);
+    url.searchParams.delete('favorites');
     if (state.selected === FAVORITES) url.searchParams.delete('group');
     else url.searchParams.set('group', state.selected.slice(GROUP_PREFIX.length));
     // Dropdown-Wechsel soll beim Reload nicht zur urspruenglichen Deep-Link-Gruppe zurueckspringen.
@@ -384,7 +419,7 @@
   populatePicker();
   readFavorites();
   selectWorkspace(initialWorkspace, true);
-  if (requestedGroup !== null) syncGroupURL();
+  if (requestedGroup !== null || requestedFavorites) syncGroupURL();
   syncSidebar();
   setupSearch();
   ui.workspaceSelect.addEventListener('change', () => {
@@ -397,8 +432,10 @@
   ui.backdrop.addEventListener('click', () => setSidebar(false, true));
   ui.reloadApp.addEventListener('click', () => {
     if (!state.app) return;
-    removeFrame(state.app);
-    openApp(state.app, false);
+    const label = state.app;
+    offlineInitial = refreshOffline();
+    removeFrame(label);
+    openApp(label, false);
   });
   document.addEventListener('keydown', event => {
     if (event.defaultPrevented) return;
@@ -419,8 +456,16 @@
   window.addEventListener('storage', event => {
     if (event.key === 'boilerRoom' || event.key === null) refreshFavorites();
   });
-  window.addEventListener('pageshow', refreshFavorites);
+  window.addEventListener('pageshow', () => { refreshFavorites(); offlineInitial = refreshOffline(); });
+  window.addEventListener('online', () => { offlineInitial = refreshOffline(); });
+  window.addEventListener('offline', () => { offlineInitial = refreshOffline(); });
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', event => {
+      if (event.data?.protocol === 'boiler-room-offline-v1' && event.data.changed) offlineInitial = refreshOffline();
+    });
+    navigator.serviceWorker.addEventListener('controllerchange', () => { offlineInitial = refreshOffline(); });
+  }
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') refreshFavorites();
+    if (document.visibilityState === 'visible') { refreshFavorites(); offlineInitial = refreshOffline(); }
   });
 })(window.BoilerRoom);

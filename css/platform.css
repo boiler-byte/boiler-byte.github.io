@@ -1052,3 +1052,10 @@ body.launcher-touch-press, body.launcher-touch-press * {
 @media (min-width: 621px) {
   .hero { min-height: 260px; }
 }
+
+/* v24: keep both workspace links usable on narrow launcher action bars. */
+@media (max-width: 620px) {
+  .launcher-start-actions { gap: .35rem; }
+  .launcher-offline-button { width: 44px; padding: 0; }
+  .launcher-offline-button span { display: none; }
+}

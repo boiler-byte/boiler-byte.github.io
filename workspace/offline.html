@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="de" class="offline-html">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101216">
+  <title>Offline-Manager · Boiler Room</title>
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="stylesheet" href="workspace.css">
+  <link rel="stylesheet" href="offline.css">
+  <script src="../repos.js"></script>
+</head>
+<body class="offline-body">
+  <header class="offline-header">
+    <div class="offline-header-inner">
+      <a id="workspaceBack" class="offline-back" href="index.html" aria-label="Zurück zum Workspace">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6-6 6 6 6M4 12h16"/></svg> Workspace
+      </a>
+      <span class="offline-brand"><span class="brand-mark" aria-hidden="true">db</span><span>der Boiler Room</span></span>
+      <span class="offline-connection" id="connectionStatus" role="status"></span>
+    </div>
+  </header>
+  <main class="offline-main">
+    <div class="offline-intro">
+      <p class="eyebrow">Workspace · Lokale Bereitstellung</p>
+      <h1>Offline-Manager</h1>
+      <p>Speichere einzelne Apps oder alle verfügbaren Apps eines Workspaces auf diesem Gerät. Offline-Pakete bleiben auch ohne Internetverbindung im Workspace nutzbar.</p>
+    </div>
+    <section class="offline-panel" aria-labelledby="selectionTitle">
+      <div class="offline-panel-head">
+        <div class="offline-select-wrap">
+          <label id="selectionTitle" for="offlineWorkspace">Workspace / Katalog</label>
+          <select id="offlineWorkspace"></select>
+        </div>
+        <div class="offline-bulk">
+          <button id="installAll" class="offline-button primary" type="button" disabled>Bereitstellen</button>
+          <button id="removeAll" class="offline-button secondary" type="button" disabled>Entfernen</button>
+        </div>
+      </div>
+      <div class="offline-metrics" aria-live="polite" aria-atomic="true">
+        <div><strong id="metricReady">–</strong><span>Aktuell bereit</span></div>
+        <div><strong id="metricPending">–</strong><span>Bereitstellbar / Update</span></div>
+        <div><strong id="metricUnsupported">–</strong><span>Ohne Offline-Paket</span></div>
+      </div>
+      <progress id="coverage" class="offline-coverage" max="1" value="0" aria-label="Offline-Abdeckung"></progress>
+      <p id="workspaceSummary" class="offline-summary">Offline-Status wird ermittelt …</p>
+    </section>
+    <div id="serviceNotice" class="offline-notice" role="status" hidden></div>
+    <div id="operationPanel" class="offline-panel operation-panel" hidden>
+      <p id="operationText" role="status" aria-live="polite"></p>
+      <progress id="operationProgress" max="1" value="0" aria-label="Download-Fortschritt"></progress>
+    </div>
+    <section aria-labelledby="appsTitle" class="offline-app-section">
+      <div class="offline-list-head">
+        <h2 id="appsTitle">Apps</h2>
+        <label class="offline-search"><span class="visually-hidden">Apps suchen</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4.5 4.5"/></svg><input id="offlineSearch" type="search" placeholder="Apps suchen …" autocomplete="off"></label>
+      </div>
+      <div id="offlineList" class="offline-list"></div>
+    </section>
+    <section class="offline-footnote" aria-labelledby="storageTitle">
+      <h2 id="storageTitle">Gerätespeicher</h2>
+      <p id="storageSummary">Offline-Dateien werden im Browserprofil gespeichert. Apps ohne hinterlegtes lokales Paket werden nicht automatisch kopiert.</p>
+      <button id="protectStorage" class="offline-button secondary" type="button" hidden>Dauerhaften Speicher anfragen</button>
+      <p>Das Entfernen eines Pakets löscht nur dessen Offline-Dateien, nicht Favoriten, Workspace-Einstellungen oder App-Nutzerdaten. Eine lokale Kopie einer externen App kann einen separaten Datenbestand haben. Browser können nicht geschützten Speicher bei Bedarf freigeben.</p>
+      <p>Bereitgestellte Pakete werden im Workspace anstelle der Online-URL geöffnet. API-Funktionen und nicht deklarierte Dateien benötigen ggf. weiterhin Internet.</p>
+    </section>
+  </main>
+  <script>window.BoilerRoom = window.BoilerRoom || {};</script>
+  <script src="../js/data.js"></script>
+  <script src="../js/storage.js"></script>
+  <script src="../js/search-relevance.js"></script>
+  <script src="offline-model.js"></script>
+  <script src="offline-client.js"></script>
+  <script src="offline-manager.js"></script>
+</body>
+</html>

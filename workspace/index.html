@@ -5,7 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#101216">
   <title>Workspace · Boiler Room</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Workspace">
   <link rel="stylesheet" href="workspace.css">
+  <script src="pwa.js" defer></script>
   <script src="../repos.js"></script>
 </head>
 <body>
@@ -34,6 +41,15 @@
       <nav id="appList" class="app-list" aria-label="Apps im Workspace"></nav>
       <div class="sidebar-footer">
         <p id="storageNotice" class="storage-notice" hidden>Speichern im Browser nicht verfügbar.</p>
+        <p id="offlineNotice" class="storage-notice" role="status" hidden>Offline · Bereitgestellte Pakete sind lokal nutzbar.</p>
+        <button id="installWorkspace" class="back-link install-link" type="button" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 15v5h16v-5"/></svg>
+          <span>Workspace installieren</span>
+        </button>
+        <a id="offlineManagerLink" class="back-link offline-manager-link" href="offline.html">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 15v5h16v-5"/></svg>
+          <span>Offline-Manager</span>
+        </a>
         <a class="back-link" href="../index.html">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6-6 6 6 6M4 12h16"/></svg>
           <span>Boiler Room</span>
@@ -75,6 +91,8 @@
   <script src="../js/data.js"></script>
   <script src="../js/storage.js"></script>
   <script src="../js/search-relevance.js"></script>
+  <script src="offline-model.js"></script>
+  <script src="offline-client.js"></script>
   <script src="workspace.js"></script>
 </body>
 </html>

@@ -32,7 +32,8 @@
   // Beispiel: dev: { label: 'Dev-Tools', img: 'all', preview: 'all' }.
   const repogroups =  (typeof originrepogroups !== 'undefined') ? originrepogroups : {
     dev: { label: "Dev-Tools", img: 'img/grp/devtools.png' },
-    cards: { label: "Kartenspiele", img: 'img/grp/cards.png' }
+    cards: { label: "Kartenspiele", img: 'img/grp/cards.png' },
+    'offline-demo': { label: "Offline-Demo" }
   }
 
   // ======================================================
@@ -43,6 +44,18 @@
   // Optionales "preview" (Bildpfad): bei Card-Hover statt "img";
   // in der Gruppen-Vorschau direkt sichtbar (z. B. preview: 'img/snake-preview.png').
   const repos = (typeof originrepos !== 'undefined' && Array.isArray(originrepos)) ? originrepos : [
+    {
+        label: "Offline-Notizblock",
+        icon: '✎',
+        img: 'workspace/icons/icon-192.png',
+        description: 'Lokales Offline-Beispiel ohne externe Abhängigkeiten.',
+        type: 'tool',
+        workspace: 'offline-demo',
+        url: 'workspace/apps/offline-demo/index.html',
+        offline: { version: '1', files: ['style.css', 'app.js'] },
+        year: 2026,
+        tags: ['Offline', 'Lokal']
+    },
     {
         label: "Android Vollbild",
         img: 'img/pwa.png',
