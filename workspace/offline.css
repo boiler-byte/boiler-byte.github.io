@@ -74,7 +74,7 @@ progress::-moz-progress-bar { background: var(--accent); }
   .offline-panel-head { gap: 12px; }
   .offline-select-wrap { flex-basis: 100%; }
   .offline-bulk { width: 100%; }
-  .offline-bulk .offline-button { flex: 1; min-width: 0; }
+  .offline-bulk .offline-button { flex: 1 1 calc(50% - 8px); min-width: 0; }
   .offline-metrics { gap: 8px; }
   .offline-metrics strong { font-size: 24px; }
   .offline-metrics span { font-size: 11px; }

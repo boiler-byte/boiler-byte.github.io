@@ -1,16 +1,26 @@
-# Boiler Room – App-Plattform v25
+# Boiler Room – App-Plattform v26
 
 Vanilla JavaScript mit **klassischen `<script src="...">`-Dateien**. Keine ES-Module, keine Abhaengigkeiten, kein Build-Prozess.
 
 ## Installation
 
-Inhalt des ZIPs über den bisherigen v24-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **erhalten** (die Workspace-Zuordnungen koennen wie unten beschrieben umbenannt werden). Sie wird von `index.html` weiterhin vor allen Modulen geladen:
+Inhalt des ZIPs über den bisherigen v25-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **erhalten** (die Workspace-Zuordnungen koennen wie unten beschrieben umbenannt werden). Sie wird von `index.html` weiterhin vor allen Modulen geladen:
 
 ```html
 <script src="repos.js"></script>
 ```
 
 Ihre `originrepos` und `originrepogroups` haben weiterhin Vorrang vor den Fallback-Daten in `js/data.js`. Die Datei `repos.js` sowie eigene `img/`, `fonts/`, `icons/` und `manifest.json` sind nicht Teil dieses ZIPs und duerfen auf dem Host nicht geloescht werden.
+
+## Neu in v26: Versionsprüfung im Workspace-Offline-Manager
+
+- Online wird die `boiler-room.json` jeder App des aktuell ausgewählten Workspaces automatisch höchstens einmal innerhalb von 24 Stunden geprüft. Die lokale Suche beeinflusst den Prüfumfang nicht. Beim Wechsel auf einen anderen Workspace werden dessen Apps geprüft, soweit ihre Ergebnisse fehlen oder abgelaufen sind.
+- Prüfergebnis und Zeitpunkt werden getrennt von den installierten Paketen im Service-Worker-Cache `offline-versions-v1` gespeichert. Das gilt auch für nicht installierte Apps, fehlende/ungültige Manifeste, `offline.mode: none` und momentan nicht erreichbare Manifeste. Die Ergebnisse bleiben über Seitenwechsel, Neuladen, Tab-Wechsel und Worker-Neustarts hinweg erhalten. Statisch nicht unterstützte Apps (andere Origins, Informationskarten) verursachen keine Netzwerkanfrage.
+- Offline werden zuletzt gespeicherte Ergebnisse und lokale Paketdaten angezeigt; ohne Netzverbindung wird kein neuer Prüfzeitpunkt gesetzt. Beim Wiederverbinden, Öffnen/Fokussieren und bei dauerhaft sichtbarem Manager werden fällige Prüfungen ausgeführt. Bei geschlossenem Manager findet keine Hintergrundprüfung statt.
+- „Versionen prüfen“ im Panel-Kopf startet online eine sofortige manuelle Prüfung des ausgewählten Workspaces, unabhängig vom 24-Stunden-Intervall. Der letzte Prüfzeitpunkt erscheint an jeder geprüften App. Ein vorübergehend nicht erreichbares Manifest kann so erneut geprüft werden.
+- „Version x verfügbar“ verwendet `version_name` (ansonsten `version`) für erkannte Updates. „Alle Aktualisieren“ erscheint nur, wenn Updates vorhanden sind, und aktualisiert ausschließlich diese installierten Pakete im ausgewählten Workspace. „Bereitstellen“ bleibt für fehlende oder zu reparierende Pakete zuständig. Einzelupdates bleiben möglich.
+- Eine ausdrücklich gestartete Bereitstellung, Reparatur oder Aktualisierung ruft das Live-Manifest zur sicheren Download-Transaktion erneut ab und aktualisiert das Prüfergebnis. Fehlgeschlagene Paketdownloads lassen vorher installierte Dateien unverändert. Die 24-Stunden-Sperre gilt für automatische Versionsprüfungen, nicht für explizite Installationsvorgänge.
+- Die Shell wird auf `shell-v26` angehoben. Die bereits installierten Pakete und der lokale Offline-Index bleiben erhalten. Nach dem Deployment alle bisherigen Workspace-Tabs/PWA-Fenster schließen und online erneut öffnen, damit der neue Worker aktiviert wird.
 
 ## Neu in v25: App-eigene `boiler-room.json`
 
@@ -48,7 +58,7 @@ Die mitgelieferte `boiler-room.example.json` entspricht der Vorlage des Nutzers.
 - `schema_version: 2` und eine nichtnegative ganzzahlige `version` sind erforderlich. Bei jeder Änderung am Paket `version` erhöhen. `version_name` ist die lesbare Versionsbezeichnung; weitere Metadaten bleiben im gespeicherten Manifest erhalten.
 - `offline.mode`: `full` = vollständig, `partial` = eingeschränkt (mit sichtbaren `limitations`), `none` = nicht zentral bereitstellbar. Nur vollständig gespeicherte `full`-Pakete zählen zur vollständigen Workspace-Abdeckung.
 - `files`: alle benötigten statischen Dateien mit relativen Pfaden im App-Verzeichnis, einschließlich CSS, JS, Icons, Webmanifest, ggf. Daten und Unterverzeichnissen. Der HTML-Einstieg aus `repo.url` und `boiler-room.json` werden automatisch zusätzlich gespeichert. Maximal 500 verschiedene URLs einschließlich dieser beiden Dateien. Querystrings müssen exakt passen. `changelog` ist Metadatum; soll die Datei offline verfügbar sein, muss sie zusätzlich in `files` stehen.
-- Der Offline-Manager prüft Manifeste online neu, unterscheidet fehlende/ungültige von momentan nicht erreichbaren Manifesten und erkennt Änderungen an Version, Modus, Einschränkungen oder Dateiliste. Offline wird der tatsächlich gespeicherte Stand angezeigt, nicht eine vermeintlich aktuelle Online-Version.
+- Der Offline-Manager prüft Manifeste gemäß dem oben beschriebenen Intervall und erkennt Änderungen an Version, Modus, Einschränkungen oder Dateiliste. Offline werden der letzte Prüfstand und die tatsächlich gespeicherte Paketversion angezeigt.
 
 ### Hosting und Grenzen
 
@@ -60,13 +70,13 @@ Keine Authentifizierung, Weiterleitungen (außer der üblichen Verzeichnis-URL, 
 
 Der Manager bleibt aus der Workspace-Sidebar erreichbar. Einzel-/Sammelbereitstellung, Reparatur, Versionsupdate und Entfernen bleiben erhalten. Updates werden atomar gespeichert; bei einem fehlgeschlagenen Download bleibt das alte Paket erhalten. Installierte Pakete können offline entfernt werden, ohne Favoriten oder App-Nutzerdaten zu löschen. Speicher ist browserprofilbezogen und kann vom Browser freigegeben werden.
 
-Produktive `repos.js` und eigene Ressourcen erhalten; `repo.offline` wird ignoriert und kann gelöscht werden. Jede kompatible App benötigt eine eigene `boiler-room.json`. Bestehende v24-Pakete werden nicht pauschal gelöscht; sie bleiben nur dann als Offline-Einstieg nutzbar, wenn ihre gespeicherte URL zu `repo.url` passt. Sie können nach dem Manifest-Update neu bereitgestellt oder entfernt werden. Neue Shell: `shell-v25`. Nach dem Deployment alle alten Workspace-Tabs/PWA-Fenster schließen und online erneut öffnen, damit der neue Worker aktiviert wird.
+Produktive `repos.js` und eigene Ressourcen erhalten; `repo.offline` wird ignoriert und kann gelöscht werden. Jede kompatible App benötigt eine eigene `boiler-room.json`. Bestehende v24-Pakete werden nicht pauschal gelöscht; sie bleiben nur dann als Offline-Einstieg nutzbar, wenn ihre gespeicherte URL zu `repo.url` passt. Sie können nach dem Manifest-Update neu bereitgestellt oder entfernt werden. Aktuelle Shell: `shell-v26`. Nach dem Deployment alle alten Workspace-Tabs/PWA-Fenster schließen und online erneut öffnen, damit der neue Worker aktiviert wird.
 
 Beispiel: `workspace/apps/offline-demo/` enthält den Notizblock samt Manifest und Changelog. Bei produktiver `repos.js` kann er optional als normaler Repo-Eintrag mit `url: 'workspace/apps/offline-demo/index.html'` aufgenommen werden.
 
 ### Prüfung
 
-`node tests/offline.test.cjs` prüft die Manifest-Suche und -Validierung, fehlende und nicht erreichbare Manifeste, Modi, den simulierten Service-Worker-Lebenszyklus, die Offline-Shell, direkte und gespiegelte App-Dateien, atomare Updates mit Rollback, Reparatur, Entfernung und Cache-Isolation. JavaScript-Syntaxprüfung für alle JS-Dateien. Reale App-Deployments und Offline-Kaltstarts auf Endgeräten müssen separat geprüft werden; die produktive `repos.js` und produktive App-Dateien liegen nicht in diesem ZIP vor.
+`node tests/offline.test.cjs` prüft die Manifest-Suche und -Validierung, fehlende und nicht erreichbare Manifeste, Modi, den simulierten Service-Worker-Lebenszyklus, die Offline-Shell, direkte und gespiegelte App-Dateien, atomare Updates mit Rollback, Reparatur, Entfernung und Cache-Isolation. Zusätzlich werden tägliche positive und negative Prüfergebnisse, manuelle Prüfungen, persistente Offline-Prüfergebnisse und parallele Anfragen geprüft. `node tests/offline-manager.test.cjs` testet die Manager-Bedienlogik in einer simulierten DOM-Umgebung. JavaScript-Syntaxprüfung für alle JS-Dateien. Reale App-Deployments und Offline-Kaltstarts auf Endgeräten müssen separat geprüft werden; die produktive `repos.js` und produktive App-Dateien liegen nicht in diesem ZIP vor.
 
 ## Neu in v23 (historisch): Workspace-PWA
 

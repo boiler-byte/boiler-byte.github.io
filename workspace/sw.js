@@ -5,7 +5,7 @@ const M = self.BoilerRoomOfflineModel;
 const scope = new URL(self.registration.scope);
 const url = path => new URL(path, scope).href;
 const prefix = M.prefix(scope);
-const shellCache = `${prefix}shell-v25`;
+const shellCache = `${prefix}shell-v26`;
 const dataCache = `${prefix}data-v1`;
 const indexCache = `${prefix}offline-index-v1`;
 const packagePrefix = `${prefix}offline-app-v1:`;
@@ -20,6 +20,9 @@ const shell = [entry, manager, url('workspace.css'), url('workspace.js'), url('p
   url('icons/icon-maskable-512.png'), url('icons/apple-touch-icon.png')];
 const shellSet = new Set(shell);
 let mutationQueue = Promise.resolve();
+const versionChecksInFlight = new Map();
+// A quota failure must not trigger repeated network requests during this worker's lifetime.
+const unsavedVersionChecks = new Map();
 
 async function refreshData(request) {
   const cache = await caches.open(dataCache);
@@ -76,13 +79,55 @@ async function discover(repo) {
   } catch (_) { return { description: { ...loc, kind: 'unknown', reason: 'boiler-room.json momentan nicht erreichbar.' } }; }
   if (response.status === 404 || response.status === 410) return { description: { kind: 'unsupported', reason: 'Keine boiler-room.json gefunden.' } };
   if (!response.ok || response.type === 'opaque' || response.redirected) return { description: { ...loc, kind: 'unknown', reason: `Manifest nicht erreichbar (HTTP ${response.status}).` } };
+  if (/(?:^|,)\s*(?:no-store|private)(?:\s|=|,|$)/i.test(response.headers.get('Cache-Control') || '')) {
+    return { description: { kind: 'unsupported', reason: 'Manifest darf nicht offline gespeichert werden.' } };
+  }
   try {
     const metadata = await response.clone().json();
     return { description: M.describe(repo, scope, metadata), response };
   } catch (_) { return { description: { kind: 'unsupported', reason: 'boiler-room.json ist kein gültiges JSON.' } }; }
 }
+async function readVersionCheck(key) {
+  if (unsavedVersionChecks.has(key)) return unsavedVersionChecks.get(key);
+  try {
+    const response = await (await caches.open(M.versionCheckCache(scope))).match(key);
+    return response ? await response.json() : null;
+  } catch (_) { return null; }
+}
+function liveVersionCheck(repo, key) {
+  if (versionChecksInFlight.has(key)) return versionChecksInFlight.get(key);
+  const pending = (async () => {
+    const found = await discover(repo);
+    const description = { ...found.description, checkedAt: Date.now() };
+    try {
+      const cache = await caches.open(M.versionCheckCache(scope));
+      await cache.put(key, new Response(JSON.stringify(description), { headers: { 'Content-Type': 'application/json' } }));
+      unsavedVersionChecks.delete(key);
+    } catch (_) { unsavedVersionChecks.set(key, description); }
+    return { ...found, description };
+  })();
+  versionChecksInFlight.set(key, pending);
+  const clear = () => { if (versionChecksInFlight.get(key) === pending) versionChecksInFlight.delete(key); };
+  pending.then(clear, clear);
+  return pending;
+}
+async function checkVersion(repo, { force = false, cacheOnly = false } = {}) {
+  const loc = M.locate(repo, scope);
+  if (loc.kind !== 'candidate') return loc;
+  const key = M.versionCheckKey(loc, scope);
+  if (!cacheOnly && versionChecksInFlight.has(key)) return (await versionChecksInFlight.get(key)).description;
+  const cached = await readVersionCheck(key);
+  // Offline browsing never consumes the next online check or discards a known result.
+  if (cacheOnly) return cached || loc;
+  if (!force && M.isVersionCheckFresh(cached)) return cached;
+  return (await liveVersionCheck(repo, key)).description;
+}
 async function installPackage(repo, progress) {
-  const found = await discover(repo);
+  // An explicit install/update validates the live manifest again so that the
+  // manifest and downloaded files belong to the same transaction.
+  const loc = M.locate(repo, scope);
+  if (loc.kind !== 'candidate') throw new Error(loc.reason || 'Kein Offline-Paket verfügbar.');
+  const found = await liveVersionCheck(repo, M.versionCheckKey(loc, scope));
   if (found.description.kind !== 'package') throw new Error(found.description.reason || 'Kein Offline-Paket verfügbar.');
   const pkg = found.description.pkg;
   const records = await readIndex();
@@ -161,7 +206,7 @@ self.addEventListener('message', event => {
     return;
   }
   if (msg.action === 'discover') {
-    event.waitUntil(discover(msg.repo).then(({description}) => port.postMessage({ok:true,result:description}), error => port.postMessage({ok:false,error:error.message || String(error)})));
+    event.waitUntil(checkVersion(msg.repo, { force: msg.force === true, cacheOnly: msg.cacheOnly === true }).then(description => port.postMessage({ok:true,result:description}), error => port.postMessage({ok:false,error:error.message || String(error)})));
     return;
   }
   const work = mutationQueue.then(async () => {

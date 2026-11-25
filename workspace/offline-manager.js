@@ -2,7 +2,7 @@
 (function (B) {
   'use strict';
   const $ = id => document.getElementById(id);
-  const ui = Object.fromEntries(['workspaceBack','connectionStatus','offlineWorkspace','installAll','removeAll','metricReady','metricPending',
+  const ui = Object.fromEntries(['workspaceBack','connectionStatus','offlineWorkspace','checkVersions','updateAll','installAll','removeAll','metricReady','metricPending',
     'metricUnsupported','coverage','workspaceSummary','serviceNotice','operationPanel','operationText','operationProgress','offlineSearch',
     'offlineList','storageSummary','protectStorage'].map(id => [id, $(id)]));
   const groups = B.data.getGroups();
@@ -10,6 +10,7 @@
   for (const repo of B.data.repos) if (repo && typeof repo.label === 'string' && repo.label.trim() && !catalog.has(repo.label)) catalog.set(repo.label, repo);
   B.storage.init();
   let installed = new Map(), descriptions = new Map(), busy = false, available = false, checked = false, revision = 0;
+  let activeRefresh = null, checking = false;
   const states = { ready: 'Offline bereit', update: 'Update verfügbar', incomplete: 'Unvollständig', missing: 'Bereitstellbar', unsupported: 'Kein Offline-Paket', info: 'Information', obsolete: 'Nicht mehr zugeordnet', unknown: 'Manifest nicht geprüft', saved: 'Offline gespeichert' };
   const selections = new Map([['all','Alle Apps'],['favorites','Mein Workspace'], ...[...groups].map(([id,g]) => ['group:'+id,g.label])]);
   for (const [value,label] of selections) ui.offlineWorkspace.append(new Option(label,value));
@@ -47,8 +48,8 @@
     const btn = node('button','offline-button '+style,text); btn.type = 'button'; btn.disabled = !enabled; btn.setAttribute('aria-label',label || text); btn.addEventListener('click',callback); return btn;
   }
   function setNotice(text) { ui.serviceNotice.textContent = text || ''; ui.serviceNotice.hidden = !text; }
-  const canInstall = () => available && !busy && navigator.onLine;
-  const canRemove = () => available && !busy;
+  const canInstall = () => available && !busy && !checking && navigator.onLine;
+  const canRemove = () => available && !busy && !checking;
   function makeRow(item) {
     const { repo, description, record, state } = item;
     const row = node('article','offline-row');
@@ -57,11 +58,12 @@
     const copy = node('div'); copy.append(node('strong','',repo.label),node('small','',repo.removed ? 'Nicht mehr im Katalog' : B.data.types[repo.type]?.label || 'App'));
     title.append(icon,copy);
     const status = node('div','offline-state'); status.dataset.state = checked ? state : 'unknown';
-    status.append(node('span','',checked ? (states[state] + (['ready','saved'].includes(state) && record?.mode === 'partial' ? ' (teilweise)' : '')) : 'Status wird geprüft …'));
+    status.append(node('span','',checked ? ((B.offline.statusLabel(state, description) || states[state]) + (['ready','saved'].includes(state) && record?.mode === 'partial' ? ' (teilweise)' : '')) : 'Status wird geprüft …'));
     if (record) {
       const date = new Date(record.installedAt).toLocaleDateString('de-DE');
       status.append(node('small','',`${record.files.length} Dateien · ${date}${record.version ? ' · v' + (record.versionName || record.version) : ''}`));
     } else if (description.kind === 'package') status.append(node('small','',`${description.pkg.files.length} Dateien${description.pkg.version ? ' · v' + (description.pkg.versionName || description.pkg.version) : ''}`));
+    if (Number.isFinite(description.checkedAt)) status.append(node('small','','Geprüft: ' + new Date(description.checkedAt).toLocaleString('de-DE', {dateStyle:'short',timeStyle:'short'})));
     if (description.reason) status.append(node('small','',description.reason));
     const metadata = description.pkg || record;
     if (metadata?.mode === 'partial') status.append(node('small','','Teilweiser Offlinebetrieb'));
@@ -69,7 +71,7 @@
     const actions = node('div','offline-row-actions');
     if (description.kind === 'package') {
       const verb = state === 'ready' || state === 'update' ? 'Aktualisieren' : state === 'incomplete' ? 'Reparieren' : 'Bereitstellen';
-      actions.append(button(verb,state === 'ready' ? 'secondary' : 'primary',canInstall(),() => run([item],'install'),`${repo.label}: ${verb}`));
+      actions.append(button(verb,state === 'ready' ? 'secondary' : 'primary',canInstall(),() => run([item],state === 'update' || state === 'ready' ? 'update' : 'install'),`${repo.label}: ${verb}`));
     }
     if (record) actions.append(button('Entfernen','secondary',canRemove(),() => run([item],'remove'),`${repo.label}: Offline-Dateien entfernen`));
     row.append(title,status,actions); return row;
@@ -79,7 +81,9 @@
     const ready = items.filter(i => ['ready','saved'].includes(i.state) && i.record?.mode === 'full').length;
     const partial = items.filter(i => ['ready','saved'].includes(i.state) && i.record?.mode === 'partial').length;
     const unknown = items.filter(i => i.state === 'unknown').length;
-    const pending = items.filter(i => i.description.kind === 'package' && ['missing','update','incomplete'].includes(i.state)).length;
+    const provisionable = items.filter(i => i.description.kind === 'package' && ['missing','incomplete'].includes(i.state)).length;
+    const updates = items.filter(i => i.state === 'update').length;
+    const pending = provisionable + updates;
     const unsupported = items.filter(i => i.description.kind === 'unsupported').length;
     const launchable = items.filter(i => i.description.kind !== 'info' && !i.repo.removed).length;
     const removable = items.filter(i => i.record).length;
@@ -87,11 +91,16 @@
     ui.coverage.max = launchable || 1; ui.coverage.value = checked ? ready : 0;
     ui.coverage.setAttribute('aria-valuetext',`${ready} von ${launchable} Apps aktuell bereit`);
     ui.workspaceSummary.textContent = !checked ? 'Offline-Status wird ermittelt …' : !launchable ? 'Dieser Bereich enthält keine startbaren Apps.' : ready === launchable ? 'Alle startbaren Apps sind vollständig offline gespeichert.' : `${ready} von ${launchable} startbaren Apps sind vollständig offline gespeichert.${partial ? ' '+partial+' teilweise verfügbar.' : ''}${unknown ? ' '+unknown+' Manifeste noch nicht geprüft.' : ''}${unsupported ? ' Apps ohne Paket können nicht zentral offline bereitgestellt werden.' : ''}${items.some(i=>i.state==='update') ? ' Bereits vollständig gespeicherte ältere Versionen bleiben bis zum Update nutzbar.' : ''}`;
-    ui.installAll.textContent = pending ? `Bereitstellen (${pending})` : 'Bereitstellen';
+    ui.installAll.textContent = provisionable ? `Bereitstellen (${provisionable})` : 'Bereitstellen';
+    ui.updateAll.hidden = !updates;
+    ui.updateAll.textContent = updates ? `Alle Aktualisieren (${updates})` : 'Alle Aktualisieren';
+    ui.updateAll.disabled = !canInstall() || !updates;
+    ui.checkVersions.textContent = checking ? 'Versionen werden geprüft …' : 'Versionen prüfen';
+    ui.checkVersions.disabled = !canInstall() || !items.some(i => B.offline.describe(i.repo).kind === 'candidate');
     ui.removeAll.textContent = removable ? `Entfernen (${removable})` : 'Entfernen';
-    ui.installAll.disabled = !canInstall() || !pending;
+    ui.installAll.disabled = !canInstall() || !provisionable;
     ui.removeAll.disabled = !canRemove() || !removable;
-    ui.offlineWorkspace.disabled = busy;
+    ui.offlineWorkspace.disabled = busy || Boolean(activeRefresh?.force);
     const query = B.searchRelevance.normalize(ui.offlineSearch.value);
     const visible = query ? items.filter(i => B.searchRelevance.score(i.repo,query) >= 0) : items;
     const fragment = document.createDocumentFragment(); visible.forEach(item => fragment.append(makeRow(item)));
@@ -111,9 +120,19 @@
     } catch (_) {}
     ui.storageSummary.textContent = text;
   }
-  async function refresh() {
+  function refresh(force = false) {
+    if (busy) return Promise.resolve();
+    const selection = ui.offlineWorkspace.value;
+    if (!force && activeRefresh?.selection === selection) return activeRefresh.promise;
     const token = ++revision;
-    descriptions = new Map();
+    const job = { selection, force };
+    activeRefresh = job; checking = true; render();
+    job.promise = refreshSelection(token, force).finally(() => {
+      if (activeRefresh === job) { activeRefresh = null; checking = false; render(); }
+    });
+    return job.promise;
+  }
+  async function refreshSelection(token, force) {
     try {
       const list = await B.offline.request('list');
       if (token !== revision) return;
@@ -126,15 +145,19 @@
       setNotice(error.message);
     }
     render(); storageStatus();
-    if (!available || !navigator.onLine) return;
-    const queue = [...catalog.values()].filter(repo => B.offline.describe(repo).kind === 'candidate');
-    // Bound parallel requests; show results as they arrive.
+    const queue = members().filter(repo => B.offline.describe(repo).kind === 'candidate');
+    // Check only the selected workspace, regardless of the local search filter.
+    // The worker enforces the daily interval across selections, reloads and tabs.
     await Promise.all(Array.from({length:Math.min(6,queue.length)},async () => {
-      while (queue.length && token === revision && navigator.onLine) {
+      while (queue.length && token === revision) {
         const repo = queue.shift();
         let description;
-        try { description = await B.offline.discover(repo); }
-        catch (error) { description = {...B.offline.describe(repo), kind:'unknown', reason:error.message}; }
+        try {
+          description = available ? await B.offline.discover(repo,{force,cacheOnly:!navigator.onLine}) : await B.offline.cachedDescription(repo);
+        } catch (error) {
+          description = descriptions.get(repo.label) || await B.offline.cachedDescription(repo).catch(() => null);
+          if (!description || description.kind === 'candidate') description = {...B.offline.describe(repo), kind:'unknown', reason:error.message};
+        }
         if (token !== revision) return;
         descriptions.set(repo.label,description);
         render();
@@ -142,46 +165,65 @@
     }));
   }
   async function run(items, action) {
-    if (!items.length || (action === 'install' ? !canInstall() : !canRemove())) return;
+    const installing = action !== 'remove';
+    if (!items.length || (installing ? !canInstall() : !canRemove())) return;
     if (action === 'remove' && !window.confirm(`Offline-Dateien von ${items.length === 1 ? '„'+items[0].repo.label+'“' : items.length+' Apps'} entfernen? Diese Apps sind danach auch in anderen Workspaces nicht mehr zentral offline verfügbar. App-Daten bleiben erhalten.`)) return;
     busy = true; ++revision; setNotice(''); ui.operationPanel.hidden = false; render();
     let succeeded = 0; const errors = [];
     for (let i=0;i<items.length;i++) {
       const item = items[i], label = item.repo.label;
-      ui.operationText.textContent = `${i+1}/${items.length} · ${label} · ${action === 'install' ? 'Dateien werden gespeichert …' : 'Dateien werden entfernt …'}`;
+      ui.operationText.textContent = `${i+1}/${items.length} · ${label} · ${installing ? 'Dateien werden gespeichert …' : 'Dateien werden entfernt …'}`;
       ui.operationProgress.max = items.length; ui.operationProgress.value = i;
       try {
-        if (action === 'install') {
+        if (installing) {
           const result = await B.offline.request('install',{repo:{label:item.repo.label,url:item.repo.url}},p=>{
             ui.operationText.textContent = `${i+1}/${items.length} · ${label} · ${p.done}/${p.total} Dateien`;
             ui.operationProgress.value = i + p.done / p.total;
           }); installed.set(label,result);
+          descriptions.set(label, {kind:'package', pkg:result, checkedAt:Date.now()});
         } else { await B.offline.request('remove',{id:label}); installed.delete(label); }
         succeeded++;
       } catch (error) { errors.push(`${label}: ${error.message}`); }
       ui.operationProgress.value = i+1; render();
     }
     busy = false; await refresh();
-    ui.operationText.textContent = `${succeeded} von ${items.length} Apps ${action === 'install' ? 'bereitgestellt' : 'entfernt'}.${errors.length ? ' ' + errors.length + ' fehlgeschlagen.' : ''}`;
+    ui.operationText.textContent = `${succeeded} von ${items.length} Apps ${action === 'update' ? 'aktualisiert' : installing ? 'bereitgestellt' : 'entfernt'}.${errors.length ? ' ' + errors.length + ' fehlgeschlagen.' : ''}`;
     if (errors.length) setNotice(errors.join(' · '));
     render();
   }
-  ui.installAll.addEventListener('click',()=>run(entries().filter(i=>i.description.kind === 'package' && ['missing','update','incomplete'].includes(i.state)),'install'));
+  function refreshAfterCurrent() {
+    if (busy) return;
+    if (activeRefresh) {
+      const current = activeRefresh;
+      if (!current.followUp) {
+        current.followUp = true;
+        current.promise.then(()=>{if(!busy) refresh();});
+      }
+    } else refresh();
+  }
+  ui.checkVersions.addEventListener('click',()=>{if(!ui.checkVersions.disabled) refresh(true);});
+  ui.updateAll.addEventListener('click',()=>run(entries().filter(i=>i.state === 'update'),'update'));
+  ui.installAll.addEventListener('click',()=>run(entries().filter(i=>i.description.kind === 'package' && ['missing','incomplete'].includes(i.state)),'install'));
   ui.removeAll.addEventListener('click',()=>run(entries().filter(i=>i.record),'remove'));
-  ui.offlineWorkspace.addEventListener('change',()=>{ ui.offlineSearch.value=''; syncLink(); render(); });
+  ui.offlineWorkspace.addEventListener('change',()=>{ ui.offlineSearch.value=''; syncLink(); render(); refresh(); });
   ui.offlineSearch.addEventListener('input',render);
   ui.protectStorage.addEventListener('click',async()=>{
     try { const result = await navigator.storage.persist(); await storageStatus(); if (!result) setNotice('Der Browser hat dauerhaften Speicher nicht freigegeben.'); }
     catch (error) { setNotice(error.message); }
   });
   window.addEventListener('online',()=>{render(); if (!busy) refresh();});
-  window.addEventListener('offline',()=>{if (!busy) { ++revision; descriptions = new Map(); } render();});
-  window.addEventListener('storage',event=>{if(event.key==='boilerRoom' || event.key===null) render();});
+  window.addEventListener('offline',render);
+  window.addEventListener('storage',event=>{if(event.key==='boilerRoom' || event.key===null) { render(); if(!busy) refresh(); }});
   window.addEventListener('pageshow',()=>{if(!busy) refresh();});
   document.addEventListener('visibilitychange',()=>{if(!busy && document.visibilityState==='visible') refresh();});
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.addEventListener('message',event=>{if(!busy && event.data?.protocol==='boiler-room-offline-v1' && event.data.changed) refresh();});
-    navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!busy) refresh();});
+    navigator.serviceWorker.addEventListener('message',event=>{if(!busy && event.data?.protocol==='boiler-room-offline-v1' && event.data.changed) refreshAfterCurrent();});
+    navigator.serviceWorker.addEventListener('controllerchange',refreshAfterCurrent);
   }
+  // Also check when a visible manager stays open across the 24-hour boundary.
+  setInterval(()=>{
+    if (!busy && !checking && navigator.onLine && document.visibilityState==='visible' && members().some(repo=>
+      B.offline.describe(repo).kind === 'candidate' && !B.offline.isVersionCheckFresh(descriptions.get(repo.label)))) refresh();
+  },60000);
   syncLink(); render(); refresh();
 })(window.BoilerRoom);

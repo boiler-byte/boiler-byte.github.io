@@ -67,12 +67,22 @@
     }));
   }
   function describe(repo) { return model.locate(repo, scope); }
-  function discover(repo) { return request('discover', {repo: {label:repo.label, url:repo.url}}); }
+  function discover(repo, { force = false, cacheOnly = false } = {}) {
+    return request('discover', { repo: {label:repo.label, url:repo.url}, force, cacheOnly });
+  }
+  async function cachedDescription(repo) {
+    const loc = describe(repo);
+    if (!supported || loc.kind !== 'candidate') return loc;
+    const name = model.versionCheckCache(scope);
+    if (!(await caches.keys()).includes(name)) return loc;
+    const response = await (await caches.open(name)).match(model.versionCheckKey(loc, scope));
+    return response ? await response.json() : loc;
+  }
   function localEntry(repo, installed) {
     if (!installed?.complete || !model.matches(describe(repo), installed)) return null;
     const entry = new URL(installed.launchEntry || installed.entry);
     entry.hash = new URL(repo.url.trim(), new URL('../', scope)).hash;
     return entry.href;
   }
-  B.offline = { supported, scope, register, request, snapshot, describe, discover, localEntry, status: model.status };
+  B.offline = { supported, scope, register, request, snapshot, describe, discover, cachedDescription, localEntry, status: model.status, statusLabel: model.statusLabel, isVersionCheckFresh: model.isVersionCheckFresh };
 })(window);

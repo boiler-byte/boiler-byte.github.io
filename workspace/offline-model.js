@@ -2,9 +2,20 @@
 (function (global) {
   'use strict';
   const MAX_FILES = 500;
+  const VERSION_CHECK_INTERVAL = 24 * 60 * 60 * 1000;
   const modes = new Set(['full', 'partial', 'none']);
   function prefix(scope) { return `boiler-room-workspace:${new URL(scope).href}:`; }
   function indexKey(scope) { return new URL('apps/.offline-index', scope).href; }
+  function versionCheckCache(scope) { return `${prefix(scope)}offline-versions-v1`; }
+  function versionCheckKey(loc, scope) {
+    const key = new URL('apps/.offline-version', scope);
+    key.searchParams.set('id', loc.id);
+    key.searchParams.set('entry', loc.entry);
+    return key.href;
+  }
+  function isVersionCheckFresh(description, now = Date.now()) {
+    return Number.isFinite(description?.checkedAt) && description.checkedAt <= now && now - description.checkedAt < VERSION_CHECK_INTERVAL;
+  }
   function webURL(value, base) {
     const u = new URL(value, base);
     if (!['https:', 'http:'].includes(u.protocol) || u.username || u.password || /%2f|%5c|%00/i.test(u.pathname)) throw new Error('Ungültige App-URL.');
@@ -85,5 +96,9 @@
     if (!installed.complete) return 'incomplete';
     return installed.signature === description.pkg.signature ? 'ready' : 'update';
   }
-  global.BoilerRoomOfflineModel = { prefix, indexKey, locate, validate, describe, matches, status };
+  function statusLabel(state, description) {
+    if (state !== 'update') return null;
+    return `Version ${description.pkg.versionName || description.pkg.version} verfügbar`;
+  }
+  global.BoilerRoomOfflineModel = { prefix, indexKey, locate, validate, describe, matches, status, statusLabel, versionCheckCache, versionCheckKey, isVersionCheckFresh };
 })(typeof self !== 'undefined' ? self : globalThis);
