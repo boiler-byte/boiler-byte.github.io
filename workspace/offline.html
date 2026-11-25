@@ -59,9 +59,9 @@
     </section>
     <section class="offline-footnote" aria-labelledby="storageTitle">
       <h2 id="storageTitle">Gerätespeicher</h2>
-      <p id="storageSummary">Offline-Dateien werden im Browserprofil gespeichert. Apps ohne hinterlegtes lokales Paket werden nicht automatisch kopiert.</p>
+      <p id="storageSummary">Offline-Dateien werden im Browserprofil gespeichert. Apps werden über ihre boiler-room.json erkannt; nur explizit deklarierte Dateien werden gespeichert.</p>
       <button id="protectStorage" class="offline-button secondary" type="button" hidden>Dauerhaften Speicher anfragen</button>
-      <p>Das Entfernen eines Pakets löscht nur dessen Offline-Dateien, nicht Favoriten, Workspace-Einstellungen oder App-Nutzerdaten. Eine lokale Kopie einer externen App kann einen separaten Datenbestand haben. Browser können nicht geschützten Speicher bei Bedarf freigeben.</p>
+      <p>Das Entfernen eines Pakets löscht nur dessen Offline-Dateien, nicht Favoriten, Workspace-Einstellungen oder App-Nutzerdaten. Apps anderer Origins können nicht zentral offline gestartet werden. Bei lokalen Spiegel-URLs können pfadabhängige App-Daten abweichen. Browser können nicht geschützten Speicher bei Bedarf freigeben.</p>
       <p>Bereitgestellte Pakete werden im Workspace anstelle der Online-URL geöffnet. API-Funktionen und nicht deklarierte Dateien benötigen ggf. weiterhin Internet.</p>
     </section>
   </main>

@@ -1,0 +1,26 @@
+{
+  "schema_version": 2,
+  "version": 185,
+  "version_name": "2.4.1",
+  "created": "2026-01-15",
+  "updated": "2026-11-25",
+  "tags": [
+    "wortzählung",
+    "zeichenstatistik",
+    "textvergleich"
+  ],
+  "offline": {
+    "mode": "full",
+    "limitations": []
+  },
+  "files": [
+    "app.html",
+    "manifest.webmanifest",
+    "style.css",
+    "app.js",
+    "icons/icon-192.png",
+    "icons/icon-512.png",
+    "icons/icon-maskable-512.png"
+  ],
+  "changelog": "CHANGELOG.md"
+}

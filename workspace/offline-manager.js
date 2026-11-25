@@ -9,8 +9,8 @@
   const catalog = new Map();
   for (const repo of B.data.repos) if (repo && typeof repo.label === 'string' && repo.label.trim() && !catalog.has(repo.label)) catalog.set(repo.label, repo);
   B.storage.init();
-  let installed = new Map(), busy = false, available = false, checked = false, revision = 0;
-  const states = { ready: 'Offline bereit', update: 'Update verfügbar', incomplete: 'Unvollständig', missing: 'Bereitstellbar', unsupported: 'Kein Offline-Paket', info: 'Information', obsolete: 'Nicht mehr zugeordnet' };
+  let installed = new Map(), descriptions = new Map(), busy = false, available = false, checked = false, revision = 0;
+  const states = { ready: 'Offline bereit', update: 'Update verfügbar', incomplete: 'Unvollständig', missing: 'Bereitstellbar', unsupported: 'Kein Offline-Paket', info: 'Information', obsolete: 'Nicht mehr zugeordnet', unknown: 'Manifest nicht geprüft', saved: 'Offline gespeichert' };
   const selections = new Map([['all','Alle Apps'],['favorites','Mein Workspace'], ...[...groups].map(([id,g]) => ['group:'+id,g.label])]);
   for (const [value,label] of selections) ui.offlineWorkspace.append(new Option(label,value));
   const requested = new URLSearchParams(location.search).get('workspace');
@@ -36,7 +36,7 @@
   }
   function entries() {
     return members().map(repo => {
-      const description = B.offline.describe(repo), record = installed.get(repo.label);
+      const description = descriptions.get(repo.label) || B.offline.describe(repo), record = installed.get(repo.label);
       return { repo, description, record, state: B.offline.status(description,record) };
     });
   }
@@ -57,12 +57,15 @@
     const copy = node('div'); copy.append(node('strong','',repo.label),node('small','',repo.removed ? 'Nicht mehr im Katalog' : B.data.types[repo.type]?.label || 'App'));
     title.append(icon,copy);
     const status = node('div','offline-state'); status.dataset.state = checked ? state : 'unknown';
-    status.append(node('span','',checked ? states[state] : 'Status wird geprüft …'));
+    status.append(node('span','',checked ? (states[state] + (['ready','saved'].includes(state) && record?.mode === 'partial' ? ' (teilweise)' : '')) : 'Status wird geprüft …'));
     if (record) {
       const date = new Date(record.installedAt).toLocaleDateString('de-DE');
-      status.append(node('small','',`${record.files.length} Dateien · ${date}${record.version ? ' · v' + record.version : ''}`));
-    } else if (description.kind === 'package') status.append(node('small','',`${description.pkg.files.length} Dateien${description.pkg.version ? ' · v' + description.pkg.version : ''}`));
-    else if (description.kind === 'unsupported') status.append(node('small','',description.reason));
+      status.append(node('small','',`${record.files.length} Dateien · ${date}${record.version ? ' · v' + (record.versionName || record.version) : ''}`));
+    } else if (description.kind === 'package') status.append(node('small','',`${description.pkg.files.length} Dateien${description.pkg.version ? ' · v' + (description.pkg.versionName || description.pkg.version) : ''}`));
+    if (description.reason) status.append(node('small','',description.reason));
+    const metadata = description.pkg || record;
+    if (metadata?.mode === 'partial') status.append(node('small','','Teilweiser Offlinebetrieb'));
+    if (metadata?.limitations?.length) status.append(node('small','',metadata.limitations.join(' · '))); 
     const actions = node('div','offline-row-actions');
     if (description.kind === 'package') {
       const verb = state === 'ready' || state === 'update' ? 'Aktualisieren' : state === 'incomplete' ? 'Reparieren' : 'Bereitstellen';
@@ -73,15 +76,17 @@
   }
   function render() {
     const items = entries();
-    const ready = items.filter(i => i.state === 'ready').length;
-    const pending = items.filter(i => ['missing','update','incomplete'].includes(i.state)).length;
+    const ready = items.filter(i => ['ready','saved'].includes(i.state) && i.record?.mode === 'full').length;
+    const partial = items.filter(i => ['ready','saved'].includes(i.state) && i.record?.mode === 'partial').length;
+    const unknown = items.filter(i => i.state === 'unknown').length;
+    const pending = items.filter(i => i.description.kind === 'package' && ['missing','update','incomplete'].includes(i.state)).length;
     const unsupported = items.filter(i => i.description.kind === 'unsupported').length;
     const launchable = items.filter(i => i.description.kind !== 'info' && !i.repo.removed).length;
     const removable = items.filter(i => i.record).length;
     ui.metricReady.textContent = checked ? ready : '–'; ui.metricPending.textContent = checked ? pending : '–'; ui.metricUnsupported.textContent = checked ? unsupported : '–';
     ui.coverage.max = launchable || 1; ui.coverage.value = checked ? ready : 0;
     ui.coverage.setAttribute('aria-valuetext',`${ready} von ${launchable} Apps aktuell bereit`);
-    ui.workspaceSummary.textContent = !checked ? 'Offline-Status wird ermittelt …' : !launchable ? 'Dieser Bereich enthält keine startbaren Apps.' : ready === launchable ? 'Alle startbaren Apps sind in der aktuellen Paketversion offline bereit.' : `${ready} von ${launchable} startbaren Apps sind aktuell bereit.${unsupported ? ' Apps ohne Paket können nicht zentral offline bereitgestellt werden.' : ''}${items.some(i=>i.state==='update') ? ' Bereits vollständig gespeicherte ältere Versionen bleiben bis zum Update nutzbar.' : ''}`;
+    ui.workspaceSummary.textContent = !checked ? 'Offline-Status wird ermittelt …' : !launchable ? 'Dieser Bereich enthält keine startbaren Apps.' : ready === launchable ? 'Alle startbaren Apps sind vollständig offline gespeichert.' : `${ready} von ${launchable} startbaren Apps sind vollständig offline gespeichert.${partial ? ' '+partial+' teilweise verfügbar.' : ''}${unknown ? ' '+unknown+' Manifeste noch nicht geprüft.' : ''}${unsupported ? ' Apps ohne Paket können nicht zentral offline bereitgestellt werden.' : ''}${items.some(i=>i.state==='update') ? ' Bereits vollständig gespeicherte ältere Versionen bleiben bis zum Update nutzbar.' : ''}`;
     ui.installAll.textContent = pending ? `Bereitstellen (${pending})` : 'Bereitstellen';
     ui.removeAll.textContent = removable ? `Entfernen (${removable})` : 'Entfernen';
     ui.installAll.disabled = !canInstall() || !pending;
@@ -108,6 +113,7 @@
   }
   async function refresh() {
     const token = ++revision;
+    descriptions = new Map();
     try {
       const list = await B.offline.request('list');
       if (token !== revision) return;
@@ -120,6 +126,20 @@
       setNotice(error.message);
     }
     render(); storageStatus();
+    if (!available || !navigator.onLine) return;
+    const queue = [...catalog.values()].filter(repo => B.offline.describe(repo).kind === 'candidate');
+    // Bound parallel requests; show results as they arrive.
+    await Promise.all(Array.from({length:Math.min(6,queue.length)},async () => {
+      while (queue.length && token === revision && navigator.onLine) {
+        const repo = queue.shift();
+        let description;
+        try { description = await B.offline.discover(repo); }
+        catch (error) { description = {...B.offline.describe(repo), kind:'unknown', reason:error.message}; }
+        if (token !== revision) return;
+        descriptions.set(repo.label,description);
+        render();
+      }
+    }));
   }
   async function run(items, action) {
     if (!items.length || (action === 'install' ? !canInstall() : !canRemove())) return;
@@ -132,7 +152,7 @@
       ui.operationProgress.max = items.length; ui.operationProgress.value = i;
       try {
         if (action === 'install') {
-          const result = await B.offline.request('install',{package:item.description.pkg},p=>{
+          const result = await B.offline.request('install',{repo:{label:item.repo.label,url:item.repo.url}},p=>{
             ui.operationText.textContent = `${i+1}/${items.length} · ${label} · ${p.done}/${p.total} Dateien`;
             ui.operationProgress.value = i + p.done / p.total;
           }); installed.set(label,result);
@@ -146,7 +166,7 @@
     if (errors.length) setNotice(errors.join(' · '));
     render();
   }
-  ui.installAll.addEventListener('click',()=>run(entries().filter(i=>['missing','update','incomplete'].includes(i.state)),'install'));
+  ui.installAll.addEventListener('click',()=>run(entries().filter(i=>i.description.kind === 'package' && ['missing','update','incomplete'].includes(i.state)),'install'));
   ui.removeAll.addEventListener('click',()=>run(entries().filter(i=>i.record),'remove'));
   ui.offlineWorkspace.addEventListener('change',()=>{ ui.offlineSearch.value=''; syncLink(); render(); });
   ui.offlineSearch.addEventListener('input',render);
@@ -155,7 +175,7 @@
     catch (error) { setNotice(error.message); }
   });
   window.addEventListener('online',()=>{render(); if (!busy) refresh();});
-  window.addEventListener('offline',render);
+  window.addEventListener('offline',()=>{if (!busy) { ++revision; descriptions = new Map(); } render();});
   window.addEventListener('storage',event=>{if(event.key==='boilerRoom' || event.key===null) render();});
   window.addEventListener('pageshow',()=>{if(!busy) refresh();});
   document.addEventListener('visibilitychange',()=>{if(!busy && document.visibilityState==='visible') refresh();});

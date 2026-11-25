@@ -45,7 +45,7 @@
         if (msg.ok) finish(null, msg.result);
         else finish(new Error(msg.error || 'Offline-Vorgang fehlgeschlagen.'));
       };
-      arm(action === 'list' ? 8000 : 120000);
+      arm(action === 'list' || action === 'discover' ? 12000 : 120000);
       try { worker.postMessage({ protocol: 'boiler-room-offline-v1', action, ...payload }, [channel.port2]); }
       catch (error) { finish(error); }
     });
@@ -66,11 +66,13 @@
       return { ...record, complete: matches.every(Boolean) };
     }));
   }
-  function describe(repo) { return model.describe(repo, scope); }
+  function describe(repo) { return model.locate(repo, scope); }
+  function discover(repo) { return request('discover', {repo: {label:repo.label, url:repo.url}}); }
   function localEntry(repo, installed) {
-    const description = describe(repo);
-    if (description.kind !== 'package' || !installed?.complete) return null;
-    return installed.entry; // A previously installed version remains usable until successfully updated.
+    if (!installed?.complete || !model.matches(describe(repo), installed)) return null;
+    const entry = new URL(installed.launchEntry || installed.entry);
+    entry.hash = new URL(repo.url.trim(), new URL('../', scope)).hash;
+    return entry.href;
   }
-  B.offline = { supported, scope, register, request, snapshot, describe, localEntry, status: model.status };
+  B.offline = { supported, scope, register, request, snapshot, describe, discover, localEntry, status: model.status };
 })(window);

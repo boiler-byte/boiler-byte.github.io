@@ -57,8 +57,8 @@ progress::-moz-progress-bar { background: var(--accent); }
 .offline-state { font-size: 12px; overflow-wrap: anywhere; }
 .offline-state > span { display: flex; align-items: baseline; gap: 7px; font-weight: 500; }
 .offline-state > span::before { content: ''; display: inline-block; width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: #727d8a; }
-.offline-state[data-state="ready"] > span { color: #a0dec0; }
-.offline-state[data-state="ready"] > span::before { background: #7bd9a2; }
+.offline-state:is([data-state="ready"], [data-state="saved"]) > span { color: #a0dec0; }
+.offline-state:is([data-state="ready"], [data-state="saved"]) > span::before { background: #7bd9a2; }
 .offline-state[data-state="update"] > span::before, .offline-state[data-state="incomplete"] > span::before { background: #e9b76d; }
 .offline-row-actions { justify-content: flex-end; }
 .offline-row-actions a { display: inline-flex; align-items: center; color: var(--accent-muted); padding: 7px 4px; font-size: 12px; }

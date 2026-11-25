@@ -1,0 +1,11 @@
+{
+  "schema_version": 2,
+  "version": 1,
+  "version_name": "1.0.0",
+  "created": "2026-11-24",
+  "updated": "2026-11-25",
+  "tags": ["Offline", "Lokal", "Notizen"],
+  "offline": { "mode": "full", "limitations": [] },
+  "files": ["index.html", "style.css", "app.js"],
+  "changelog": "CHANGELOG.md"
+}

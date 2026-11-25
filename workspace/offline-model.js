@@ -1,50 +1,89 @@
-/* Shared package contract for the Workspace Offline Manager and its worker. */
+/* Shared contract for app-owned boiler-room.json (schema_version 2). */
 (function (global) {
   'use strict';
   const MAX_FILES = 500;
+  const modes = new Set(['full', 'partial', 'none']);
   function prefix(scope) { return `boiler-room-workspace:${new URL(scope).href}:`; }
   function indexKey(scope) { return new URL('apps/.offline-index', scope).href; }
-  function appDirectory(value, scope) {
-    const u = new URL(value, scope);
-    const base = new URL('apps/', scope);
-    if (u.origin !== base.origin || !['https:', 'http:'].includes(u.protocol) ||
-        u.username || u.password || u.hash || !u.pathname.startsWith(base.pathname) || /%2f|%5c/i.test(u.pathname)) {
-      throw new Error('Offline-Dateien müssen im lokalen workspace/apps/-Verzeichnis liegen.');
-    }
-    const rest = u.pathname.slice(base.pathname.length);
-    const folder = rest.split('/')[0];
-    if (!folder || folder.startsWith('.') || !rest.includes('/')) throw new Error('Ein eigenes App-Unterverzeichnis ist erforderlich.');
-    return { href: u.href, directory: new URL(`${folder}/`, base).href };
+  function webURL(value, base) {
+    const u = new URL(value, base);
+    if (!['https:', 'http:'].includes(u.protocol) || u.username || u.password || /%2f|%5c|%00/i.test(u.pathname)) throw new Error('Ungültige App-URL.');
+    return u;
+  }
+  function locate(repo, scope) {
+    if (!repo || typeof repo.url !== 'string' || !repo.url.trim()) return { kind: 'info' };
+    try {
+      const entry = webURL(repo.url.trim(), new URL('../', scope));
+      entry.hash = '';
+      if (entry.origin !== new URL(scope).origin) return { kind: 'unsupported', reason: 'Andere Origin: zentraler Offline-Start ist nicht möglich.' };
+      const last = entry.pathname.split('/').pop();
+      const directory = new URL(entry.href);
+      directory.search = '';
+      if (last && !last.includes('.')) directory.pathname += '/';
+      else if (last) directory.pathname = directory.pathname.slice(0, -last.length);
+      // Do not allow a package to take ownership of the platform shell or host root.
+      const platform = new URL('../', scope);
+      if (directory.pathname === '/' || directory.href === platform.href || directory.href === new URL(scope).href || directory.href === new URL('offline-apps/', scope).href || directory.pathname.startsWith(new URL('offline-apps/', scope).pathname)) throw new Error('Ein eigenes App-Verzeichnis ist erforderlich.');
+      const manifest = new URL('boiler-room.json', directory).href;
+      return { kind: 'candidate', id: repo.label, entry: entry.href, directory: directory.href, manifest };
+    } catch (error) { return { kind: 'unsupported', reason: error.message }; }
   }
   function validate(raw, scope) {
-    if (!raw || typeof raw.id !== 'string' || !raw.id.trim() || raw.id.length > 300 ||
-        typeof raw.entry !== 'string' || !Array.isArray(raw.files) || raw.files.length > MAX_FILES ||
-        raw.files.some(file => typeof file !== 'string' || !file.trim())) throw new Error('Ungültige Offline-Konfiguration.');
-    const entry = appDirectory(raw.entry, scope);
-    const files = [...new Set([entry.href, ...raw.files.map(file => {
-      const asset = appDirectory(new URL(file, entry.href).href, scope);
-      if (asset.directory !== entry.directory) throw new Error('Dateien müssen im selben App-Verzeichnis liegen.');
+    if (!raw || typeof raw.id !== 'string' || !raw.id.trim() || raw.id.length > 300 || typeof raw.entry !== 'string') throw new Error('Ungültige App-ID oder URL.');
+    const loc = locate({ label: raw.id, url: raw.entry }, scope);
+    if (loc.kind !== 'candidate') throw new Error(loc.reason || 'Ungültiger Einstieg.');
+    const manifest = raw.metadata;
+    if (!manifest || manifest.schema_version !== 2 || !Number.isSafeInteger(manifest.version) || manifest.version < 0 ||
+        !manifest.offline || !modes.has(manifest.offline.mode) || !Array.isArray(manifest.offline.limitations) ||
+        manifest.offline.limitations.some(x => typeof x !== 'string') || !Array.isArray(manifest.files) || manifest.files.length > MAX_FILES ||
+        manifest.files.some(file => typeof file !== 'string' || !file.trim())) throw new Error('Ungültige boiler-room.json (Schema 2 erwartet).');
+    if (manifest.offline.mode === 'none') throw new Error('Die App deklariert keinen Offlinebetrieb.');
+    const directory = new URL(loc.directory);
+    const assets = manifest.files.map(file => {
+      const asset = webURL(file, directory);
+      if (asset.hash || asset.origin !== directory.origin || !asset.pathname.startsWith(directory.pathname)) throw new Error('Dateien müssen im App-Verzeichnis liegen.');
       return asset.href;
-    })])].sort();
+    });
+    // A directory URL without trailing slash may redirect to its canonical slash URL.
+    const entry = new URL(loc.entry);
+    const canonical = new URL(entry.href);
+    if (entry.pathname + '/' === directory.pathname) canonical.pathname += '/';
+    const files = [...new Set([canonical.href, loc.manifest, ...assets])].sort();
     if (files.length > MAX_FILES) throw new Error(`Maximal ${MAX_FILES} Offline-Dateien pro App.`);
-    const version = typeof raw.version === 'string' || typeof raw.version === 'number' ? String(raw.version) : '';
-    if (version.length > 100) throw new Error('Die Versionsangabe ist zu lang.');
-    return { id: raw.id, entry: entry.href, directory: entry.directory, files, version,
-      signature: JSON.stringify([entry.href, version, files]) };
+    const version = String(manifest.version);
+    const versionName = typeof manifest.version_name === 'string' ? manifest.version_name : '';
+    const limitations = manifest.offline.limitations.slice();
+    const mode = manifest.offline.mode;
+    const direct = directory.href.startsWith(new URL('apps/', scope).href);
+    // Apps outside the SW scope get a stable, same-origin local URL with relative paths intact.
+    const mirror = direct ? null : new URL('offline-apps/' + encodeURIComponent(directory.pathname).replace(/_/g, '%5F').replace(/%/g, '_') + '/', scope).href;
+    const localURL = file => mirror ? new URL(file.slice(directory.href.length), mirror).href : file;
+    const launchEntry = localURL(canonical.href);
+    return { id: raw.id, entry: loc.entry, canonicalEntry: canonical.href, directory: directory.href, manifest: loc.manifest,
+      files, version, versionName, mode, limitations, metadata: manifest, mirror, launchEntry,
+      signature: JSON.stringify([loc.entry, version, versionName, mode, limitations, files]) };
   }
-  function describe(repo, scope) {
-    if (!repo || typeof repo.url !== 'string' || !repo.url.trim()) return { kind: 'info' };
-    if (!repo.offline || typeof repo.offline !== 'object') return { kind: 'unsupported', reason: 'Kein Offline-Paket hinterlegt.' };
-    try {
-      const entry = new URL(repo.offline.entry || repo.url, new URL('../', scope)).href;
-      return { kind: 'package', pkg: validate({ id: repo.label, entry, files: repo.offline.files, version: repo.offline.version }, scope) };
-    } catch (e) { return { kind: 'unsupported', reason: e.message }; }
+  function describe(repo, scope, metadata) {
+    const loc = locate(repo, scope);
+    if (loc.kind !== 'candidate' || metadata === undefined) return loc;
+    try { return { kind: 'package', pkg: validate({ id: loc.id, entry: loc.entry, metadata }, scope) }; }
+    catch (e) { return { kind: 'unsupported', reason: e.message }; }
+  }
+  function matches(loc, installed) {
+    if (!installed || !['candidate','package','unknown'].includes(loc.kind)) return false;
+    const target = loc.pkg || loc;
+    return target.entry === installed.entry || (target.directory === installed.directory && target.entry + '/' === installed.entry);
   }
   function status(description, installed) {
+    if (description.kind === 'candidate' || description.kind === 'unknown') {
+      if (installed && matches(description, installed)) return installed.complete ? 'saved' : 'incomplete';
+      return 'unknown';
+    }
     if (description.kind !== 'package') return installed ? 'obsolete' : description.kind;
     if (!installed) return 'missing';
+    if (!matches(description, installed)) return 'update';
     if (!installed.complete) return 'incomplete';
     return installed.signature === description.pkg.signature ? 'ready' : 'update';
   }
-  global.BoilerRoomOfflineModel = { prefix, indexKey, appDirectory, validate, describe, status };
+  global.BoilerRoomOfflineModel = { prefix, indexKey, locate, validate, describe, matches, status };
 })(typeof self !== 'undefined' ? self : globalThis);

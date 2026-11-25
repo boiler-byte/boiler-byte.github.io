@@ -52,7 +52,6 @@
         type: 'tool',
         workspace: 'offline-demo',
         url: 'workspace/apps/offline-demo/index.html',
-        offline: { version: '1', files: ['style.css', 'app.js'] },
         year: 2026,
         tags: ['Offline', 'Lokal']
     },

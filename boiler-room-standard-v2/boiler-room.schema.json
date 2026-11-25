@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Boiler Room App-Metadaten v2",
+  "description": "Ergänzt das Web App Manifest um beschreibende Boiler-Room-Metadaten und Offline-Ressourceninformationen.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "version",
+    "created",
+    "updated",
+    "tags",
+    "offline",
+    "files"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 2,
+      "description": "Version des Boiler-Room-Integrationsstandards."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991,
+      "description": "Fortlaufend steigende technische App-Version als sichere JavaScript-Ganzzahl."
+    },
+    "version_name": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S",
+      "description": "Optionale frei wählbare sichtbare Versionsbezeichnung; nicht für technische Versionsvergleiche."
+    },
+    "created": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date",
+      "description": "Erstveröffentlichung (YYYY-MM-DD); null nur bei nicht ermittelbarem Altbestand."
+    },
+    "updated": {
+      "type": "string",
+      "format": "date",
+      "description": "Veröffentlichungsdatum des aktuellen Paketstands (YYYY-MM-DD)."
+    },
+    "tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
+      },
+      "description": "Freie Suchbegriffe, keine Wiederholung der PWA-Kategorien."
+    },
+    "offline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "limitations"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "full",
+            "partial",
+            "none"
+          ]
+        },
+        "limitations": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^(?!(?:\\.|%2[eE]){1,2}(?:/|$))(?:[^/\\\\?#:*%\\x00-\\x20\\x7f]|%(?!(?:2[fF]|5[cC]|[01][0-9a-fA-F]|7[fF]))[0-9a-fA-F]{2})+(?:/(?!(?:\\.|%2[eE]){1,2}(?:/|$))(?:[^/\\\\?#:*%\\x00-\\x20\\x7f]|%(?!(?:2[fF]|5[cC]|[01][0-9a-fA-F]|7[fF]))[0-9a-fA-F]{2})+)*$(?![\\s\\S])"
+      },
+      "description": "Eindeutige relative URL-Dateipfade der tatsächlich benötigten lokalen Offline-Ressourcen, bezogen auf boiler-room.json."
+    },
+    "changelog": {
+      "type": "string",
+      "pattern": "^(?!(?:\\.|%2[eE]){1,2}(?:/|$))(?:[^/\\\\?#:*%\\x00-\\x20\\x7f]|%(?!(?:2[fF]|5[cC]|[01][0-9a-fA-F]|7[fF]))[0-9a-fA-F]{2})+(?:/(?!(?:\\.|%2[eE]){1,2}(?:/|$))(?:[^/\\\\?#:*%\\x00-\\x20\\x7f]|%(?!(?:2[fF]|5[cC]|[01][0-9a-fA-F]|7[fF]))[0-9a-fA-F]{2})+)*$(?![\\s\\S])",
+      "description": "Optionaler relativer URL-Dateipfad zur vorhandenen veröffentlichten Änderungshistorie."
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S",
+      "description": "Optionale tatsächliche Softwarelizenz, bevorzugt SPDX-Ausdruck."
+    },
+    "author": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S",
+      "description": "Optionaler tatsächlicher Autor oder verantwortliches Team."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "offline": {
+            "properties": {
+              "mode": {
+                "const": "full"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "offline": {
+            "properties": {
+              "limitations": {
+                "maxItems": 0
+              }
+            }
+          },
+          "files": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "offline": {
+            "properties": {
+              "mode": {
+                "const": "partial"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "offline": {
+            "properties": {
+              "limitations": {
+                "minItems": 1
+              }
+            }
+          },
+          "files": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "offline": {
+            "properties": {
+              "mode": {
+                "const": "none"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "offline": {
+            "properties": {
+              "limitations": {
+                "minItems": 1
+              }
+            }
+          },
+          "files": {
+            "maxItems": 0
+          }
+        }
+      }
+    }
+  ]
+}

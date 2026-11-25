@@ -1,10 +1,10 @@
-# Boiler Room – App-Plattform v24
+# Boiler Room – App-Plattform v25
 
 Vanilla JavaScript mit **klassischen `<script src="...">`-Dateien**. Keine ES-Module, keine Abhaengigkeiten, kein Build-Prozess.
 
 ## Installation
 
-Inhalt des ZIPs über den bisherigen v23-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **erhalten** (die Workspace-Zuordnungen koennen wie unten beschrieben umbenannt werden). Sie wird von `index.html` weiterhin vor allen Modulen geladen:
+Inhalt des ZIPs über den bisherigen v24-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **erhalten** (die Workspace-Zuordnungen koennen wie unten beschrieben umbenannt werden). Sie wird von `index.html` weiterhin vor allen Modulen geladen:
 
 ```html
 <script src="repos.js"></script>
@@ -12,53 +12,61 @@ Inhalt des ZIPs über den bisherigen v23-Projektstand kopieren. Die produktive `
 
 Ihre `originrepos` und `originrepogroups` haben weiterhin Vorrang vor den Fallback-Daten in `js/data.js`. Die Datei `repos.js` sowie eigene `img/`, `fonts/`, `icons/` und `manifest.json` sind nicht Teil dieses ZIPs und duerfen auf dem Host nicht geloescht werden.
 
-## Neu in v24: Workspace Offline-Manager
+## Neu in v25: App-eigene `boiler-room.json`
 
-Der Offline-Manager (`workspace/offline.html`) ist aus der Workspace-Sidebar erreichbar. Im Launcher bleibt nur der Workspace-Link; eine direkte Verknüpfung zum Offline-Manager entfällt. Er erweitert die installierbare Workspace-PWA aus v23, ohne den Service-Worker-Scope zu ändern.
+`der Boiler Room` bleibt App-Store und Launcher. Der Workspace (`workspace/`) verwaltet die Offline-Pakete für Favoriten, Gruppen und den gesamten Katalog. Die bisherige Konfiguration `repo.offline` entfällt vollständig; bestehende Einträge in der produktiven `repos.js` können dieses Feld entfernen. Der einzige Einstieg ist `repo.url`. Der Launcher selbst öffnet weiterhin die Original-URL.
 
-- Zentraler Katalog mit Auswahl **Alle Apps**, **Mein Workspace** (Favoriten in Launcher-Reihenfolge) und den bestehenden Repo-Workspaces. Die Sidebar verlinkt direkt zur Verwaltung des aktuell geöffneten Workspaces. Suche und responsive Darstellung sind unabhängig von der Workspace-App-Suche.
-- Einzelne Apps bereitstellen, aktualisieren, reparieren und entfernen; alle noch fehlenden oder zu aktualisierenden Pakete eines Workspaces mit einer Aktion bereitstellen. Fortschritt pro Datei und pro App, Fehler je App. Bereits installierte Pakete werden nicht erneut geladen, sofern kein Update bzw. keine Reparatur erforderlich ist. Ein einzelnes Paket kann ausdrücklich neu heruntergeladen werden.
-- Status **Offline bereit**, **Bereitstellbar**, **Update verfügbar**, **Unvollständig**, **Kein Offline-Paket** sowie Katalog-Informationen ohne startbare App. Die Workspace-Abdeckung bezieht sich auf alle startbaren Apps, nicht nur auf die kompatiblen Apps. Ein Workspace ist erst vollständig bereit, wenn alle startbaren Apps in der aktuellen Paketversion gespeichert sind. Informationskarten zählen nicht als Apps.
-- Offline-Pakete werden pro Repo-Label in der CacheStorage des Browserprofils gespeichert. Mehrfach zugeordnete Apps benötigen nur ein Paket. Entfernen wirkt daher in allen Workspaces; die Bestätigung weist darauf hin. Verwaiste Pakete lassen sich über „Alle Apps“ entfernen. Favoriten, `localStorage.boilerRoom` und App-Nutzerdaten werden nicht gelöscht.
-- Das Workspace-iFrame und „App in neuem Tab öffnen“ verwenden ein vollständig bereitgestelltes lokales Paket statt der Online-URL. Die Sidebar kennzeichnet es mit „Offline“. Eine bereits vollständige ältere Version bleibt bei einem fehlgeschlagenen Update nutzbar. Eine laufende App wird bei Änderungen in anderen Tabs nicht ungefragt neu geladen; erneut auswählen oder neu laden, um eine geänderte URL zu übernehmen.
-- Der Service Worker cached nur die deklarierte HTML-Einstiegsdatei und explizit angegebenen Dateien eines Pakets. Neue Versionen werden vollständig in einem separaten Cache geladen, erst danach wird der Index umgestellt. Cache-Lücken werden als unvollständig erkannt. Fremde Caches, Shell- und Katalogdaten werden beim Entfernen eines Pakets nicht berührt. Die Manager-Oberfläche selbst gehört zur Offline-Shell.
-- Die lokale Bereitstellung ist keine ZIP-Exportfunktion, kein Backup und keine automatische Kopie fremder Websites. Sie speichert explizit konfigurierte Web-App-Pakete in diesem Browserprofil. Dauerhafter Speicher kann optional angefragt werden; Browser können Speicher dennoch löschen. HTTPS bzw. localhost und Unterstützung für Service Worker/CacheStorage sind erforderlich.
-
-### Offline-Paket in der produktiven `repos.js` konfigurieren
-
-Bestehende Apps bleiben ohne Änderung weiter online nutzbar. Für ein offline-fähiges Repo muss eine vertrauenswürdige lokale Version seiner statischen Dateien unter **`workspace/apps/<app>/`** auf dem Boiler-Room-Host bereitliegen. Der Workspace-Service-Worker hat ausschließlich dort Zugriff auf die App-Navigation und ihre lokalen Ressourcen. Pro Paket ist ein eigenes Unterverzeichnis erforderlich. Beispiel:
+### App konfigurieren
 
 ```js
 {
   label: 'Textanalyse',
   type: 'tool',
-  workspace: ['dev', 'texte'],
-  url: 'https://example.org/Textanalyse/',
-  offline: {
-    entry: 'workspace/apps/textanalyse/index.html',
-    version: '1.0.0',
-    files: ['style.css', 'app.js', 'assets/icon.svg']
-  }
+  workspace: 'dev',
+  url: 'https://myprojectpages.github.io/Textanalyse/'
 }
 ```
 
-- `offline.entry`: Pfad relativ zum Stammverzeichnis der Plattform (oder passende absolute URL). Falls die normale `url` bereits innerhalb `workspace/apps/<app>/` liegt, kann `entry` entfallen. Verwende möglichst eine konkrete HTML-Datei und keine Weiterleitungen.
-- `offline.files`: vollständige Liste aller benötigten statischen Ressourcen, relativ zur Einstiegsdatei (oder absolute URLs innerhalb desselben App-Unterverzeichnisses). Die HTML-Einstiegsdatei wird automatisch aufgenommen; eine selbstenthaltende HTML-App darf `files: []` verwenden. Maximal 500 Dateien inkl. Einstieg. Cache-busting-Querystrings müssen exakt mit den tatsächlichen Requests übereinstimmen.
-- `offline.version`: optionale, bei Änderungen zu erhöhende Versionsangabe. Änderungen an Einstieg oder Dateiliste werden ebenfalls als Update erkannt. Eine explizite Aktualisierung funktioniert auch ohne Versionsänderung.
-- Die Dateien müssen als öffentliche statische HTTP-200-Antworten auf demselben Host verfügbar sein. Keine fremden Origins, Authentifizierung, Weiterleitungen oder `Cache-Control: private/no-store`. Externe CDN-Dateien, API-Aufrufe, nicht deklarierte URLs, dynamische Routen und HTTP-Range-Requests werden nicht automatisch offline bereitgestellt. Die Anwendung selbst muss für den Offlinebetrieb geeignet sein. Nur vertrauenswürdigen eigenen Code lokal hosten: lokale Apps teilen sich den Origin mit Boiler Room.
-- Bei einer ursprünglich externen App kann sich der Datenbestand zwischen externer URL und lokaler Kopie unterscheiden, weil Browser Speicher nach Origin trennen. Der Manager überträgt keine App-Daten zwischen Origins. Für unabhängige App-Service-Worker außerhalb dieses Scopes gibt der Manager keine Offline-Garantie.
+Der Offline-Manager sucht `boiler-room.json` im App-Verzeichnis: bei `/Textanalyse/` oder `/Textanalyse` unter `/Textanalyse/boiler-room.json`, bei `/Textanalyse/app.html` ebenfalls dort. Relative Repo-URLs werden wie bisher relativ zum Plattform-Stamm aufgelöst. Eine URL ohne Dateiendung wird als Verzeichnis interpretiert; für HTML-Dateien eine konkrete URL mit Endung verwenden. Die Manifest-Dateien werden relativ zum Manifest-Verzeichnis aufgelöst, nicht relativ zum Plattform-Stamm.
 
-Beispiel im ZIP: `workspace/apps/offline-demo/` enthält einen kleinen statischen Notizblock (HTML, CSS, JS). Bei fehlender produktiver `repos.js` ist er im Fallback-Katalog als „Offline-Notizblock“ und im Workspace „Offline-Demo“ enthalten. Falls eine produktive `repos.js` vorhanden ist, bleibt ihr Katalog unverändert; der Demo-Eintrag kann bei Bedarf nach dem obigen Muster ergänzt werden.
+Die mitgelieferte `boiler-room.example.json` entspricht der Vorlage des Nutzers. Beispiel für die Offline-Demo:
 
-### Update von v23 und Prüfung
+```json
+{
+  "schema_version": 2,
+  "version": 1,
+  "version_name": "1.0.0",
+  "created": "2026-11-24",
+  "updated": "2026-11-25",
+  "tags": ["Offline", "Lokal", "Notizen"],
+  "offline": { "mode": "full", "limitations": [] },
+  "files": ["index.html", "style.css", "app.js"],
+  "changelog": "CHANGELOG.md"
+}
+```
 
-Alle Dateien des ZIPs einschließlich `workspace/sw.js`, `offline-model.js`, `offline-client.js`, `offline-manager.js`, `offline.html`, `offline.css` und `workspace/apps/` ausliefern. Produktive `repos.js`, eigene App-Dateien, Bilder und Schriften behalten. Der Workspace-Scope bleibt `workspace/`, der neue Shell-Cache heißt `shell-v24`. Falls der v23-Worker noch aktiv ist, alle Workspace-/Manager-Tabs und installierten Workspace-Fenster schließen, danach online erneut öffnen. Anschließend bleiben gespeicherte App-Pakete bei späteren Shell-Updates erhalten.
+- `schema_version: 2` und eine nichtnegative ganzzahlige `version` sind erforderlich. Bei jeder Änderung am Paket `version` erhöhen. `version_name` ist die lesbare Versionsbezeichnung; weitere Metadaten bleiben im gespeicherten Manifest erhalten.
+- `offline.mode`: `full` = vollständig, `partial` = eingeschränkt (mit sichtbaren `limitations`), `none` = nicht zentral bereitstellbar. Nur vollständig gespeicherte `full`-Pakete zählen zur vollständigen Workspace-Abdeckung.
+- `files`: alle benötigten statischen Dateien mit relativen Pfaden im App-Verzeichnis, einschließlich CSS, JS, Icons, Webmanifest, ggf. Daten und Unterverzeichnissen. Der HTML-Einstieg aus `repo.url` und `boiler-room.json` werden automatisch zusätzlich gespeichert. Maximal 500 verschiedene URLs einschließlich dieser beiden Dateien. Querystrings müssen exakt passen. `changelog` ist Metadatum; soll die Datei offline verfügbar sein, muss sie zusätzlich in `files` stehen.
+- Der Offline-Manager prüft Manifeste online neu, unterscheidet fehlende/ungültige von momentan nicht erreichbaren Manifesten und erkennt Änderungen an Version, Modus, Einschränkungen oder Dateiliste. Offline wird der tatsächlich gespeicherte Stand angezeigt, nicht eine vermeintlich aktuelle Online-Version.
 
-Prüfung v24: JavaScript-Syntaxprüfung und `node tests/offline.test.cjs` erfolgreich (simulierter Service-Worker-Lebenszyklus, Offline-Shell, App- und Asset-Abruf, Versionsupdate mit Rollback, Reparatur, Entfernen, Cache-Isolation und Scope-Prüfung). Chromium-Oberfläche mit eingebetteten Projektdateien und simuliertem Worker bei 320, 390, 768 und 1280 px geprüft: Gruppenbereitstellung, Teilabdeckung, Suche, Offline-Entfernen und kein horizontaler Überlauf. Die direkte lokale URL-Navigation wurde vom Testbrowser administrativ blockiert (`ERR_BLOCKED_BY_ADMINISTRATOR`). Ein echter PWA-/Offline-Kaltstart auf einem Gerät und die produktiven Apps konnten daher nicht verifiziert werden.
+### Hosting und Grenzen
 
-Manueller Gerätetest: HTTPS/localhost aufrufen, Offline-Demo im Manager auswählen und bereitstellen, App im Workspace öffnen, Notiz speichern, Internetverbindung trennen und den Workspace neu öffnen. Notiz und App müssen weiterhin verfügbar sein. Danach den Manager offline öffnen, Paket entfernen, Internetverbindung wieder herstellen und erneut bereitstellen.
+HTTPS oder localhost und Service Worker/CacheStorage sind erforderlich. Der Workspace-Service-Worker bleibt unter `workspace/`. Die App-Dateien müssen öffentlich und unter derselben Origin (Protokoll, Host, Port) wie Boiler Room erreichbar sein. Damit können beispielsweise mehrere Projektverzeichnisse auf derselben GitHub-Pages-Origin verwaltet werden. Eine App unter `workspace/apps/<app>/` wird direkt gestartet. Apps in anderen Verzeichnissen derselben Origin werden über einen stabilen, virtuellen Pfad `workspace/offline-apps/…/` aus dem Cache gestartet; das Original in `repo.url` bleibt unverändert. Relative Ressourcenpfade und deklarierte relative Navigation funktionieren dabei; absolute/root-relative Pfade, hartcodierte Basispfade, eigene Service Worker, pfadgebundene App-Daten, APIs und dynamische Routen können zusätzliche Anpassungen an der App erfordern. Es findet kein HTML-/JS-Rewriting statt. Nur vertrauenswürdige eigene Apps verwenden. Andere Origins können nicht sicher zentral offline gestartet werden; dort muss die App selbst ihren Offlinebetrieb über einen eigenen Service Worker bereitstellen. Die normale Online-URL bleibt nutzbar.
 
-Geändert: `index.html`, `css/platform.css`, `js/data.js`, `workspace/index.html`, `workspace/workspace.js`, `workspace/workspace.css`, `workspace/pwa.js`, `workspace/sw.js`, `README.md`. Neu: `workspace/offline.html`, `workspace/offline.css`, `workspace/offline-model.js`, `workspace/offline-client.js`, `workspace/offline-manager.js`, `workspace/apps/offline-demo/`, `tests/offline.test.cjs`.
+Keine Authentifizierung, Weiterleitungen (außer der üblichen Verzeichnis-URL, die direkt mit abschließendem Slash angefragt wird), fremden Ressourcen oder `Cache-Control: private/no-store`. Die Dateien werden nicht automatisch aus HTML extrahiert. App-spezifische Abhängigkeiten und tatsächliche Offline-Fähigkeit müssen vom App-Autor geprüft werden. Die Plattform kann nur die deklarierten Dateien prüfen und speichern.
+
+### Offline-Manager und Migration
+
+Der Manager bleibt aus der Workspace-Sidebar erreichbar. Einzel-/Sammelbereitstellung, Reparatur, Versionsupdate und Entfernen bleiben erhalten. Updates werden atomar gespeichert; bei einem fehlgeschlagenen Download bleibt das alte Paket erhalten. Installierte Pakete können offline entfernt werden, ohne Favoriten oder App-Nutzerdaten zu löschen. Speicher ist browserprofilbezogen und kann vom Browser freigegeben werden.
+
+Produktive `repos.js` und eigene Ressourcen erhalten; `repo.offline` wird ignoriert und kann gelöscht werden. Jede kompatible App benötigt eine eigene `boiler-room.json`. Bestehende v24-Pakete werden nicht pauschal gelöscht; sie bleiben nur dann als Offline-Einstieg nutzbar, wenn ihre gespeicherte URL zu `repo.url` passt. Sie können nach dem Manifest-Update neu bereitgestellt oder entfernt werden. Neue Shell: `shell-v25`. Nach dem Deployment alle alten Workspace-Tabs/PWA-Fenster schließen und online erneut öffnen, damit der neue Worker aktiviert wird.
+
+Beispiel: `workspace/apps/offline-demo/` enthält den Notizblock samt Manifest und Changelog. Bei produktiver `repos.js` kann er optional als normaler Repo-Eintrag mit `url: 'workspace/apps/offline-demo/index.html'` aufgenommen werden.
+
+### Prüfung
+
+`node tests/offline.test.cjs` prüft die Manifest-Suche und -Validierung, fehlende und nicht erreichbare Manifeste, Modi, den simulierten Service-Worker-Lebenszyklus, die Offline-Shell, direkte und gespiegelte App-Dateien, atomare Updates mit Rollback, Reparatur, Entfernung und Cache-Isolation. JavaScript-Syntaxprüfung für alle JS-Dateien. Reale App-Deployments und Offline-Kaltstarts auf Endgeräten müssen separat geprüft werden; die produktive `repos.js` und produktive App-Dateien liegen nicht in diesem ZIP vor.
 
 ## Neu in v23 (historisch): Workspace-PWA
 

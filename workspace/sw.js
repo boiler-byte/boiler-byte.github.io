@@ -5,7 +5,7 @@ const M = self.BoilerRoomOfflineModel;
 const scope = new URL(self.registration.scope);
 const url = path => new URL(path, scope).href;
 const prefix = M.prefix(scope);
-const shellCache = `${prefix}shell-v24`;
+const shellCache = `${prefix}shell-v25`;
 const dataCache = `${prefix}data-v1`;
 const indexCache = `${prefix}offline-index-v1`;
 const packagePrefix = `${prefix}offline-app-v1:`;
@@ -59,8 +59,32 @@ async function listPackages() {
     return { ...record, complete: files.every(Boolean) };
   }));
 }
-async function installPackage(raw, progress) {
-  const pkg = M.validate(raw, scope);
+async function publicFile(file) {
+  const response = await fetch(file, { cache: 'reload', credentials: 'omit', redirect: 'error' });
+  const cacheControl = response.headers.get('Cache-Control') || '';
+  if (response.status !== 200 || response.type === 'opaque' || response.redirected || /(?:^|,)\s*(?:no-store|private)(?:\s|=|,|$)/i.test(cacheControl)) {
+    throw new Error(`Datei nicht offline speicherbar: ${new URL(file).pathname} (HTTP ${response.status})`);
+  }
+  return response;
+}
+async function discover(repo) {
+  const loc = M.locate(repo, scope);
+  if (loc.kind !== 'candidate') return { description: loc };
+  let response;
+  try {
+    response = await fetch(loc.manifest, { cache: 'no-store', credentials: 'omit', redirect: 'error' });
+  } catch (_) { return { description: { ...loc, kind: 'unknown', reason: 'boiler-room.json momentan nicht erreichbar.' } }; }
+  if (response.status === 404 || response.status === 410) return { description: { kind: 'unsupported', reason: 'Keine boiler-room.json gefunden.' } };
+  if (!response.ok || response.type === 'opaque' || response.redirected) return { description: { ...loc, kind: 'unknown', reason: `Manifest nicht erreichbar (HTTP ${response.status}).` } };
+  try {
+    const metadata = await response.clone().json();
+    return { description: M.describe(repo, scope, metadata), response };
+  } catch (_) { return { description: { kind: 'unsupported', reason: 'boiler-room.json ist kein gültiges JSON.' } }; }
+}
+async function installPackage(repo, progress) {
+  const found = await discover(repo);
+  if (found.description.kind !== 'package') throw new Error(found.description.reason || 'Kein Offline-Paket verfügbar.');
+  const pkg = found.description.pkg;
   const records = await readIndex();
   const previous = records[pkg.id];
   if (Object.values(records).some(record => record.id !== pkg.id && record.directory === pkg.directory)) {
@@ -72,13 +96,10 @@ async function installPackage(raw, progress) {
   progress({ done, total: pkg.files.length });
   try {
     for (const file of pkg.files) {
-      // Only trusted, static, public assets. Do not cache authenticated responses or redirects.
-      const response = await fetch(file, { cache: 'reload', credentials: 'omit', redirect: 'error' });
-      const cacheControl = response.headers.get('Cache-Control') || '';
-      if (response.status !== 200 || response.type === 'opaque' || response.redirected || /(?:^|,)\s*(?:no-store|private)(?:\s|=|,|$)/i.test(cacheControl)) {
-        throw new Error(`Datei nicht offline speicherbar: ${new URL(file).pathname}`);
-      }
-      if (file === pkg.entry && !/\b(?:text\/html|application\/xhtml\+xml)\b/i.test(response.headers.get('Content-Type') || '')) {
+      // Manifest and assets must come from the same discovery/install transaction.
+      const response = file === pkg.manifest ? found.response : await publicFile(file);
+      if (/(?:^|,)\s*(?:no-store|private)(?:\s|=|,|$)/i.test(response.headers.get('Cache-Control') || '')) throw new Error('Manifest darf nicht offline gespeichert werden.');
+      if (file === pkg.canonicalEntry && !/\b(?:text\/html|application\/xhtml\+xml)\b/i.test(response.headers.get('Content-Type') || '')) {
         throw new Error('Der Offline-Einstieg muss ein HTML-Dokument sein.');
       }
       await cache.put(file, response);
@@ -112,7 +133,7 @@ self.addEventListener('install', event => {
     const cache = await caches.open(shellCache);
     await cache.addAll(shell.map(href => new Request(href, { cache: 'reload' })));
     await Promise.allSettled([refreshData(catalog), refreshData(font)]);
-    // Do not mix the v23 and v24 shells: activate after old pages close.
+    // Do not mix the old and new shells: activate after old pages close.
   })());
 });
 self.addEventListener('activate', event => {
@@ -139,8 +160,12 @@ self.addEventListener('message', event => {
     event.waitUntil(listPackages().then(result => port.postMessage({ ok: true, result }), error => port.postMessage({ ok: false, error: error.message || String(error) })));
     return;
   }
+  if (msg.action === 'discover') {
+    event.waitUntil(discover(msg.repo).then(({description}) => port.postMessage({ok:true,result:description}), error => port.postMessage({ok:false,error:error.message || String(error)})));
+    return;
+  }
   const work = mutationQueue.then(async () => {
-    if (msg.action === 'install') return installPackage(msg.package, progress);
+    if (msg.action === 'install') return installPackage(msg.repo, progress);
     if (msg.action === 'remove') return removePackage(msg.id);
     throw new Error('Unbekannter Offline-Vorgang.');
   });
@@ -151,12 +176,20 @@ async function fromShell(href, request) {
   const cache = await caches.open(shellCache);
   return await cache.match(href) || fetch(request);
 }
-async function fromApp(request) {
+async function fromApp(request, mirrored = false) {
   const records = Object.values(await readIndex());
-  const record = records.find(record => record.files.includes(request.url));
-  if (record && (await caches.keys()).includes(record.cache)) {
-    const cached = await (await caches.open(record.cache)).match(request.url, { ignoreVary: true });
-    if (cached) return cached;
+  const record = mirrored ? records.find(r => r.mirror && request.url.startsWith(r.mirror)) : records.find(r => !r.mirror && r.files.includes(request.url));
+  const source = mirrored && record ? new URL(request.url.slice(record.mirror.length), record.directory).href : request.url;
+  if (record && record.files.includes(source) && (await caches.keys()).includes(record.cache)) {
+    const cached = await (await caches.open(record.cache)).match(source, { ignoreVary: true });
+    if (cached) {
+      // Reset response URL so CSS/JS relative imports resolve at the local mirror.
+      return mirrored ? new Response(cached.body, { status: cached.status, headers: cached.headers }) : cached;
+    }
+  }
+  if (mirrored) {
+    if (!record || !record.files.includes(source)) return new Response('Nicht im Offline-Paket enthalten.', {status:404});
+    return fetch(source, {credentials:'omit', redirect:'error'}).then(r => new Response(r.body,{status:r.status,headers:r.headers}));
   }
   return fetch(request);
 }
@@ -165,6 +198,10 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return;
   const target = new URL(request.url);
   if (target.origin !== scope.origin) return;
+  if (target.pathname.startsWith(new URL('offline-apps/', scope).pathname)) {
+    if (!request.headers.has('Range')) event.respondWith(fromApp(request, true));
+    return;
+  }
   if (target.pathname.startsWith(new URL('apps/', scope).pathname)) {
     if (!request.headers.has('Range')) event.respondWith(fromApp(request));
     return;
