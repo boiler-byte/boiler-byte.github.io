@@ -95,7 +95,7 @@
     ui.updateAll.hidden = !updates;
     ui.updateAll.textContent = updates ? `Alle Aktualisieren (${updates})` : 'Alle Aktualisieren';
     ui.updateAll.disabled = !canInstall() || !updates;
-    ui.checkVersions.textContent = checking ? 'Versionen werden geprüft …' : 'Versionen prüfen';
+    ui.checkVersions.textContent = checking && activeRefresh?.allowNetwork ? 'Versionen werden geprüft …' : 'Versionen prüfen';
     ui.checkVersions.disabled = !canInstall() || !items.some(i => B.offline.describe(i.repo).kind === 'candidate');
     ui.removeAll.textContent = removable ? `Entfernen (${removable})` : 'Entfernen';
     ui.installAll.disabled = !canInstall() || !provisionable;
@@ -120,19 +120,23 @@
     } catch (_) {}
     ui.storageSummary.textContent = text;
   }
-  function refresh(force = false) {
+  // Only a document opening or a deliberate manual check may contact app manifests.
+  // All other UI refreshes read the cached descriptions and installed-package index.
+  function refresh(mode = 'cache') {
     if (busy) return Promise.resolve();
     const selection = ui.offlineWorkspace.value;
-    if (!force && activeRefresh?.selection === selection) return activeRefresh.promise;
+    const force = mode === 'manual';
+    if (!force && activeRefresh?.selection === selection && (mode === 'cache' || activeRefresh.mode !== 'cache')) return activeRefresh.promise;
     const token = ++revision;
-    const job = { selection, force };
+    const allowNetwork = mode !== 'cache' && navigator.onLine;
+    const job = { selection, force, mode, allowNetwork };
     activeRefresh = job; checking = true; render();
-    job.promise = refreshSelection(token, force).finally(() => {
+    job.promise = refreshSelection(token, force, allowNetwork).finally(() => {
       if (activeRefresh === job) { activeRefresh = null; checking = false; render(); }
     });
     return job.promise;
   }
-  async function refreshSelection(token, force) {
+  async function refreshSelection(token, force, allowNetwork) {
     try {
       const list = await B.offline.request('list');
       if (token !== revision) return;
@@ -147,13 +151,13 @@
     render(); storageStatus();
     const queue = members().filter(repo => B.offline.describe(repo).kind === 'candidate');
     // Check only the selected workspace, regardless of the local search filter.
-    // The worker enforces the daily interval across selections, reloads and tabs.
+    // The worker enforces the installation-dependent interval across reloads and tabs.
     await Promise.all(Array.from({length:Math.min(6,queue.length)},async () => {
       while (queue.length && token === revision) {
         const repo = queue.shift();
         let description;
         try {
-          description = available ? await B.offline.discover(repo,{force,cacheOnly:!navigator.onLine}) : await B.offline.cachedDescription(repo);
+          description = available ? await B.offline.discover(repo,{force,cacheOnly:!allowNetwork || !navigator.onLine}) : await B.offline.cachedDescription(repo);
         } catch (error) {
           description = descriptions.get(repo.label) || await B.offline.cachedDescription(repo).catch(() => null);
           if (!description || description.kind === 'candidate') description = {...B.offline.describe(repo), kind:'unknown', reason:error.message};
@@ -201,7 +205,7 @@
       }
     } else refresh();
   }
-  ui.checkVersions.addEventListener('click',()=>{if(!ui.checkVersions.disabled) refresh(true);});
+  ui.checkVersions.addEventListener('click',()=>{if(!ui.checkVersions.disabled) refresh('manual');});
   ui.updateAll.addEventListener('click',()=>run(entries().filter(i=>i.state === 'update'),'update'));
   ui.installAll.addEventListener('click',()=>run(entries().filter(i=>i.description.kind === 'package' && ['missing','incomplete'].includes(i.state)),'install'));
   ui.removeAll.addEventListener('click',()=>run(entries().filter(i=>i.record),'remove'));
@@ -214,16 +218,13 @@
   window.addEventListener('online',()=>{render(); if (!busy) refresh();});
   window.addEventListener('offline',render);
   window.addEventListener('storage',event=>{if(event.key==='boilerRoom' || event.key===null) { render(); if(!busy) refresh(); }});
-  window.addEventListener('pageshow',()=>{if(!busy) refresh();});
+  // A history navigation restoring this document from the back-forward cache is a reopening.
+  // The ordinary initial pageshow must not trigger a second opening check.
+  window.addEventListener('pageshow',event=>{if(event.persisted && !busy) refresh('open');});
   document.addEventListener('visibilitychange',()=>{if(!busy && document.visibilityState==='visible') refresh();});
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message',event=>{if(!busy && event.data?.protocol==='boiler-room-offline-v1' && event.data.changed) refreshAfterCurrent();});
     navigator.serviceWorker.addEventListener('controllerchange',refreshAfterCurrent);
   }
-  // Also check when a visible manager stays open across the 24-hour boundary.
-  setInterval(()=>{
-    if (!busy && !checking && navigator.onLine && document.visibilityState==='visible' && members().some(repo=>
-      B.offline.describe(repo).kind === 'candidate' && !B.offline.isVersionCheckFresh(descriptions.get(repo.label)))) refresh();
-  },60000);
-  syncLink(); render(); refresh();
+  syncLink(); render(); refresh('open');
 })(window.BoilerRoom);

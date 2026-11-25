@@ -5,7 +5,7 @@ const M = self.BoilerRoomOfflineModel;
 const scope = new URL(self.registration.scope);
 const url = path => new URL(path, scope).href;
 const prefix = M.prefix(scope);
-const shellCache = `${prefix}shell-v26`;
+const shellCache = `${prefix}shell-v27`;
 const dataCache = `${prefix}data-v1`;
 const indexCache = `${prefix}offline-index-v1`;
 const packagePrefix = `${prefix}offline-app-v1:`;
@@ -116,10 +116,14 @@ async function checkVersion(repo, { force = false, cacheOnly = false } = {}) {
   if (loc.kind !== 'candidate') return loc;
   const key = M.versionCheckKey(loc, scope);
   if (!cacheOnly && versionChecksInFlight.has(key)) return (await versionChecksInFlight.get(key)).description;
+  // Read installation state from the authoritative index, not from a tab's snapshot.
+  // An incomplete but indexed package still uses the installed-app interval.
+  const installed = !cacheOnly && !force && Boolean((await readIndex())[loc.id]);
   const cached = await readVersionCheck(key);
-  // Offline browsing never consumes the next online check or discards a known result.
+  // Cache-only browsing never consumes the next online check or discards a known result.
   if (cacheOnly) return cached || loc;
-  if (!force && M.isVersionCheckFresh(cached)) return cached;
+  if (versionChecksInFlight.has(key)) return (await versionChecksInFlight.get(key)).description;
+  if (!force && M.isVersionCheckFresh(cached, installed)) return cached;
   return (await liveVersionCheck(repo, key)).description;
 }
 async function installPackage(repo, progress) {

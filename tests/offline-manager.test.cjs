@@ -24,9 +24,9 @@ const repos=['Installed','Missing','NoPackage','OtherWorkspace'].map(label=>({la
 const groups=new Map([['other',{label:'Other',repos:[repos[3]]}]]);
 const stores={workspace:{selected:'favorites'},favorites:repos.slice(0,3).map(r=>r.label),favoriteOrder:[]};
 const B=window.BoilerRoom={data:{repos,types:{tool:{label:'Tool'}},getGroups:()=>groups},storage:{init(){},get:key=>stores[key]},searchRelevance:{normalize:s=>s,score:(repo,query)=>repo.label.includes(query)?0:-1}};
-let now=Date.now(), timer;
+let now=Date.now(), timers=0;
 class Clock extends Date { static now(){return now;} }
-const context=vm.createContext({window,document,navigator,URL,URLSearchParams,Date:Clock,location:{href:scope+'offline.html',search:''},history:{replaceState(){}},Option:Element,setInterval:fn=>{timer=fn;}});
+const context=vm.createContext({window,document,navigator,URL,URLSearchParams,Date:Clock,location:{href:scope+'offline.html',search:''},history:{replaceState(){}},Option:Element,setInterval:()=>{timers++;}});
 vm.runInContext(fs.readFileSync(path.join(root,'offline-model.js'),'utf8'),context);
 const M=vm.runInContext('globalThis.BoilerRoomOfflineModel',context);
 const metadata=v=>({schema_version:2,version:v,version_name:`${v}.0.0`,offline:{mode:'full',limitations:[]},files:['app.js']});
@@ -44,25 +44,41 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
 (async()=>{
   await flush();
   assert.deepEqual(discoveries.map(d=>d.label).sort(),['Installed','Missing','NoPackage']);
+  assert(discoveries.every(d=>!d.force && !d.cacheOnly));
+  discoveries.length=0; window.emit('pageshow',{persisted:false}); await flush();
+  assert.equal(discoveries.length,0); // no duplicate opening check
+  assert.equal(timers,0);
   assert.match(ui('offlineList').text(),/Offline bereit/);
   assert(ui('updateAll').hidden); assert.equal(ui('installAll').textContent,'Bereitstellen (1)');
   assert.equal(ui('checkVersions').disabled,false);
   results.set('Installed',desc(repos[0],2));
   discoveries.length=0; ui('checkVersions').click(); await flush();
-  assert.equal(discoveries.length,3); assert(discoveries.every(d=>d.force===true));
+  assert.equal(discoveries.length,3); assert(discoveries.every(d=>d.force===true && !d.cacheOnly));
   assert.match(ui('offlineList').text(),/Version 2.0.0 verfügbar/);
   assert.equal(ui('updateAll').hidden,false); assert.equal(ui('updateAll').textContent,'Alle Aktualisieren (1)');
   assert.equal(ui('installAll').textContent,'Bereitstellen (1)');
-  navigator.onLine=false;window.emit('offline');window.emit('pageshow');await flush();
+  navigator.onLine=false;discoveries.length=0;window.emit('offline');window.emit('pageshow',{persisted:true});await flush();
   assert.equal(ui('updateAll').hidden,false);assert(ui('updateAll').disabled);assert(ui('checkVersions').disabled);
   assert(discoveries.slice(-3).every(d=>d.cacheOnly));assert.match(ui('offlineList').text(),/Version 2.0.0 verfügbar/);
-  navigator.onLine=true;window.emit('online');await flush();
-  ui('updateAll').click();await flush();
+  discoveries.length=0;navigator.onLine=true;window.emit('online');await flush();
+  assert.equal(discoveries.length,3);assert(discoveries.every(d=>d.cacheOnly && !d.force));
+  discoveries.length=0;ui('updateAll').click();await flush();
+  assert(discoveries.length>0 && discoveries.every(d=>d.cacheOnly));
   assert.deepEqual(installations,['Installed']);assert(ui('updateAll').hidden);assert.match(ui('offlineList').text(),/Offline bereit/);
   ui('installAll').click();await flush();assert.deepEqual(installations,['Installed','Missing']);
   discoveries.length=0;ui('offlineWorkspace').value='group:other';ui('offlineWorkspace').emit('change');await flush();
   assert.deepEqual(discoveries.map(d=>d.label),['OtherWorkspace']);
-  discoveries.length=0;timer();await flush();assert.equal(discoveries.length,0);
-  now+=24*60*60*1000;timer();await flush();assert.deepEqual(discoveries.map(d=>d.label),['OtherWorkspace']);
-  console.log('OK: selected workspace, manual check, version label, conditional bulk update, separate provision, offline status, daily timer.');
+  assert(discoveries.every(d=>d.cacheOnly && !d.force));
+  now+=8*24*60*60*1000;
+  for(const trigger of [()=>document.emit('visibilitychange'),()=>window.emit('storage',{key:'boilerRoom'}),()=>navigator.serviceWorker.emit('message',{data:{protocol:'boiler-room-offline-v1',changed:true}}),()=>navigator.serviceWorker.emit('controllerchange')]){
+    discoveries.length=0;trigger();await flush();
+    assert.equal(discoveries.length,1);assert(discoveries.every(d=>d.cacheOnly && !d.force));
+  }
+  discoveries.length=0; window.emit('pageshow',{persisted:true}); await flush();
+  assert.deepEqual(discoveries.map(d=>d.label),['OtherWorkspace']);
+  assert(discoveries.every(d=>!d.cacheOnly && !d.force));
+  discoveries.length=0;ui('checkVersions').click();await flush();
+  assert.equal(discoveries.length,1);assert(discoveries.every(d=>d.force && !d.cacheOnly));
+  assert.equal(timers,0);
+  console.log('OK: only opening/history restoration and manual check may fetch manifests; other events cache-only; update and provisioning controls intact.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

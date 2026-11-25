@@ -1,10 +1,10 @@
-# Boiler Room – App-Plattform v26
+# Boiler Room – App-Plattform v27
 
 Vanilla JavaScript mit **klassischen `<script src="...">`-Dateien**. Keine ES-Module, keine Abhaengigkeiten, kein Build-Prozess.
 
 ## Installation
 
-Inhalt des ZIPs über den bisherigen v25-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **erhalten** (die Workspace-Zuordnungen koennen wie unten beschrieben umbenannt werden). Sie wird von `index.html` weiterhin vor allen Modulen geladen:
+Inhalt des ZIPs über den bisherigen v26-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **erhalten** (die Workspace-Zuordnungen koennen wie unten beschrieben umbenannt werden). Sie wird von `index.html` weiterhin vor allen Modulen geladen:
 
 ```html
 <script src="repos.js"></script>
@@ -12,15 +12,15 @@ Inhalt des ZIPs über den bisherigen v25-Projektstand kopieren. Die produktive `
 
 Ihre `originrepos` und `originrepogroups` haben weiterhin Vorrang vor den Fallback-Daten in `js/data.js`. Die Datei `repos.js` sowie eigene `img/`, `fonts/`, `icons/` und `manifest.json` sind nicht Teil dieses ZIPs und duerfen auf dem Host nicht geloescht werden.
 
-## Neu in v26: Versionsprüfung im Workspace-Offline-Manager
+## Neu in v27: Versionsprüfung im Workspace-Offline-Manager
 
-- Online wird die `boiler-room.json` jeder App des aktuell ausgewählten Workspaces automatisch höchstens einmal innerhalb von 24 Stunden geprüft. Die lokale Suche beeinflusst den Prüfumfang nicht. Beim Wechsel auf einen anderen Workspace werden dessen Apps geprüft, soweit ihre Ergebnisse fehlen oder abgelaufen sind.
+- Automatische Versionsprüfungen erfolgen ausschließlich beim Öffnen des Offline-Managers (einschließlich Neuladen und erneuter Navigation zur Seite), online für die Apps des aktuell ausgewählten Workspaces. Installierte Apps werden frühestens 24 Stunden, nicht installierte Apps frühestens 7 Tage (168 Stunden) nach der letzten Prüfung erneut geprüft. Dies gilt auch für Apps ohne Offline-Paket. Ein noch nicht geprüftes Manifest ist sofort fällig. Die lokale Suche beeinflusst den Prüfumfang nicht.
 - Prüfergebnis und Zeitpunkt werden getrennt von den installierten Paketen im Service-Worker-Cache `offline-versions-v1` gespeichert. Das gilt auch für nicht installierte Apps, fehlende/ungültige Manifeste, `offline.mode: none` und momentan nicht erreichbare Manifeste. Die Ergebnisse bleiben über Seitenwechsel, Neuladen, Tab-Wechsel und Worker-Neustarts hinweg erhalten. Statisch nicht unterstützte Apps (andere Origins, Informationskarten) verursachen keine Netzwerkanfrage.
-- Offline werden zuletzt gespeicherte Ergebnisse und lokale Paketdaten angezeigt; ohne Netzverbindung wird kein neuer Prüfzeitpunkt gesetzt. Beim Wiederverbinden, Öffnen/Fokussieren und bei dauerhaft sichtbarem Manager werden fällige Prüfungen ausgeführt. Bei geschlossenem Manager findet keine Hintergrundprüfung statt.
-- „Versionen prüfen“ im Panel-Kopf startet online eine sofortige manuelle Prüfung des ausgewählten Workspaces, unabhängig vom 24-Stunden-Intervall. Der letzte Prüfzeitpunkt erscheint an jeder geprüften App. Ein vorübergehend nicht erreichbares Manifest kann so erneut geprüft werden.
+- Offline werden zuletzt gespeicherte Ergebnisse und lokale Paketdaten angezeigt; ohne Netzverbindung wird kein neuer Prüfzeitpunkt gesetzt. Workspace-Wechsel innerhalb des Managers, Fokus-/Sichtbarkeitswechsel, Wiederverbinden, Speicher- und Worker-Ereignisse sowie ein dauerhaft geöffneter Manager lösen keine automatischen Manifestabfragen aus. Bei solchen Ereignissen wird nur der gespeicherte Status angezeigt bzw. aktualisiert.
+- „Versionen prüfen“ im Panel-Kopf startet online eine sofortige manuelle Prüfung des ausgewählten Workspaces, unabhängig vom 24-Stunden- bzw. 7-Tage-Intervall. Jede manuelle Prüfung setzt den letzten Prüfzeitpunkt neu; das passende Intervall beginnt von diesem Zeitpunkt an erneut. Der letzte Prüfzeitpunkt erscheint an jeder geprüften App. Ein vorübergehend nicht erreichbares Manifest kann so erneut geprüft werden.
 - „Version x verfügbar“ verwendet `version_name` (ansonsten `version`) für erkannte Updates. „Alle Aktualisieren“ erscheint nur, wenn Updates vorhanden sind, und aktualisiert ausschließlich diese installierten Pakete im ausgewählten Workspace. „Bereitstellen“ bleibt für fehlende oder zu reparierende Pakete zuständig. Einzelupdates bleiben möglich.
-- Eine ausdrücklich gestartete Bereitstellung, Reparatur oder Aktualisierung ruft das Live-Manifest zur sicheren Download-Transaktion erneut ab und aktualisiert das Prüfergebnis. Fehlgeschlagene Paketdownloads lassen vorher installierte Dateien unverändert. Die 24-Stunden-Sperre gilt für automatische Versionsprüfungen, nicht für explizite Installationsvorgänge.
-- Die Shell wird auf `shell-v26` angehoben. Die bereits installierten Pakete und der lokale Offline-Index bleiben erhalten. Nach dem Deployment alle bisherigen Workspace-Tabs/PWA-Fenster schließen und online erneut öffnen, damit der neue Worker aktiviert wird.
+- Eine ausdrücklich gestartete Bereitstellung, Reparatur oder Aktualisierung ruft das Live-Manifest zur sicheren Download-Transaktion erneut ab und aktualisiert das Prüfergebnis. Fehlgeschlagene Paketdownloads lassen vorher installierte Dateien unverändert. Die 24-Stunden-/7-Tage-Sperre gilt für automatische Versionsprüfungen, nicht für explizite Installationsvorgänge.
+- Die Shell wird auf `shell-v27` angehoben. Die bereits installierten Pakete und der lokale Offline-Index bleiben erhalten. Nach dem Deployment alle bisherigen Workspace-Tabs/PWA-Fenster schließen und online erneut öffnen, damit der neue Worker aktiviert wird.
 
 ## Neu in v25: App-eigene `boiler-room.json`
 
@@ -70,7 +70,7 @@ Keine Authentifizierung, Weiterleitungen (außer der üblichen Verzeichnis-URL, 
 
 Der Manager bleibt aus der Workspace-Sidebar erreichbar. Einzel-/Sammelbereitstellung, Reparatur, Versionsupdate und Entfernen bleiben erhalten. Updates werden atomar gespeichert; bei einem fehlgeschlagenen Download bleibt das alte Paket erhalten. Installierte Pakete können offline entfernt werden, ohne Favoriten oder App-Nutzerdaten zu löschen. Speicher ist browserprofilbezogen und kann vom Browser freigegeben werden.
 
-Produktive `repos.js` und eigene Ressourcen erhalten; `repo.offline` wird ignoriert und kann gelöscht werden. Jede kompatible App benötigt eine eigene `boiler-room.json`. Bestehende v24-Pakete werden nicht pauschal gelöscht; sie bleiben nur dann als Offline-Einstieg nutzbar, wenn ihre gespeicherte URL zu `repo.url` passt. Sie können nach dem Manifest-Update neu bereitgestellt oder entfernt werden. Aktuelle Shell: `shell-v26`. Nach dem Deployment alle alten Workspace-Tabs/PWA-Fenster schließen und online erneut öffnen, damit der neue Worker aktiviert wird.
+Produktive `repos.js` und eigene Ressourcen erhalten; `repo.offline` wird ignoriert und kann gelöscht werden. Jede kompatible App benötigt eine eigene `boiler-room.json`. Bestehende v24-Pakete werden nicht pauschal gelöscht; sie bleiben nur dann als Offline-Einstieg nutzbar, wenn ihre gespeicherte URL zu `repo.url` passt. Sie können nach dem Manifest-Update neu bereitgestellt oder entfernt werden. Aktuelle Shell: `shell-v27`. Nach dem Deployment alle alten Workspace-Tabs/PWA-Fenster schließen und online erneut öffnen, damit der neue Worker aktiviert wird.
 
 Beispiel: `workspace/apps/offline-demo/` enthält den Notizblock samt Manifest und Changelog. Bei produktiver `repos.js` kann er optional als normaler Repo-Eintrag mit `url: 'workspace/apps/offline-demo/index.html'` aufgenommen werden.
 

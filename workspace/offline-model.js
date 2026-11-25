@@ -2,7 +2,8 @@
 (function (global) {
   'use strict';
   const MAX_FILES = 500;
-  const VERSION_CHECK_INTERVAL = 24 * 60 * 60 * 1000;
+  const INSTALLED_CHECK_INTERVAL = 24 * 60 * 60 * 1000;
+  const UNINSTALLED_CHECK_INTERVAL = 7 * INSTALLED_CHECK_INTERVAL;
   const modes = new Set(['full', 'partial', 'none']);
   function prefix(scope) { return `boiler-room-workspace:${new URL(scope).href}:`; }
   function indexKey(scope) { return new URL('apps/.offline-index', scope).href; }
@@ -13,8 +14,9 @@
     key.searchParams.set('entry', loc.entry);
     return key.href;
   }
-  function isVersionCheckFresh(description, now = Date.now()) {
-    return Number.isFinite(description?.checkedAt) && description.checkedAt <= now && now - description.checkedAt < VERSION_CHECK_INTERVAL;
+  function isVersionCheckFresh(description, installed, now = Date.now()) {
+    const interval = installed ? INSTALLED_CHECK_INTERVAL : UNINSTALLED_CHECK_INTERVAL;
+    return Number.isFinite(description?.checkedAt) && description.checkedAt <= now && now - description.checkedAt < interval;
   }
   function webURL(value, base) {
     const u = new URL(value, base);
