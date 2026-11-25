@@ -63,11 +63,11 @@ const originrepos = [
     img: 'img/app/diff.svg',
     preview: 'img/app/diff-preview.webp',
     workspace: 'dev',
-    description: 'Finde den Unterschied oder das Duplikat.',
+    description: 'Finde den Unterschied oder das Duplikat. Oder mach eine Textanalyse',
     type: 'tool',
     url: 'https://boiler-byte.github.io/Diff/',
     year: 2026,
-    tags: ['Text', 'Dubletten', 'difftool']
+    tags: ['Text', 'Dubletten', 'difftool', 'Analyse', 'Wortschatz', 'Lesbarkeit', 'Lesezeit', 'Wortwolke' ]
 },
 {
     label: "Haltestellen",
@@ -587,18 +587,18 @@ const originrepos = [
     year: 2026,
     tags: ['Gute Nacht', 'Geschichte', 'Indiana Jones' ],
 },
-{
-    label: "Textanalyse",
-    img: 'img/app/textanalyse.webp',
-    preview: 'img/app/textanalyse-preview.webp',
-    status: 'beta',
-    description: 'Zählen von Wörtern, Sätzen, Häufigkeiten uvm.',
-    type: 'tool',
-    workspace: 'dev',
-    url: 'https://boiler-byte.github.io/Textanalyse',
-    year: 2026,
-    tags: ['Texte', 'Keywords']
-},
+// {
+//     label: "Textanalyse",
+//     img: 'img/app/textanalyse.webp',
+//     preview: 'img/app/textanalyse-preview.webp',
+//     status: 'beta',
+//     description: 'Zählen von Wörtern, Sätzen, Häufigkeiten uvm.',
+//     type: 'tool',
+//     workspace: 'dev',
+//     url: 'https://boiler-byte.github.io/Textanalyse',
+//     year: 2026,
+//     tags: ['Texte', 'Keywords']
+// },
 {
     label: "Android Vollbild",
     img: 'img/pwa.png',
