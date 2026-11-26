@@ -212,6 +212,39 @@ with sync_playwright() as p:
     button.click()
     page.evaluate('window.dispatchEvent(new Event("appinstalled")); finishPrompt()')
     assert not button.is_visible() and not help_text.is_visible()
+    # v49: favorite toggle acts on the current app, not the selected group.
+    favorite=page.locator('#favoriteApp')
+    assert favorite.is_visible() and favorite.is_disabled()
+    assert page.locator('.toolbar-menu-actions > :first-child').get_attribute('id')=='favoriteApp'
+    page.locator('#toolbarMenuToggle').click()
+    page.route('https://example.test/**', lambda route: route.fulfill(status=200,body='App'))
+    page.locator('#homeWorkspaceApps > [data-label="B"] .app-item').click()
+    page.wait_for_function('!document.getElementById("reloadApp").disabled')
+    page.locator('#toolbarMenuToggle').click()
+    assert favorite.is_enabled() and favorite.get_attribute('aria-pressed')=='true'
+    assert favorite.locator('svg').evaluate('(e)=>getComputedStyle(e).fill')=='rgb(183, 160, 106)'
+    favorite.click()
+    assert favorite.is_visible() and favorite.get_attribute('aria-pressed')=='false'
+    assert favorite.locator('svg').evaluate('(e)=>getComputedStyle(e).fill')=='none'
+    favorite.click()
+    assert favorite.get_attribute('aria-pressed')=='true'
+    page.evaluate('setFavorites(["C"])')
+    assert favorite.get_attribute('aria-pressed')=='false'
+    favorite.click()
+    assert favorite.get_attribute('aria-pressed')=='true'
+    page.locator('#toolbarRecentApps .app-item[data-label="E"]').click()
+    page.wait_for_function('!document.getElementById("reloadApp").disabled')
+    page.locator('#toolbarMenuToggle').click()
+    assert favorite.get_attribute('aria-pressed')=='false'
+    assert favorite.get_attribute('aria-label').endswith(': E')
+    favorite.click()
+    assert favorite.get_attribute('aria-pressed')=='true'
+    page.locator('#toolbarMenuToggle').click()
+    page.locator('#homeApp').click()
+    page.wait_for_function('labels().includes("E")')
+    assert page.evaluate('labels()')==['C','B','E']
+    page.locator('#toolbarMenuToggle').click()
+    assert favorite.is_disabled() and favorite.get_attribute('aria-pressed')=='false'
     assert not errors, errors
     browser.close()
-print('OK: real Chromium layout, local add, external remove/reorder, rapid changes, empty grid, hidden view, reduced motion, toolbar install and fallback.')
+print('OK: real Chromium layout, local add, external remove/reorder, rapid changes, empty grid, hidden view, reduced motion, toolbar install and fallback, current-app favorite toggle and cross-tab sync.')

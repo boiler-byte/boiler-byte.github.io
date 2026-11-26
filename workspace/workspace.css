@@ -185,6 +185,9 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .toolbar-menu { position: absolute; top: calc(100% + 6px); right: 8px; width: min(280px, calc(100% - 16px)); max-height: calc(100vh - var(--toolbar-height) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px); max-height: calc(100dvh - var(--toolbar-height) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px); display: flex; flex-direction: column; padding: 6px; background: var(--toolbar); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 38px #0009; overflow: hidden; }
 .toolbar-menu-actions { display: flex; gap: 4px; padding: 0 3px 6px; border-bottom: 1px solid var(--border); flex: none; }
 .toolbar-menu-actions .icon-button { flex: 1; }
+.toolbar-menu-actions .toolbar-favorite.is-fav { color: var(--favorite-active); }
+.toolbar-menu-actions .toolbar-favorite.is-fav svg { fill: currentColor; }
+
 .toolbar-menu-actions .icon-button[aria-disabled="true"] { opacity: .35; pointer-events: none; }
 .toolbar-menu-recent { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 6px 0; }
 .toolbar-menu-heading { padding: 4px 9px; }

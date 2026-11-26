@@ -9,7 +9,7 @@
   const $ = id => document.getElementById(id);
   const ui = Object.fromEntries([
     'workspace', 'workspaceSelect', 'homeWorkspaceTitle', 'storageNotice', 'current', 'currentIcon', 'currentWorkspace', 'currentApp',
-    'reloadApp', 'externalApp', 'shareApp', 'emptyView', 'emptyTitle', 'emptyDescription', 'emptyLink',
+    'reloadApp', 'externalApp', 'shareApp', 'favoriteApp', 'emptyView', 'emptyTitle', 'emptyDescription', 'emptyLink',
     'frames', 'loading', 'offlineManagerLink', 'homeApp', 'homeView', 'homeSearch',
     'homeSearchToggle', 'homeSearchWrap', 'homeSearchClear', 'homeTitle', 'homeCount', 'homeApps', 'homeRecentSection',
     'homeWorkspaceSection', 'homeWorkspaceCount', 'homeWorkspaceApps',
@@ -280,6 +280,19 @@
     }
   }
 
+  function syncToolbarFavorite() {
+    const repo = repoMap.get(state.app);
+    const available = Boolean(resolveURL(repo?.url));
+    const favorite = available && B.favorites.isFavorite(repo.label);
+    const button = ui.favoriteApp;
+    button.disabled = !available;
+    button.classList.toggle('is-fav', favorite);
+    button.setAttribute('aria-pressed', String(favorite));
+    const action = favorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen';
+    button.title = available ? action + ': ' + repo.label : 'Keine App ausgewählt';
+    button.setAttribute('aria-label', button.title);
+  }
+
   function renderToolbarRecent() {
     const appOpen = Boolean(state.app && activeSurface?.classList.contains('app-frame'));
     ui.toolbarRecentSection.hidden = !appOpen;
@@ -295,7 +308,7 @@
   }
 
   function setToolbarMenu(visible, restoreFocus = false) {
-    if (visible) renderToolbarRecent();
+    if (visible) { refreshFavorites(); renderToolbarRecent(); }
     ui.toolbarMenu.hidden = !visible;
     ui.toolbarMenuBackdrop.hidden = !visible;
     ui.toolbarMenuToggle.setAttribute('aria-expanded', String(visible));
@@ -812,6 +825,7 @@
   window.addEventListener('resize', () => { if (edit?.menu) positionContext(edit); });
 
   function updateAppSelection() {
+    syncToolbarFavorite();
     for (const button of ui.toolbarRecentApps.querySelectorAll('.app-item')) {
       const active = button.dataset.label === state.app;
       button.classList.toggle('is-active', active);
@@ -935,6 +949,7 @@
     B.favorites.load();
     B.favorites.loadOrder();
     const next = readFavorites();
+    syncToolbarFavorite();
     if (before === favoritesSignature) return;
     if (state.selected === FAVORITES) activeRepos = next;
     renderHome();
@@ -966,6 +981,13 @@
   if (requestedGroup !== null || requestedFavorites) syncGroupURL();
   ui.toolbarMenuToggle.addEventListener('click', () => setToolbarMenu(ui.toolbarMenu.hidden));
   ui.toolbarMenuBackdrop.addEventListener('click', () => setToolbarMenu(false, true));
+  ui.favoriteApp.addEventListener('click', () => {
+    const repo = repoMap.get(state.app);
+    if (!resolveURL(repo?.url)) return;
+    B.favorites.toggleFavorite(repo.label);
+    refreshFavorites();
+    ui.storageNotice.hidden = B.storage.isAvailable();
+  });
   ui.toolbarPositionToggle.addEventListener('click', () => {
     B.storage.set('workspaceToolbarBottom', !ui.workspace.classList.contains('toolbar-bottom'));
     setToolbarMenu(false, true);
