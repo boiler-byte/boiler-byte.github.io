@@ -31,9 +31,9 @@
         </button>
       </header>
       <div class="app-heading"><span class="eyebrow">Apps</span><span id="appCount" class="app-count" aria-live="polite">0</span></div>
-      <div class="app-search" id="appSearchWrap" role="search" aria-label="Apps im Workspace suchen">
+      <div class="app-search" id="appSearchWrap" role="search" aria-label="Apps im gesamten Katalog suchen">
         <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4.5 4.5"/></svg>
-        <input id="appSearch" type="search" placeholder="Apps suchen …" aria-label="Apps im Workspace suchen" autocomplete="off" enterkeyhint="search" spellcheck="false" aria-controls="appList">
+        <input id="appSearch" type="search" placeholder="Apps suchen …" aria-label="Apps im gesamten Katalog suchen" autocomplete="off" enterkeyhint="search" spellcheck="false" aria-controls="appList">
         <button id="appSearchClear" type="button" class="search-clear" title="Suche zurücksetzen" aria-label="Suche zurücksetzen" hidden>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
         </button>
@@ -67,6 +67,9 @@
           <h1 id="currentApp">Workspace</h1>
         </div>
         <div class="toolbar-actions">
+          <button id="homeApp" class="icon-button" type="button" title="App-Übersicht" aria-label="App-Übersicht">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3zM9 20v-7h6v7"/></svg>
+          </button>
           <button id="reloadApp" class="icon-button" type="button" title="App neu laden" aria-label="App neu laden" disabled>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2 6M20 4v7h-7"/></svg>
           </button>
@@ -76,7 +79,19 @@
         </div>
       </header>
       <div class="app-stage" id="appStage">
-        <div class="empty-view" id="emptyView">
+        <section id="homeView" class="home-view" aria-labelledby="homeTitle">
+          <div class="home-content">
+            <h2>Apps</h2>
+            <div class="app-search home-search" role="search" aria-label="App-Katalog durchsuchen">
+              <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4.5 4.5"/></svg>
+              <input id="homeSearch" type="search" placeholder="Alle Apps suchen …" aria-label="Alle Apps suchen" autocomplete="off" enterkeyhint="search" spellcheck="false" aria-controls="homeApps">
+              <button id="homeSearchClear" class="search-clear" type="button" aria-label="Suche zurücksetzen" title="Suche zurücksetzen" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+            </div>
+            <div class="home-heading"><h3 id="homeTitle">Zuletzt verwendet</h3><span id="homeCount" class="app-count" aria-live="polite"></span></div>
+            <div id="homeApps" class="home-apps"></div>
+          </div>
+        </section>
+        <div class="empty-view" id="emptyView" hidden>
           <div class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M13 9h4M13 13h4"/></svg></div>
           <h2 id="emptyTitle">Dein Workspace</h2>
           <p id="emptyDescription">Wähle eine App in der Sidebar aus.</p>

@@ -1,16 +1,35 @@
-# Boiler Room – App-Plattform v28
+# Boiler Room – App-Plattform v30
 
 Vanilla JavaScript mit **klassischen `<script src="...">`-Dateien**. Keine ES-Module, keine Abhaengigkeiten, kein Build-Prozess.
 
 ## Installation
 
-Inhalt des ZIPs über den bisherigen v27-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **erhalten** (die Workspace-Zuordnungen koennen wie unten beschrieben umbenannt werden). Sie wird von `index.html` weiterhin vor allen Modulen geladen:
+Inhalt des ZIPs über den bisherigen v29-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **erhalten** (die Workspace-Zuordnungen koennen wie unten beschrieben umbenannt werden). Sie wird von `index.html` weiterhin vor allen Modulen geladen:
 
 ```html
 <script src="repos.js"></script>
 ```
 
 Ihre `originrepos` und `originrepogroups` haben weiterhin Vorrang vor den Fallback-Daten in `js/data.js`. Die Datei `repos.js` sowie eigene `img/`, `fonts/`, `icons/` und `manifest.json` sind nicht Teil dieses ZIPs und duerfen auf dem Host nicht geloescht werden.
+
+## Neu in v30: Workspace-App-Übersicht
+
+- Der Workspace startet immer mit der App-Übersicht statt einer automatisch geöffneten App. Auch der Wechsel zwischen Workspaces zeigt die Übersicht.
+- Das responsive Raster zeigt bis zu neun zuletzt im Workspace geöffnete Apps, neueste zuerst, ohne Duplikate. Vor der ersten Nutzung erscheinen bis zu neun startbare Apps aus dem Launcher in dessen Reihenfolge. Ist der Launcher leer, steht die Katalogsuche zur Verfügung.
+- Beide Suchfelder durchsuchen den gesamten Katalog nach Apps mit gültiger `repo.url`, unabhängig von Favoriten oder Gruppen. Benutzte Treffer stehen nach Nutzungsreihenfolge vor unbenutzten Treffern; diese folgen der bestehenden Relevanzbewertung. Suchergebnisse sind nicht auf neun begrenzt. Ohne Suchbegriff bleibt die Sidebar auf den ausgewählten Workspace beschränkt.
+- Erst die explizite App-Auswahl lädt den iFrame. Der Home-Button in der Toolbar zeigt die aktualisierte Übersicht; bereits geladene iFrames bleiben während der Sitzung erhalten. Reload und externer App-Link sind auf der Übersicht ausgeblendet.
+- Die globale Nutzungshistorie liegt unter `localStorage.boilerRoom.workspaceRecentApps` als Liste von Repo-Labels. Sie wird bei expliziter App-Auswahl aktualisiert, nicht bei Reload. Entfernte oder nicht mehr startbare Repos werden bei der Anzeige ignoriert. Frühere `lastApps`-Einträge werden nicht als neue Nutzungshistorie interpretiert.
+- Shell-Cache auf `shell-v30` erhöht; vorhandene Offline-Pakete bleiben erhalten. Ältere Beschreibungen zur automatischen App-Wiederherstellung und zur auf den Workspace begrenzten Suche sind durch diese Änderung überholt.
+
+Prüfung: JavaScript-Syntax, beide Offline-Testreihen, Chromium mit eingebetteten Projektdateien, simuliertem localStorage und Test-iFrames (320, 390, 700, 768, 1280 px). Produktive URLs und Repos konnten nicht getestet werden.
+
+## Neu in v29: Launcher-Aktionsleiste
+
+- Mobil (bis einschließlich 620 px) erscheint „Verwalten“ nur als Zahnrad-Button; das Workspace-Label bleibt sichtbar. Auf dem Desktop bleibt „Verwalten“ neben dem Zahnrad stehen.
+- In der Verwaltungs-/Listenansicht sind „+ App“ und „Workspace“ ausgeblendet. Info-Button und „Zurück“ (Pfeil mit Text) bleiben verfügbar; beim Wechsel zur App-Ansicht erscheinen beide ausgeblendeten Aktionen wieder.
+- Der Workspace-Service-Worker bleibt unverändert auf `shell-v28`, da ausschließlich die Hauptplattform geändert wurde.
+
+Geändert: `index.html`, `css/platform.css`, `js/launcher.js`, `README.md`.
 
 ## Neu in v28: Desktop-Layout des Offline-Managers
 

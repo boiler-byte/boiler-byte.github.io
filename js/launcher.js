@@ -4,6 +4,9 @@
 
   const modes = new Set(['list', 'apps']);
   const manageButton = document.getElementById('launcherManageButton');
+  const workspaceButton = document.getElementById('launcherWorkspaceButton');
+  const manageIcon = manageButton.querySelector('svg path');
+  const settingsIconPath = manageIcon.getAttribute('d');
   const hint = document.getElementById('launcherHint');
   const infoWrap = document.getElementById('launcherInfoWrap');
   const infoButton = document.getElementById('launcherInfoButton');
@@ -60,7 +63,11 @@
     manageButton.classList.toggle('is-active', managing);
     manageButton.setAttribute('aria-pressed', String(managing));
     manageButton.querySelector('span').textContent = managing ? 'Zurück' : 'Verwalten';
-    manageButton.querySelector('svg path').setAttribute('d', managing ? 'M19 12H5m7-7-7 7 7 7' : 'M4 6h16M4 12h16M4 18h16');
+    manageButton.setAttribute('aria-label', managing ? 'Zurück zur App-Ansicht' : 'Verwalten');
+    manageIcon.setAttribute('d', managing ? 'M19 12H5m7-7-7 7 7 7' : settingsIconPath);
+    if (managing && !addMenu.hidden) closeAddMenu();
+    addButton.hidden = managing;
+    workspaceButton.hidden = managing;
     manageButton.title = managing ? 'Zur App-Ansicht wechseln' : 'Launcher verwalten';
     if (hint) {
       const ungrouped = B.dom.launcherGrid.classList.contains('launcher-ungrouped');

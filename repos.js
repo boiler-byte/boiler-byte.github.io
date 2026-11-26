@@ -3,10 +3,10 @@ dev: { label: "Power User", preview: 'all', img: 'img/grp/dev.webp' },
 tool: { label: "Nützlich", preview: 'all', img: 'img/grp/tool.webp' },
 creative: { label: "Kreativ", preview: 'all', img: 'img/grp/tool.webp' },
 cards: { label: "Kartenspiele", preview: 'all', img: 'img/grp/cards.webp' },
-casual: { label: "Casual", preview: 'all', img: 'img/grp/riddle.webp' },
-science: { label: "Wissenschaft", preview: 'all', img: 'img/grp/dex.webp' },
+casual: { label: "Casual", preview: 'all', img: 'img/grp/casual.webp' },
+science: { label: "Wissenschaft", preview: 'all', img: 'img/grp/riddle.webp' },
 news: { label: "Infotainment", preview: 'all', img: 'img/grp/news.webp' },
-blaubeere: { label: "Blaubeere", preview: 'all', img: 'img/grp/blaubeere.webp' },
+// blaubeere: { label: "Blaubeere", preview: 'all', img: 'img/grp/blaubeere.webp' },
 alltag: { label: "Alltagshelfer", preview: 'all', img: 'img/grp/alltag.webp' },
 multiplayer: { label: "Multiplayer", preview: 'all', img: 'img/grp/multiplayer.webp'}
 }

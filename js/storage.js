@@ -7,6 +7,7 @@
   const KEY = 'boilerRoom';
   const DEFAULTS = {
     favorites: [],
+    workspaceRecentApps: [],
     favoriteOrder: [],
     launcherTypeOrder: ['game', 'tool', 'misc'],
     launcherTypeClosed: [],
@@ -44,6 +45,7 @@
     const result = {
       ...raw,
       favorites: strings(raw.favorites),
+      workspaceRecentApps: uniqueStrings(raw.workspaceRecentApps),
       favoriteOrder: strings(raw.favoriteOrder),
       launcherTypeOrder: Array.isArray(raw.launcherTypeOrder) ? uniqueStrings(raw.launcherTypeOrder) : DEFAULTS.launcherTypeOrder.slice(),
       launcherTypeClosed: uniqueStrings(raw.launcherTypeClosed),

@@ -11,7 +11,8 @@
     'workspace', 'sidebar', 'sidebarClose', 'sidebarToggle', 'backdrop', 'workspaceSelect',
     'workspaceLabel', 'appSearch', 'appSearchClear', 'appCount', 'appList', 'storageNotice', 'main', 'currentWorkspace', 'currentApp',
     'reloadApp', 'externalApp', 'emptyView', 'emptyTitle', 'emptyDescription', 'emptyLink',
-    'frames', 'loading', 'offlineManagerLink'
+    'frames', 'loading', 'offlineManagerLink', 'homeApp', 'homeView', 'homeSearch',
+    'homeSearchClear', 'homeTitle', 'homeCount', 'homeApps'
   ].map(id => [id, $(id)]));
   const mobile = window.matchMedia('(max-width: 700px)');
   const types = B.data.types;
@@ -51,7 +52,7 @@
       const records = await B.offline.snapshot();
       if (revision !== offlineRevision) return;
       offlineRecords = new Map(records.map(record => [record.id, record]));
-      if (render) renderList();
+      if (render) { renderList(); renderHome(); }
     } catch (_) { /* online URLs remain usable if browser storage is unavailable */ }
   }
 
@@ -64,6 +65,76 @@
     } catch (_) { return null; }
   }
 
+  function catalogApps() {
+    return [...repoMap.values()].filter(repo => resolveURL(repo.url));
+  }
+
+  function recentLabels() {
+    return B.storage.get('workspaceRecentApps').filter(label => resolveURL(repoMap.get(label)?.url));
+  }
+
+  function recordUsage(label) {
+    B.storage.set('workspaceRecentApps', [label, ...recentLabels().filter(item => item !== label)]);
+  }
+
+  function launcherApps() {
+    const entries = readFavorites(false);
+    const typeOf = repo => typeof repo.type === 'string' && repo.type.trim() ? repo.type : 'misc';
+    const known = [...new Set(['game', 'tool', 'misc', ...Object.keys(types), ...B.data.repos.map(typeOf)])];
+    const saved = B.storage.get('launcherTypeOrder');
+    const order = [...saved.filter(type => known.includes(type)), ...known.filter(type => !saved.includes(type))];
+    if (entries.length >= 9 && new Set(entries.map(typeOf)).size >= 2) {
+      entries.sort((a, b) => order.indexOf(typeOf(a)) - order.indexOf(typeOf(b)));
+    }
+    return entries.filter(repo => resolveURL(repo.url));
+  }
+
+  function searchCatalog(query) {
+    const rank = new Map(recentLabels().map((label, index) => [label, index]));
+    const position = repo => rank.get(repo.label) ?? Infinity;
+    return catalogApps().map((repo, index) => ({ repo, index, score: B.searchRelevance.score(repo, query) }))
+      .filter(item => item.score >= 0)
+      .sort((a, b) => (position(a.repo) - position(b.repo)) || b.score - a.score || a.index - b.index)
+      .map(item => item.repo);
+  }
+
+  function renderHome() {
+    if (ui.homeView.hidden) return;
+    const query = B.searchRelevance.normalize(ui.homeSearch.value);
+    const recent = recentLabels();
+    const repos = query ? searchCatalog(query) : (recent.length ? recent.map(label => repoMap.get(label)) : launcherApps()).slice(0, 9);
+    ui.homeTitle.textContent = query ? 'Suchergebnisse' : recent.length ? 'Zuletzt verwendet' : 'Apps aus dem Launcher';
+    ui.homeCount.textContent = String(repos.length);
+    ui.homeSearchClear.hidden = !ui.homeSearch.value;
+    ui.homeApps.replaceChildren(...repos.map(repo => createAppItem(repo)));
+    if (!repos.length) {
+      const empty = document.createElement('p');
+      empty.className = 'home-empty';
+      empty.textContent = query ? 'Keine passenden Apps gefunden.' : 'Noch keine Apps im Launcher. Suche im gesamten App-Katalog.';
+      ui.homeApps.append(empty);
+    }
+  }
+
+  function showHome() {
+    ++openToken;
+    state.app = null;
+    persist();
+    for (const entry of frames.values()) entry.frame.hidden = true;
+    ui.frames.hidden = true;
+    ui.emptyView.hidden = true;
+    ui.homeView.hidden = false;
+    ui.homeSearch.value = '';
+    setLoading(null);
+    ui.reloadApp.hidden = true;
+    ui.reloadApp.disabled = true;
+    ui.externalApp.hidden = true;
+    ui.externalApp.removeAttribute('href');
+    ui.currentApp.textContent = 'App-Übersicht';
+    document.title = workspaceLabel(state.selected) + ' · Boiler Room';
+    updateAppSelection();
+    renderHome();
+  }
+
   function workspaceExists(id) {
     return id === FAVORITES || (typeof id === 'string' && id.startsWith(GROUP_PREFIX) && groups.has(id.slice(GROUP_PREFIX.length)));
   }
@@ -72,12 +143,12 @@
     return id === FAVORITES ? 'Mein Workspace' : groups.get(id.slice(GROUP_PREFIX.length))?.label || 'Workspace';
   }
 
-  function readFavorites() {
+  function readFavorites(track = true) {
     const favorites = B.storage.get('favorites');
     const order = B.storage.get('favoriteOrder');
     const set = new Set(favorites);
     const labels = [...new Set([...order.filter(label => set.has(label)), ...favorites])];
-    favoritesSignature = JSON.stringify(labels);
+    if (track) favoritesSignature = JSON.stringify(labels);
     return labels.map(label => repoMap.get(label)).filter(Boolean);
   }
 
@@ -86,16 +157,6 @@
   }
 
   function persist() {
-    // Alte bzw. umbenannte Gruppen und Apps nicht dauerhaft als Auswahl behalten.
-    const favorites = new Set(B.storage.get('favorites'));
-    const lastApps = Object.fromEntries(Object.entries(state.lastApps).filter(([id, label]) => {
-      if (!workspaceExists(id)) return false;
-      if (id === FAVORITES) return favorites.has(label) && repoMap.has(label);
-      return groups.get(id.slice(GROUP_PREFIX.length)).repos.some(repo => repo.label === label);
-    }));
-    if (state.app !== null) lastApps[state.selected] = state.app;
-    else delete lastApps[state.selected];
-    state.lastApps = lastApps;
     B.storage.set('workspace', state);
     ui.storageNotice.hidden = B.storage.isAvailable();
   }
@@ -166,23 +227,20 @@
   function renderList() {
     const fragment = document.createDocumentFragment();
     const searching = Boolean(searchQuery);
-    const visibleRepos = searching ? activeRepos
-      .map((repo, index) => ({ repo, index, score: B.searchRelevance.score(repo, searchQuery) }))
-      .filter(item => item.score >= 0)
-      .sort((a, b) => b.score - a.score || a.index - b.index)
-      .map(item => item.repo) : activeRepos;
+    const visibleRepos = searching ? searchCatalog(searchQuery) : activeRepos;
+    const total = searching ? catalogApps().length : activeRepos.length;
     if (!visibleRepos.length) {
       const empty = document.createElement('p');
       empty.className = 'list-empty';
-      empty.textContent = !activeRepos.length
+      empty.textContent = !searching && !activeRepos.length
         ? (state.selected === FAVORITES ? 'Noch keine Favoriten.' : 'Keine Repos in dieser Gruppe.')
         : 'Keine passenden Apps gefunden.';
       fragment.append(empty);
     }
     visibleRepos.forEach(repo => fragment.append(createAppItem(repo)));
     ui.appList.replaceChildren(fragment);
-    ui.appCount.textContent = searching ? `${visibleRepos.length} / ${activeRepos.length}` : String(activeRepos.length);
-    ui.appCount.setAttribute('aria-label', searching ? `${visibleRepos.length} von ${activeRepos.length} Apps` : `${activeRepos.length} Apps`);
+    ui.appCount.textContent = searching ? `${visibleRepos.length} / ${total}` : String(total);
+    ui.appCount.setAttribute('aria-label', searching ? `${visibleRepos.length} von ${total} Apps` : `${total} Apps`);
     updateAppSelection();
   }
 
@@ -288,9 +346,15 @@
 
   async function openApp(label, save = true) {
     const token = ++openToken;
-    const repo = activeRepos.find(item => item.label === label) || null;
+    const repo = repoMap.get(label) || null;
     state.app = repo?.label || null;
-    if (save) persist();
+    if (save) {
+      if (resolveURL(repo?.url)) recordUsage(repo.label);
+      persist();
+    }
+    ui.homeView.hidden = true;
+    ui.reloadApp.hidden = false;
+    renderList();
     updateAppSelection();
     ui.currentApp.textContent = repo?.label || 'Workspace';
     document.title = (repo ? repo.label + ' · ' : '') + workspaceLabel(state.selected) + ' · Boiler Room';
@@ -325,9 +389,8 @@
     setLoading(entry);
   }
 
-  function selectWorkspace(id, initial = false) {
+  function selectWorkspace(id) {
     const previous = state.selected;
-    if (state.app && !initial) state.lastApps[previous] = state.app;
     state.selected = workspaceExists(id) ? id : FAVORITES;
     const same = state.selected === previous;
     activeRepos = members(state.selected);
@@ -338,12 +401,8 @@
     managerURL.searchParams.set('workspace', state.selected);
     ui.offlineManagerLink.href = managerURL.href;
     if (!same) resetSearch(false);
-    const wanted = (same ? state.app : null) || state.lastApps[state.selected];
-    const repo = activeRepos.find(item => item.label === wanted)
-      || activeRepos.find(item => resolveURL(item.url)) || activeRepos[0];
     renderList();
-    openApp(repo?.label || null);
-    ui.appList.querySelector('.is-active')?.scrollIntoView({ block: 'nearest' });
+    showHome();
   }
 
   function syncSidebar() {
@@ -387,14 +446,11 @@
   function refreshFavorites() {
     const before = favoritesSignature;
     const next = readFavorites();
-    if (before === favoritesSignature || state.selected !== FAVORITES) return;
-    const activeStillExists = next.some(repo => repo.label === state.app);
+    if (before === favoritesSignature) return;
+    if (state.selected !== FAVORITES) { renderHome(); return; }
     activeRepos = next;
     renderList();
-    if (!activeStillExists) {
-      const repo = activeRepos.find(item => resolveURL(item.url)) || activeRepos[0];
-      openApp(repo?.label || null);
-    } else updateAppSelection();
+    renderHome();
   }
 
   // Deep-Link hat beim Start Vorrang; ohne gueltige Gruppe gilt der gespeicherte Zustand.
@@ -418,10 +474,18 @@
 
   populatePicker();
   readFavorites();
-  selectWorkspace(initialWorkspace, true);
+  selectWorkspace(initialWorkspace);
   if (requestedGroup !== null || requestedFavorites) syncGroupURL();
   syncSidebar();
   setupSearch();
+  ui.homeApp.addEventListener('click', () => { showHome(); if (searchQuery) renderList(); });
+  ui.homeSearch.addEventListener('input', renderHome);
+  ui.homeSearch.addEventListener('search', renderHome);
+  ui.homeSearchClear.addEventListener('click', () => { ui.homeSearch.value = ''; renderHome(); ui.homeSearch.focus(); });
+  ui.homeSearch.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && ui.homeSearch.value) { event.preventDefault(); ui.homeSearch.value = ''; renderHome(); }
+    else if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); renderHome(); ui.homeSearch.blur(); }
+  });
   ui.workspaceSelect.addEventListener('change', () => {
     selectWorkspace(ui.workspaceSelect.value);
     syncGroupURL();
@@ -454,7 +518,7 @@
   if (mobile.addEventListener) mobile.addEventListener('change', handleViewport);
   else mobile.addListener(handleViewport);
   window.addEventListener('storage', event => {
-    if (event.key === 'boilerRoom' || event.key === null) refreshFavorites();
+    if (event.key === 'boilerRoom' || event.key === null) { refreshFavorites(); renderList(); renderHome(); }
   });
   window.addEventListener('pageshow', () => { refreshFavorites(); offlineInitial = refreshOffline(); });
   window.addEventListener('online', () => { offlineInitial = refreshOffline(); });

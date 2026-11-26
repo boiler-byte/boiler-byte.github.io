@@ -508,10 +508,6 @@
 .launcher-workspace-icon { width: 20px; height: 20px; flex: 0 0 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .launcher-workspace-button:hover { color: var(--text-primary); border-color: var(--cyan-border); background: rgba(44,212,255,.09); }
 .launcher-workspace-button:focus-visible { outline: 2px solid var(--cyan-base); outline-offset: 2px; }
-@media (max-width: 540px) {
-  .launcher-workspace-button { width: 44px; padding: 0; }
-  .launcher-workspace-button span { display: none; }
-}
 .launcher-info-wrap { position: relative; flex: 0 0 auto; }
 .launcher-info-button {
   display: grid;
@@ -764,6 +760,10 @@ body.launcher-touch-press, body.launcher-touch-press * {
   border-color: rgba(255,255,255,.11);
   background: rgba(255,255,255,.03);
   padding: .63rem .75rem;
+}
+@media (max-width: 620px) {
+  .launcher-manage-btn:not(.is-active) { width: 44px; min-height: 44px; padding: 0; }
+  .launcher-manage-btn:not(.is-active) > span { display: none; }
 }
 .launcher-manage-icon { width: 16px; height: 16px; flex: 0 0 16px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .launcher-view-btn:hover { color: #fff; }
