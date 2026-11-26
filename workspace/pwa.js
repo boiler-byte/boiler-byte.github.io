@@ -1,27 +1,39 @@
-/* Optional native install prompt; Safari uses its own browser menu. */
+/* Workspace installation: native prompt when available, browser-menu help otherwise. */
 (function () {
   'use strict';
   const installButton = document.getElementById('installWorkspace');
+  const installHelp = document.getElementById('installWorkspaceHelp');
   const offlineNotice = document.getElementById('offlineNotice');
   const standalone = window.matchMedia('(display-mode: standalone)');
   let promptEvent = null;
   let prompting = false;
+  let installedHere = false;
+
+  const isInstalled = () => installedHere || standalone.matches || navigator.standalone === true;
 
   function updateInstallButton() {
-    installButton.hidden = !promptEvent || standalone.matches || navigator.standalone === true;
+    installButton.hidden = isInstalled();
     installButton.disabled = prompting;
+    if (installButton.hidden || promptEvent || prompting) installHelp.hidden = true;
+    if (promptEvent || prompting || installButton.hidden) installButton.removeAttribute('aria-expanded');
+    else installButton.setAttribute('aria-expanded', String(!installHelp.hidden));
   }
   function updateOfflineNotice() {
     offlineNotice.hidden = navigator.onLine;
   }
   window.addEventListener('beforeinstallprompt', event => {
-    if (standalone.matches || navigator.standalone === true) return;
+    if (isInstalled()) return;
     event.preventDefault();
     promptEvent = event;
     updateInstallButton();
   });
   installButton.addEventListener('click', async () => {
-    if (!promptEvent || prompting) return;
+    if (isInstalled() || prompting) return;
+    if (!promptEvent) {
+      installHelp.hidden = !installHelp.hidden;
+      updateInstallButton();
+      return;
+    }
     const event = promptEvent;
     promptEvent = null;
     prompting = true;
@@ -30,8 +42,9 @@
     catch (_) { /* browser dismissed or invalidated the prompt */ }
     finally { prompting = false; updateInstallButton(); }
   });
-  window.addEventListener('appinstalled', () => { promptEvent = null; updateInstallButton(); });
+  window.addEventListener('appinstalled', () => { installedHere = true; promptEvent = null; updateInstallButton(); });
   if (standalone.addEventListener) standalone.addEventListener('change', updateInstallButton);
+  else if (standalone.addListener) standalone.addListener(updateInstallButton);
   window.addEventListener('online', updateOfflineNotice);
   window.addEventListener('offline', updateOfflineNotice);
   updateInstallButton();

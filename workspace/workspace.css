@@ -191,6 +191,9 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .toolbar-menu-offline, .toolbar-position-toggle { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 44px; padding: 7px 9px; border-radius: 8px; background: transparent; text-align: left; font-size: 12px; }
 .toolbar-menu-offline { border: 1px solid transparent; color: var(--accent-muted); }
 .toolbar-menu-offline:hover { border-color: var(--border); }
+#installWorkspace { color: var(--accent); }
+#installWorkspace:disabled { opacity: .5; cursor: default; }
+.toolbar-install-help { margin: 0; padding: 4px 9px 8px; color: var(--muted); font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
 #boilerRoomLink .brand-mark { width: 28px; height: 28px; border-radius: 7px; font-size: 14px; }
 .toolbar-position-toggle { border: 1px solid var(--border); background: var(--surface); }
 .toolbar-position-toggle:hover { border-color: var(--accent-muted); color: var(--accent); }

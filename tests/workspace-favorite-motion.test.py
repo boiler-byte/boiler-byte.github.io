@@ -95,6 +95,57 @@ with sync_playwright() as p:
     assert page.locator('.favorite-exit-layer > [data-label="B"]').count() == 1
     page.wait_for_timeout(350)
     assert page.locator('.favorite-exit-layer').count() == 0
+    # v45: real dropdown layout with a simulated browser install event.
+    page.evaluate('''() => {
+      const original=window.matchMedia.bind(window);
+      window.installMode = new EventTarget();
+      installMode.matches=false;
+      window.matchMedia=query=>query==='(display-mode: standalone)'?installMode:original(query);
+    }''')
+    page.add_script_tag(content=(WS/'pwa.js').read_text())
+    button=page.locator('#installWorkspace')
+    help_text=page.locator('#installWorkspaceHelp')
+    page.locator('#toolbarMenuToggle').click()
+    assert button.is_visible() and not help_text.is_visible()
+    button.click()
+    assert help_text.is_visible() and button.get_attribute('aria-expanded')=='true'
+    button.click()
+    assert not help_text.is_visible()
+    page.locator('#toolbarPositionToggle').click()
+    page.wait_for_timeout(400)
+    page.locator('#toolbarMenuToggle').click()
+    assert page.locator('.toolbar-bottom').count()==1 and button.is_visible()
+    button.click()
+    assert help_text.is_visible()
+    assert help_text.bounding_box()['y'] >= 0
+    # A late native prompt replaces the manual hint and remains one-shot.
+    page.evaluate('''() => {
+      window.promptCalls=0;
+      window.offerInstall=()=>{
+        const e=new Event('beforeinstallprompt',{cancelable:true});
+        e.prompt=()=>{promptCalls++;return new Promise(resolve=>window.finishPrompt=resolve)};
+        e.userChoice=Promise.resolve({outcome:'dismissed'});
+        window.dispatchEvent(e);
+        return e.defaultPrevented;
+      };
+    }''')
+    assert page.evaluate('offerInstall()')
+    assert not help_text.is_visible()
+    button.click()
+    assert button.is_disabled() and page.evaluate('promptCalls')==1
+    page.evaluate('finishPrompt()')
+    page.wait_for_function('!document.getElementById("installWorkspace").disabled')
+    button.click()
+    assert help_text.is_visible() and page.evaluate('promptCalls')==1
+    # Standalone mode hides the button and hint; a new native offer still works.
+    page.evaluate('installMode.matches=true; installMode.dispatchEvent(new Event("change"))')
+    assert not button.is_visible() and not help_text.is_visible()
+    page.evaluate('installMode.matches=false; installMode.dispatchEvent(new Event("change"))')
+    assert button.is_visible()
+    assert page.evaluate('offerInstall()')
+    button.click()
+    page.evaluate('window.dispatchEvent(new Event("appinstalled")); finishPrompt()')
+    assert not button.is_visible() and not help_text.is_visible()
     assert not errors, errors
     browser.close()
-print('OK: real Chromium layout, local add, external remove/reorder, rapid changes, empty grid, hidden view, reduced motion.')
+print('OK: real Chromium layout, local add, external remove/reorder, rapid changes, empty grid, hidden view, reduced motion, toolbar install and fallback.')
