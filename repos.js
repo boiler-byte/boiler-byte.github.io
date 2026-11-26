@@ -547,6 +547,17 @@ const originrepos = [
     tags: ['Musik', 'Drumpad']
 },
 {
+    label: "Strike Sampler",
+    // img: 'img/app/drums.webp',
+    // preview: 'img/app/drums-preview.webp',
+    description: 'Richtiges HTML-Schlagzeug.',
+    type: 'tool',
+    workspace: 'casual',
+    url: 'https://boiler-byte.github.io/strikesampler/',
+    year: 2026,
+    tags: ['Musik', 'Drumpad']
+},
+{
     label: "Dateiumbenenner",
     img: 'img/dateiumbenenner.png',
     status: 'beta',

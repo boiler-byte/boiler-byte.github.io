@@ -47,14 +47,16 @@ progress::-moz-progress-bar { background: var(--accent); }
 .offline-search svg { width: 16px; height: 16px; }
 .offline-search input { min-width: 0; width: 100%; border: 0; outline: 0; background: transparent; font-size: 16px; }
 .offline-list { border: 1px solid var(--border); border-radius: 12px; background: var(--sidebar); overflow: hidden; }
-.offline-row { display: grid; grid-template-columns: minmax(0,1fr) minmax(150px, auto) minmax(0,auto); align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+/* Keep long manifest limitations from determining the desktop column widths. */
+.offline-row { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.15fr) max-content; align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
 .offline-row:last-child { border: 0; }
 .offline-row-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.offline-row-name > div { min-width: 0; }
 .offline-row-name .app-icon { width: 38px; height: 38px; }
 .offline-row-name strong, .offline-row-name small { display: block; overflow-wrap: anywhere; }
 .offline-row-name strong { font-size: 14px; font-weight: 600; }
 .offline-row-name small, .offline-state small { color: var(--muted); font-size: 11px; display: block; }
-.offline-state { font-size: 12px; overflow-wrap: anywhere; }
+.offline-state { min-width: 0; font-size: 12px; overflow-wrap: anywhere; }
 .offline-state > span { display: flex; align-items: baseline; gap: 7px; font-weight: 500; }
 .offline-state > span::before { content: ''; display: inline-block; width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: #727d8a; }
 .offline-state:is([data-state="ready"], [data-state="saved"]) > span { color: #a0dec0; }
