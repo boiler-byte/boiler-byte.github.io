@@ -52,17 +52,42 @@ with sync_playwright() as p:
         assert abs(a['width']-7/3)<0.05 and abs(a['height']-7/3)<0.05
         assert a['x']+a['width']<=b['x']
         assert abs(a['y']+a['height']/2-b['y']-b['height']/2)<1
+    def check_card_layout(card, height, icon_size):
+        item=card.locator('.app-item')
+        icon=card.locator('.app-icon')
+        copy=card.locator('.app-copy')
+        a,b,c=item.bounding_box(),icon.bounding_box(),copy.bounding_box()
+        assert a['height']==height and b['width']==b['height']==icon_size, (a,b)
+        assert abs(a['x']+a['width']/2-b['x']-b['width']/2)<1
+        assert abs(a['y']+a['height']/2-b['y']-b['height']/2)<1
+        assert c['height']==20 and abs(a['y']+a['height']-c['y']-c['height']-8)<1
+        assert b['y']+b['height']<=c['y']
+        name=card.locator('.app-name')
+        assert name.evaluate('(e)=>getComputedStyle(e).textOverflow')=='ellipsis'
+        assert name.evaluate('(e)=>getComputedStyle(e).whiteSpace')=='nowrap'
+    check_card_layout(card_a,154,56)
+    check_card_layout(card_b,154,56)
     page.evaluate("""window.v47Node=document.querySelector('#homeWorkspaceApps > [data-label="A"]'); setInstalled(["A","E"])""")
     page.wait_for_function('v47Node.querySelector(".app-item").classList.contains("is-installed")')
     assert page.evaluate("""v47Node===document.querySelector('#homeWorkspaceApps > [data-label="A"]')""")
-    assert card_a.locator('.app-icon').bounding_box()['width']==68
+    assert card_a.locator('.app-icon').bounding_box()['width']==72
     assert card_b.locator('.app-icon').bounding_box()['width']==56
-    assert page.locator('#homeApps .app-icon').bounding_box()['width']==68
+    check_card_layout(card_a,154,72)
+    check_card_layout(card_b,154,56)
+    assert page.locator('#homeApps .app-icon').bounding_box()['width']==72
     assert 'Offline' not in card_a.inner_text()
     assert 'Offline installiert' in card_a.locator('.app-item').get_attribute('aria-label')
     page.set_viewport_size({'width':390,'height':844})
-    assert card_a.locator('.app-icon').bounding_box()['width']==54
+    assert card_a.locator('.app-icon').bounding_box()['width']==72
     assert card_b.locator('.app-icon').bounding_box()['width']==44
+    check_card_layout(card_a,134,72)
+    check_card_layout(card_b,134,44)
+    name=card_a.locator('.app-name')
+    name.evaluate('(e)=>e.textContent="Ein sehr langer App-Titel mit vielen weiteren Worten"')
+    assert name.evaluate('(e)=>e.scrollWidth>e.clientWidth')
+    check_card_layout(card_a,134,72)
+    assert abs(card_a.locator('.app-copy').bounding_box()['y']-card_b.locator('.app-copy').bounding_box()['y'])<1
+    name.evaluate('(e)=>e.textContent="A"')
     page.set_viewport_size({'width':1024,'height':850})
     page.evaluate('setInstalled([])')
     page.wait_for_function('!v47Node.querySelector(".app-item").classList.contains("is-installed")')
