@@ -47,8 +47,10 @@
   let offlineRecords = new Map();
   let openToken = 0;
   let offlineRevision = 0;
-  let edit = null, gesture = null, deferredHome = false;
-  const offlineBusy = new Set();
+  let edit = null, press = null, homeRefreshPending = false;
+  let favoriteGridVisible = false;
+  const favoriteMotion = new Map();
+  let favoriteExitLayer = null;
   let offlineInitial = refreshOffline();
 
   async function refreshOffline(render = true) {
@@ -57,7 +59,10 @@
       const records = await B.offline.snapshot();
       if (revision !== offlineRevision) return;
       offlineRecords = new Map(records.map(record => [record.id, record]));
-      if (render) { renderHome(); if (!ui.toolbarMenu.hidden) renderToolbarRecent(); }
+      if (render) {
+        if (edit || press) homeRefreshPending = true; else renderHome();
+        if (!ui.toolbarMenu.hidden) renderToolbarRecent();
+      }
     } catch (_) { /* online URLs remain usable if browser storage is unavailable */ }
   }
 
@@ -92,30 +97,155 @@
       .map(item => item.repo);
   }
 
-  function renderHomeGrid(grid, repos, emptyMessage) {
-    grid.replaceChildren(...repos.map(repo => createAppItem(repo, true, false, grid.id)));
-    if (!repos.length && emptyMessage) {
-      const empty = document.createElement('p');
-      empty.className = 'home-empty';
-      empty.textContent = emptyMessage;
-      grid.append(empty);
+  // Keep live favorite cards keyed by label. Only actual membership/order
+  // changes animate; worker snapshots and duplicate storage events do not.
+  function settleFavoriteMotion() {
+    for (const [node, animation] of favoriteMotion) animation.cancel();
+    favoriteMotion.clear();
+    favoriteExitLayer?.remove(); favoriteExitLayer = null;
+  }
+  function playFavoriteMotion(node, frames, duration, cleanup = () => {}) {
+    favoriteMotion.get(node)?.cancel();
+    const animation = node.animate(frames, { duration, easing: 'cubic-bezier(.22,.61,.36,1)' });
+    favoriteMotion.set(node, animation);
+    const finish = () => {
+      if (favoriteMotion.get(node) !== animation) return;
+      favoriteMotion.delete(node); cleanup();
+    };
+    animation.finished.then(finish, finish);
+  }
+  function favoriteVisual(node) {
+    const rect = node.getBoundingClientRect();
+    return { rect, opacity: getComputedStyle(node).opacity };
+  }
+  function animateFavoriteExit(grid, node, visual, origin) {
+    if (!visual.rect.width || !visual.rect.height) return;
+    if (!favoriteExitLayer) {
+      favoriteExitLayer = document.createElement('div');
+      favoriteExitLayer.className = 'favorite-exit-layer';
+      favoriteExitLayer.inert = true;
+      favoriteExitLayer.setAttribute('aria-hidden', 'true');
+      grid.append(favoriteExitLayer);
     }
+    const layer = favoriteExitLayer;
+    // The removed card is purely visual and no longer occupies a grid cell.
+    // Use a clone so no active controls, focus or pointer listeners survive.
+    const ghost = node.cloneNode(true);
+    ghost.classList.add('favorite-exit');
+    ghost.style.left = `${visual.rect.left - origin.left}px`;
+    ghost.style.top = `${visual.rect.top - origin.top}px`;
+    ghost.style.width = `${visual.rect.width}px`;
+    ghost.style.height = `${visual.rect.height}px`;
+    layer.append(ghost);
+    playFavoriteMotion(ghost, [
+      { opacity: visual.opacity, transform: 'scale(1)' },
+      { opacity: 0, transform: 'scale(.88)' }
+    ], 220, () => {
+      ghost.remove();
+      if (!layer.children.length) { layer.remove(); if (favoriteExitLayer === layer) favoriteExitLayer = null; }
+    });
+  }
+  function emptyHomeItem(message) {
+    const empty = document.createElement('p');
+    empty.className = 'home-empty'; empty.textContent = message;
+    return empty;
+  }
+  function updateFavoriteCard(card, repo) {
+    const offline = Boolean(B.offline.localEntry(repo, offlineRecords.get(repo.label)));
+    const button = card.querySelector('.app-item');
+    const type = card.querySelector('.app-type');
+    const label = types[repo.type]?.label || repo.type || 'App';
+    type.textContent = label + (offline ? ' · Offline' : '');
+    button.title = repo.label + (offline ? ' · Offline-Paket vorhanden' : '');
+    // A card inherited from a different workspace might still have its star.
+    card.querySelector('.workspace-fav')?.remove();
+  }
+  function renderFavoriteGrid(grid, repos, emptyMessage, animate) {
+    const old = [...grid.children].filter(node => node.classList.contains('app-card') || node.classList.contains('home-empty'));
+    const oldCards = new Map(old.filter(node => node.classList.contains('app-card')).map(node => [node.dataset.label, node]));
+    const empty = old.find(node => node.classList.contains('home-empty'));
+    const next = repos.map(repo => {
+      const card = oldCards.get(repo.label) || createAppItem(repo, true);
+      updateFavoriteCard(card, repo); return card;
+    });
+    if (!next.length && emptyMessage) next.push(empty || emptyHomeItem(emptyMessage));
+    const changed = old.length !== next.length || old.some((node, i) => node !== next[i]);
+    if (!changed) return;
+    const motion = animate && !reducedMotion.matches && !surfaceTransition && typeof grid.animate === 'function';
+    const visuals = motion ? new Map(old.map(node => [node, favoriteVisual(node)])) : new Map();
+    // A newer change starts at the actual displayed positions. Let unrelated
+    // exits finish, but remove an old ghost if that same card is re-added.
+    if (!motion) settleFavoriteMotion();
+    else {
+      for (const node of old) {
+        const animation = favoriteMotion.get(node);
+        if (animation) { favoriteMotion.delete(node); animation.cancel(); }
+      }
+      const returning = new Set(next.map(node => node.dataset.label || ''));
+      if (favoriteExitLayer) {
+        for (const ghost of [...favoriteExitLayer.children]) {
+          if (!returning.has(ghost.dataset.label || '')) continue;
+          const animation = favoriteMotion.get(ghost);
+          favoriteMotion.delete(ghost); animation?.cancel(); ghost.remove();
+        }
+        if (!favoriteExitLayer.children.length) { favoriteExitLayer.remove(); favoriteExitLayer = null; }
+      }
+    }
+    const nextSet = new Set(next);
+    for (const node of old) if (!nextSet.has(node)) node.remove();
+    next.forEach((node, i) => {
+      if (grid.children[i] !== node) grid.insertBefore(node, grid.children[i] || null);
+    });
+    if (!motion) return;
+    const origin = grid.getBoundingClientRect();
+    for (const node of old) if (!nextSet.has(node)) animateFavoriteExit(grid, node, visuals.get(node), origin);
+    for (const node of next) {
+      const before = visuals.get(node), after = node.getBoundingClientRect();
+      if (!after.width || !after.height) continue;
+      if (!before || !before.rect.width || !before.rect.height) {
+        playFavoriteMotion(node, [
+          { opacity: 0, transform: 'translateY(8px) scale(.92)' },
+          { opacity: 1, transform: 'translateY(0) scale(1)' }
+        ], 280);
+        continue;
+      }
+      const dx = before.rect.left - after.left, dy = before.rect.top - after.top;
+      const sx = before.rect.width / after.width, sy = before.rect.height / after.height;
+      if (Math.abs(dx) < .5 && Math.abs(dy) < .5 && Math.abs(sx - 1) < .005 && Math.abs(sy - 1) < .005 && Number(before.opacity) >= .999) continue;
+      playFavoriteMotion(node, [
+        { opacity: before.opacity, transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, transformOrigin: 'top left' },
+        { opacity: 1, transform: 'none', transformOrigin: 'top left' }
+      ], 300);
+    }
+  }
+  function renderHomeGrid(grid, repos, emptyMessage) {
+    const favorites = grid === ui.homeWorkspaceApps && state.selected === FAVORITES;
+    grid.classList.toggle('reorderable', favorites);
+    if (favorites) {
+      if (!favoriteGridVisible) { settleFavoriteMotion(); grid.replaceChildren(); }
+      renderFavoriteGrid(grid, repos, emptyMessage, favoriteGridVisible);
+      favoriteGridVisible = true;
+      return;
+    }
+    if (grid === ui.homeWorkspaceApps) { favoriteGridVisible = false; settleFavoriteMotion(); }
+    grid.replaceChildren(...repos.map(repo => createAppItem(repo, true)));
+    if (!repos.length && emptyMessage) grid.append(emptyHomeItem(emptyMessage));
   }
 
   function renderHome() {
-    if (ui.homeView.hidden) return;
-    if (gesture) { deferredHome = true; return; }
-    deferredHome = false;
+    if (ui.homeView.hidden) { favoriteGridVisible = false; settleFavoriteMotion(); return; }
+    finishPress(false);
+    closeEdit(false);
+    homeRefreshPending = false;
     const query = B.searchRelevance.normalize(ui.homeSearch.value);
     const recent = recentLabels();
     const repos = query ? searchCatalog(query) : recent.slice(0, 9).map(label => repoMap.get(label));
     ui.homeRecentSection.hidden = !query && !recent.length;
     ui.homeWorkspaceSection.hidden = Boolean(query);
+    if (query) { favoriteGridVisible = false; settleFavoriteMotion(); }
     ui.homeTitle.textContent = query ? 'Suchergebnisse' : 'Zuletzt verwendet';
     ui.homeCount.textContent = String(repos.length);
     ui.homeSearchClear.hidden = !ui.homeSearch.value;
-    const editRepos = edit?.grid === ui.homeApps.id ? repos : (!query ? activeRepos.filter(repo => resolveURL(repo.url)) : []);
-    if (edit && !editRepos.some(repo => repo.label === edit.label)) edit = null;
     renderHomeGrid(ui.homeApps, repos, query ? 'Keine passenden Apps gefunden.' : '');
     if (!query) {
       const workspaceRepos = activeRepos.filter(repo => resolveURL(repo.url));
@@ -228,6 +358,7 @@
     // A cancelled animation must never hide the destination of a newer request.
     settleSurfaces();
     const previous = activeSurface;
+    if (next !== ui.homeView || previous !== ui.homeView) { favoriteGridVisible = false; settleFavoriteMotion(); }
     activeSurface = next;
     if (!previous || previous === next || reducedMotion.matches || typeof next.animate !== 'function') {
       settleSurfaces();
@@ -257,7 +388,8 @@
   }
 
   function showHome() {
-    endEdit();
+    finishPress(false);
+    closeEdit(false);
     setToolbarMenu(false);
     ++openToken;
     state.app = null;
@@ -336,25 +468,23 @@
     button.title = favorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen';
     button.setAttribute('aria-label', button.title + ': ' + repo.label);
     button.addEventListener('click', () => {
-      const scope = button.closest('.home-apps');
       const oldStar = button.querySelector('svg');
       const rect = oldStar.getBoundingClientRect();
       const added = B.favorites.toggleFavorite(repo.label);
       refreshFavorites();
-      // Re-rendering may remove a favorite from Favoriten. Restore focus
-      // to the corresponding star if it remains available, otherwise the search.
-      const replacement = [...scope.querySelectorAll('.workspace-fav')].find(el => el.dataset.label === repo.label);
-      if (replacement) {
-        animateFavoriteStar(replacement.querySelector('svg'), added);
-      } else if (!added && !reducedMotion.matches && typeof oldStar.animate === 'function' && rect.width && rect.height) {
+      // The new favorite is hidden on re-render; a detached visual star finishes
+      // the original bounce without keeping a second interactive control alive.
+      if (!reducedMotion.matches && typeof oldStar.animate === 'function' && rect.width && rect.height) {
         const ghost = oldStar.cloneNode(true);
         ghost.classList.add('workspace-fav-ghost');
-        ghost.style.left = `${rect.left + rect.width / 2 - 13}px`;
-        ghost.style.top = `${rect.top + rect.height / 2 - 13}px`;
+        if (added) ghost.classList.add('is-fav');
+        const size = added ? 13 : 26;
+        ghost.style.left = `${rect.left + rect.width / 2 - size / 2}px`;
+        ghost.style.top = `${rect.top + rect.height / 2 - size / 2}px`;
         document.body.append(ghost);
-        animateFavoriteStar(ghost, false, true);
+        animateFavoriteStar(ghost, added, true);
       }
-      (replacement || (ui.homeSearchWrap.hidden ? ui.homeSearchToggle : ui.homeSearch)).focus({ preventScroll: true });
+      (ui.homeSearchWrap.hidden ? ui.homeSearchToggle : ui.homeSearch).focus({ preventScroll: true });
     });
     return button;
   }
@@ -393,7 +523,7 @@
     }
   }
 
-  function createAppItem(repo, card = false, recent = false, gridId = null) {
+  function createAppItem(repo, card = false, recent = false) {
     const item = document.createElement('div');
     item.className = card ? 'app-card' : 'app-row';
     const button = document.createElement('button');
@@ -422,246 +552,254 @@
     dot.setAttribute('aria-hidden', 'true');
     button.append(icon, copy, dot);
     button.addEventListener('click', event => {
-      if (gridId && (button._suppressClick || edit)) {
-        event.preventDefault();
-        button._suppressClick = false;
-        return;
-      }
+      if (card && (item.classList.contains('is-editing') || item._suppressClickUntil > Date.now())) { event.preventDefault(); return; }
       openApp(repo.label);
       if (recent) ui.toolbarMenuToggle.focus({ preventScroll: true });
     });
     item.append(button);
-    if (!recent) item.append(createFavoriteButton(repo));
-    if (gridId) setupCardEditing(item, button, icon, repo, gridId);
+    if (card) {
+      item.dataset.label = repo.label;
+      button.setAttribute('aria-haspopup', 'true');
+      button.draggable = false;
+      bindAppEdit(item, button, repo);
+    }
+    if (!recent && !B.favorites.isFavorite(repo.label)) item.append(createFavoriteButton(repo));
     return item;
   }
 
-  // A single icon is edited at a time. Pointer events cover mouse, pen and touch;
-  // reordering is permitted only in the unfiltered Favorites workspace grid.
-  const HOLD_MS = 450;
-  const MOVE_PX = 9;
-  function editableGrid(grid) {
-    return grid === ui.homeWorkspaceApps.id && state.selected === FAVORITES && !B.searchRelevance.normalize(ui.homeSearch.value);
-  }
-  function sameEdit(card) {
-    return edit && edit.label === card.dataset.label && edit.grid === card.dataset.grid;
-  }
-  function editCards() {
-    return [...ui.homeView.querySelectorAll('.app-card[data-grid]')];
-  }
-  function syncEditCards() {
-    editCards().forEach(syncEditCard);
-  }
-  function syncEditCard(card) {
-    const selected = Boolean(sameEdit(card));
-    card.classList.toggle('is-editing', selected);
-    card.classList.toggle('is-holding', selected && Boolean(gesture?.held));
-    const controls = card.querySelector('.app-edit-controls');
-    controls.hidden = !selected || Boolean(gesture?.held);
-    card.querySelector('.workspace-fav').hidden = selected;
-    const toggle = controls.querySelector('.app-edit-menu-toggle');
-    const panel = card.querySelector('.app-edit-menu');
-    const open = selected && !gesture?.held && Boolean(edit.menu);
-    toggle.setAttribute('aria-expanded', String(open));
-    panel.hidden = !open;
-    if (open) renderEditMenu(panel, edit);
-  }
-  function enterEdit(card) {
-    if (!sameEdit(card)) edit = { label: card.dataset.label, grid: card.dataset.grid, menu: false };
-    else edit.menu = false;
-    syncEditCards();
-  }
-  function endEdit(restoreFocus = false) {
-    if (gesture) finishGesture(null, true);
-    const card = editCards().find(sameEdit);
-    edit = null;
-    syncEditCards();
-    if (restoreFocus) card?.querySelector('.app-item')?.focus({ preventScroll: true });
-  }
-  function editButton(className, text, label) {
+  // One edit session at a time. Long press works with mouse, pen and touch.
+  const HOLD_MS = 480, MOVE_THRESHOLD = 10;
+  const editButton = (className, label, glyph) => {
     const button = document.createElement('button');
-    button.type = 'button'; button.className = className; button.textContent = text;
+    button.type = 'button'; button.className = className;
     button.title = label; button.setAttribute('aria-label', label);
+    button.textContent = glyph;
     return button;
+  };
+  function flushHomeRefresh() {
+    if (homeRefreshPending && !edit && !press) renderHome();
   }
-  function setupCardEditing(card, button, icon, repo, grid) {
-    card.dataset.grid = grid; card.dataset.label = repo.label;
-    const controls = document.createElement('div');
-    controls.className = 'app-edit-controls';
-    const more = editButton('app-edit-menu-toggle', '⋯', 'Kontextmenü: ' + repo.label);
+  function closeEdit(refresh = true) {
+    if (edit) {
+      const current = edit; edit = null;
+      current.item.classList.remove('is-editing', 'edit-ready');
+      current.item.querySelectorAll('.app-edit-control, .app-context-menu').forEach(el => el.remove());
+    }
+    if (refresh) flushHomeRefresh();
+  }
+  function beginEdit(item, repo) {
+    closeEdit(false);
+    edit = { item, repo, menu: null, busy: false, description: null, checking: false };
+    item.classList.add('is-editing');
+    return edit;
+  }
+  function showEditControls(current) {
+    if (edit !== current || current.item.classList.contains('edit-ready')) return;
+    const { item, repo } = current;
+    const more = editButton('app-edit-control app-edit-more', 'Kontextmenü: ' + repo.label, '⋯');
+    const exit = editButton('app-edit-control app-edit-exit', 'Edit-Modus beenden', '×');
     more.setAttribute('aria-expanded', 'false');
-    const close = editButton('app-edit-close', '×', 'Edit-Modus beenden: ' + repo.label);
-    const panel = document.createElement('div');
-    panel.className = 'app-edit-menu'; panel.setAttribute('role', 'group');
-    panel.setAttribute('aria-label', 'Offline-Aktionen: ' + repo.label);
-    controls.append(more, close); card.append(controls, panel);
     more.addEventListener('click', () => {
-      if (!sameEdit(card)) return;
-      if (edit.menu) { edit.menu = false; syncEditCards(); }
-      else openEditMenu(edit, repo);
+      if (current.menu) { hideContext(current); return; }
+      openContext(current, more);
     });
-    close.addEventListener('click', () => endEdit(true));
-    icon.addEventListener('dragstart', event => event.preventDefault());
+    exit.addEventListener('click', () => { closeEdit(); item.querySelector('.app-item')?.focus({preventScroll:true}); });
+    item.append(more, exit); item.classList.add('edit-ready');
+  }
+  function hideContext(current) {
+    current.menu?.remove(); current.menu = null;
+    current.item.querySelector('.app-edit-more')?.setAttribute('aria-expanded', 'false');
+  }
+  function positionContext(current) {
+    if (!current.menu) return;
+    const menu = current.menu, card = current.item.getBoundingClientRect(), view = ui.homeView.getBoundingClientRect();
+    menu.style.maxWidth = `${Math.max(120, view.width - 24)}px`;
+    menu.style.left = `${Math.max(view.left + 8 - card.left, Math.min(0, view.right - 8 - card.left - menu.offsetWidth))}px`;
+    const below = view.bottom - card.top - 32, above = card.top - view.top - 8;
+    const flip = below < menu.scrollHeight && above > below;
+    menu.style.maxHeight = `${Math.max(64, flip ? above : below)}px`;
+    menu.style.top = flip ? `${-menu.offsetHeight - 8}px` : '30px';
+  }
+  function paintContext(current) {
+    if (edit !== current || !current.menu) return;
+    const { repo, menu, description } = current;
+    const busy = current.busy || offlineOperations.has(repo.label);
+    menu.replaceChildren();
+    const action = (label, run, disabled = false) => {
+      const button = document.createElement('button');
+      button.type = 'button'; button.textContent = label; button.disabled = disabled;
+      button.addEventListener('click', run); menu.append(button);
+    };
+    const note = text => { const p = document.createElement('p'); p.textContent = text; menu.append(p); };
+    B.favorites.load();
+    action(B.favorites.isFavorite(repo.label) ? 'Favorit entfernen' : 'Favorit hinzufügen', () => {
+      B.favorites.toggleFavorite(repo.label); closeEdit(false); refreshFavorites(); flushHomeRefresh();
+    }, busy);
+    const installed = offlineRecords.get(repo.label);
+    if (repo.boiler_room_pwa === true) {
+      if (current.checking) note('Version wird geprüft …');
+      if (description?.kind === 'package') {
+        const status = B.offline.status(description, installed);
+        if (status === 'update') action('Update', () => runContextAction(current, 'update'), busy || current.checking || !navigator.onLine || !B.offline.supported);
+        if (!installed || status === 'incomplete') action('Installieren', () => runContextAction(current, 'install'), busy || current.checking || !navigator.onLine || !B.offline.supported);
+      }
+      if (current.error) note(current.error);
+      else if (description?.kind === 'unknown' || description?.kind === 'unsupported') note(description.reason || 'Kein Offline-Paket verfügbar.');
+    }
+    // Existing packages can always be explicitly removed, even after revoking PWA opt-in.
+    if (installed) action('Deinstallieren', () => runContextAction(current, 'remove'), busy || !B.offline.supported);
+    if (busy) note(current.progress || 'Offline-Vorgang läuft …');
+    positionContext(current);
+  }
+  async function openContext(current, more) {
+    const menu = document.createElement('div');
+    menu.className = 'app-context-menu';
+    menu.setAttribute('role', 'group'); menu.setAttribute('aria-label', 'App-Aktionen');
+    current.item.append(menu); current.menu = menu;
+    more.setAttribute('aria-expanded', 'true');
+    current.error = '';
+    const eligible = current.repo.boiler_room_pwa === true && B.offline.describe(current.repo).kind === 'candidate';
+    current.checking = eligible && !offlineOperations.has(current.repo.label);
+    paintContext(current);
+    if (!eligible || offlineOperations.has(current.repo.label)) return;
+    try {
+      // The worker uses the existing 24h / 7d interval and shared persistent cache.
+      // No forced check, no network request while offline.
+      current.description = B.offline.supported
+        ? await B.offline.discover(current.repo, { force: false, cacheOnly: !navigator.onLine })
+        : await B.offline.cachedDescription(current.repo);
+    } catch (error) {
+      current.description = await B.offline.cachedDescription(current.repo).catch(() => null);
+      current.error = error.message;
+    } finally {
+      current.checking = false; paintContext(current);
+    }
+  }
+  const offlineOperations = new Set();
+  async function runContextAction(current, action) {
+    const { repo } = current;
+    if (current.busy || offlineOperations.has(repo.label)) return;
+    offlineOperations.add(repo.label); current.busy = true; current.error = ''; current.progress = '';
+    paintContext(current);
+    try {
+      if (action === 'remove') {
+        await B.offline.request('remove', { id: repo.label });
+        offlineRecords.delete(repo.label);
+      } else {
+        const result = await B.offline.request('install', { repo: { label: repo.label, url: repo.url } }, progress => {
+          current.progress = `${progress.done}/${progress.total} Dateien`; paintContext(current);
+        });
+        offlineRecords.set(repo.label, { ...result, complete: true });
+        current.description = { kind: 'package', pkg: result };
+      }
+      B.toast?.showMessage(action === 'remove' ? 'App deinstalliert.' : action === 'update' ? 'App aktualisiert.' : 'App installiert.');
+    } catch (error) {
+      current.error = error.message; B.toast?.showMessage(error.message);
+    } finally {
+      offlineOperations.delete(repo.label); current.busy = false; current.progress = '';
+      await refreshOffline(); paintContext(current);
+      if (edit && edit !== current && edit.repo.label === repo.label) paintContext(edit);
+    }
+  }
+  function bindAppEdit(item, button, repo) {
     button.addEventListener('pointerdown', event => {
-      if (event.button !== 0 || !event.isPrimary || !icon.contains(event.target) || gesture) return;
-      button._suppressClick = false;
-      const g = gesture = { card, button, icon, capture: event.target, grid, id: event.pointerId, x: event.clientX, y: event.clientY, held: false, target: null };
-      const hold = () => {
-        if (gesture !== g) return;
-        g.held = true; button._suppressClick = true;
-        enterEdit(card);
-        try { g.capture.setPointerCapture(g.id); } catch (_) {}
-      };
-      // A second grab of an already edited favorite can drag immediately.
-      if (sameEdit(card) && editableGrid(grid)) hold();
-      else g.timer = setTimeout(hold, HOLD_MS);
+      if (!event.isPrimary || event.button !== 0 || press) return;
+      if (edit?.item !== item) closeEdit(false);
+      const grid = item.parentElement;
+      const reorderable = grid === ui.homeWorkspaceApps && state.selected === FAVORITES;
+      const g = { item, button, repo, grid, reorderable, id: event.pointerId, type: event.pointerType,
+        x: event.clientX, y: event.clientY, lastY: event.clientY, held: false, moved: false, dragging: false, timer: 0 };
+      press = g;
+      g.timer = setTimeout(() => {
+        if (press !== g || !item.isConnected) return;
+        g.held = true; g.current = beginEdit(item, repo);
+        try { ui.homeView.setPointerCapture(g.id); } catch (_) {}
+      }, HOLD_MS);
     });
     button.addEventListener('contextmenu', event => {
       event.preventDefault();
-      // Native touch context menus must not interrupt an active hold.
-      if (!gesture) enterEdit(card);
+      if (press) return; // touch-generated contextmenu during a long press
+      const current = edit?.item === item ? edit : beginEdit(item, repo);
+      showEditControls(current);
     });
     button.addEventListener('keydown', event => {
       if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
-        event.preventDefault(); enterEdit(card); more.focus();
-      } else if (sameEdit(card) && editableGrid(grid) && event.altKey && ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)) {
-        event.preventDefault();
-        const cards = [...card.parentElement.querySelectorAll('.app-card')];
-        const offset = {ArrowLeft:-1,ArrowRight:1,ArrowUp:-3,ArrowDown:3}[event.key];
-        const target = cards[cards.indexOf(card) + offset];
-        if (target) { moveFavorite(repo.label, target.dataset.label); editCards().find(sameEdit)?.querySelector('.app-item').focus(); }
+        event.preventDefault(); showEditControls(edit?.item === item ? edit : beginEdit(item, repo));
+        item.querySelector('.app-edit-more')?.focus();
       }
     });
-    syncEditCard(card);
+    button.addEventListener('dragstart', event => event.preventDefault());
   }
-  function dragMove(event) {
-    const g = gesture;
-    if (!g || event.pointerId !== g.id) return;
-    const distance = Math.hypot(event.clientX - g.x, event.clientY - g.y);
-    if (!g.held) {
-      if (distance > MOVE_PX) { clearTimeout(g.timer); g.button._suppressClick = true; }
-      return;
-    }
-    if (!editableGrid(g.grid) || (!g.ghost && distance < MOVE_PX)) return;
-    event.preventDefault();
-    if (!g.ghost) {
-      const rect = g.icon.getBoundingClientRect();
-      g.ghost = g.icon.cloneNode(true); g.ghost.classList.add('app-drag-ghost');
-      g.ghost.style.width = rect.width + 'px'; g.ghost.style.height = rect.height + 'px';
-      document.body.append(g.ghost); g.card.classList.add('is-dragging');
-    }
-    g.ghost.style.left = event.clientX + 'px'; g.ghost.style.top = event.clientY + 'px';
-    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('.app-card');
-    const next = target && target !== g.card && target.parentElement === ui.homeWorkspaceApps ? target : null;
-    if (g.target !== next) { g.target?.classList.remove('is-drop-target'); g.target = next; next?.classList.add('is-drop-target'); }
+  function startDrag(g) {
+    settleFavoriteMotion();
+    g.dragging = true; g.original = [...g.grid.children];
+    const rect = g.item.getBoundingClientRect();
+    g.offsetX = g.x - rect.left; g.offsetY = g.y - rect.top;
+    g.ghost = g.item.cloneNode(true); g.ghost.classList.add('app-drag-ghost');
+    g.ghost.setAttribute('aria-hidden','true'); g.ghost.inert = true;
+    g.ghost.style.width = `${rect.width}px`; g.ghost.style.height = `${rect.height}px`;
+    document.body.append(g.ghost); g.item.classList.add('is-dragging');
   }
-  function finishGesture(event, cancel = false) {
-    const g = gesture;
-    if (!g || (event && event.pointerId !== g.id)) return;
-    clearTimeout(g.timer); gesture = null;
-    if (g.capture.hasPointerCapture(g.id)) g.capture.releasePointerCapture(g.id);
-    g.ghost?.remove(); g.target?.classList.remove('is-drop-target'); g.card.classList.remove('is-dragging');
-    if (g.held) {
-      g.button._suppressClick = true;
-      if (!cancel && g.target && editableGrid(g.grid)) moveFavorite(g.card.dataset.label, g.target.dataset.label);
-      else syncEditCards();
-    }
-    if (deferredHome) {
-      if (g.held || cancel) renderHome();
-      else setTimeout(() => { if (deferredHome) renderHome(); }, 0);
+  function moveDrag(g, x, y) {
+    g.ghost.style.left = `${x - g.offsetX}px`; g.ghost.style.top = `${y - g.offsetY}px`;
+    const target = document.elementFromPoint(x, y)?.closest('.app-card');
+    if (target && target !== g.item && target.parentElement === g.grid) {
+      const children = [...g.grid.children];
+      g.grid.insertBefore(g.item, children.indexOf(g.item) < children.indexOf(target) ? target.nextSibling : target);
     }
   }
-  function moveFavorite(label, target) {
-    // Keep non-launchable favorites in their existing slots; share the order
-    // with the platform launcher, and read current storage before writing.
-    if (!editableGrid(ui.homeWorkspaceApps.id)) return;
-    const all = readFavorites(false).map(repo => repo.label);
-    const visible = all.filter(label => resolveURL(repoMap.get(label)?.url));
-    const from = visible.indexOf(label), to = visible.indexOf(target);
-    if (from < 0 || to < 0 || from === to) return;
-    visible.splice(from, 1); visible.splice(to, 0, label);
+  function saveDragOrder(g) {
+    const visible = [...g.grid.querySelectorAll('.app-card')].map(el => el.dataset.label);
+    const visibleSet = new Set(visible);
+    const favorites = B.storage.get('favorites'), favoriteSet = new Set(favorites);
+    const order = [...new Set([...B.storage.get('favoriteOrder').filter(label => favoriteSet.has(label)), ...favorites])];
+    // Replace only the displayed favorite slots; preserve other stored favorites.
+    const sorted = visible.filter(label => favoriteSet.has(label));
     let index = 0;
-    B.favorites.setOrder(all.map(label => resolveURL(repoMap.get(label)?.url) ? visible[index++] : label));
-    refreshFavorites();
+    B.favorites.setOrder(order.map(label => visibleSet.has(label) ? sorted[index++] : label));
+    activeRepos = readFavorites(); ui.storageNotice.hidden = B.storage.isAvailable();
   }
-  document.addEventListener('pointermove', dragMove, { passive: false });
-  document.addEventListener('pointerup', event => finishGesture(event));
-  document.addEventListener('pointercancel', event => finishGesture(event, true));
-  document.addEventListener('lostpointercapture', event => { if (event.target === gesture?.capture) finishGesture(event, true); });
-  window.addEventListener('blur', () => finishGesture(null, true));
-  document.addEventListener('pointerdown', event => {
-    if (edit?.menu && !event.target.closest('.app-edit-menu, .app-edit-menu-toggle')) {
-      edit.menu = false; syncEditCards();
+  function finishPress(commit = true) {
+    const g = press; if (!g) return;
+    press = null; clearTimeout(g.timer);
+    if (g.raf) cancelAnimationFrame(g.raf);
+    if (g.held || g.moved) g.item._suppressClickUntil = Date.now() + 450;
+    if (g.dragging) {
+      g.ghost.remove(); g.item.classList.remove('is-dragging');
+      if (commit) saveDragOrder(g); else g.grid.append(...g.original);
     }
-  }, true);
-
-  async function openEditMenu(current, repo) {
-    current.menu = true;
-    current.checking = repo.boiler_room_pwa === true && B.offline.supported;
-    current.description = null; current.error = '';
-    const request = current.request = {};
-    syncEditCards();
-    try {
-      // The service worker owns the shared 24h/7d interval, including checks
-      // from other tabs and the Offline Manager. Never force a network check.
-      if (repo.boiler_room_pwa === true && B.offline.supported) {
-        await offlineInitial;
-        const cached = await B.offline.cachedDescription(repo);
-        if (current.request !== request) return;
-        current.description = cached;
-        if (edit === current) syncEditCards();
-        if (navigator.onLine && B.offline.describe(repo).kind === 'candidate') {
-          const description = await B.offline.discover(repo, { force: false });
-          if (current.request === request) current.description = description;
-        }
-      }
-    } catch (error) { if (current.request === request) current.error = error.message; }
-    finally {
-      if (current.request === request) { current.checking = false; if (edit === current) syncEditCards(); }
+    if (g.held && commit) showEditControls(g.current);
+    else if (g.held) closeEdit(false);
+    try { if (ui.homeView.hasPointerCapture(g.id)) ui.homeView.releasePointerCapture(g.id); } catch (_) {}
+  }
+  document.addEventListener('pointermove', event => {
+    const g = press; if (!g || event.pointerId !== g.id) return;
+    const distance = Math.hypot(event.clientX - g.x, event.clientY - g.y);
+    if (!g.held && distance > MOVE_THRESHOLD) { clearTimeout(g.timer); g.moved = true; }
+    if (!g.held && g.moved && g.reorderable && g.type === 'touch') {
+      ui.homeView.scrollTop += g.lastY - event.clientY; event.preventDefault();
     }
-  }
-  function renderEditMenu(panel, current) {
-    const repo = repoMap.get(current.label);
-    const record = offlineRecords.get(current.label);
-    const description = current.description;
-    const busy = offlineBusy.has(current.label);
-    const online = navigator.onLine && B.offline.supported;
-    panel.replaceChildren();
-    const note = text => { const p = document.createElement('p'); p.textContent = text; panel.append(p); };
-    const action = (text, kind, enabled) => {
-      const button = editButton('app-edit-action', text, text + ': ' + current.label);
-      button.disabled = !enabled || busy;
-      button.addEventListener('click', () => runEditAction(current, repo, kind)); panel.append(button);
-    };
-    if (busy) note('Offline-Vorgang läuft …');
-    else if (current.checking) note('Version wird geprüft …');
-    if (current.error) note(current.error);
-    if (repo.boiler_room_pwa === true && description?.kind === 'package') {
-      const status = B.offline.status(description, record);
-      if (status === 'update') action('Update', 'update', online && !current.checking);
-      else if (!record || status === 'incomplete') action('Installieren', 'install', online && !current.checking);
+    g.lastY = event.clientY;
+    if (!g.held || !g.reorderable || distance <= MOVE_THRESHOLD && !g.dragging) return;
+    if (!g.dragging) startDrag(g);
+    event.preventDefault(); moveDrag(g, event.clientX, event.clientY);
+    g.dragX = event.clientX; g.dragY = event.clientY;
+    if (!g.raf) {
+      const tick = () => {
+        if (press !== g || !g.dragging) return;
+        const rect = ui.homeView.getBoundingClientRect();
+        const delta = g.dragY < rect.top + 45 ? -9 : g.dragY > rect.bottom - 45 ? 9 : 0;
+        if (delta) { ui.homeView.scrollTop += delta; moveDrag(g, g.dragX, g.dragY); }
+        g.raf = requestAnimationFrame(tick);
+      };
+      g.raf = requestAnimationFrame(tick);
     }
-    if (record) action('Deinstallieren', 'remove', B.offline.supported && !current.checking);
-    if (!panel.children.length) note(repo.boiler_room_pwa !== true ? 'Keine Offline-Aktionen verfügbar.' : description?.reason || (!online ? 'Offline: keine Prüfung möglich.' : 'Kein Update verfügbar.'));
-  }
-  async function runEditAction(current, repo, kind) {
-    if (offlineBusy.has(repo.label) || (kind !== 'remove' && (repo.boiler_room_pwa !== true || !navigator.onLine))) return;
-    offlineBusy.add(repo.label); current.error = ''; syncEditCards();
-    try {
-      if (kind === 'remove') await B.offline.request('remove', { id: repo.label });
-      else await B.offline.request('install', { repo: { label: repo.label, url: repo.url } });
-      offlineInitial = refreshOffline(); await offlineInitial;
-      if (repo.boiler_room_pwa === true) {
-        const description = await B.offline.cachedDescription(repo);
-        current.description = description;
-        if (edit?.label === repo.label) edit.description = description;
-      }
-      B.toast?.showMessage(repo.label + ': ' + ({remove:'deinstalliert',install:'installiert',update:'aktualisiert'}[kind]));
-    } catch (error) {
-      current.error = error.message;
-      B.toast?.showMessage(repo.label + ': ' + error.message);
-    } finally { offlineBusy.delete(repo.label); syncEditCards(); }
-  }
+  }, { passive: false });
+  document.addEventListener('pointerup', event => { if (press?.id === event.pointerId) { finishPress(); if (!edit && homeRefreshPending) setTimeout(flushHomeRefresh, 0); } });
+  document.addEventListener('pointercancel', event => { if (press?.id === event.pointerId) { finishPress(false); flushHomeRefresh(); } });
+  window.addEventListener('blur', () => { finishPress(false); closeEdit(); });
+  ui.homeView.addEventListener('scroll', () => { if (edit?.menu) positionContext(edit); }, { passive: true });
+  window.addEventListener('resize', () => { if (edit?.menu) positionContext(edit); });
 
   function updateAppSelection() {
     for (const button of ui.toolbarRecentApps.querySelectorAll('.app-item')) {
@@ -732,7 +870,8 @@
   }
 
   async function openApp(label, save = true) {
-    endEdit();
+    finishPress(false);
+    closeEdit(false);
     setToolbarMenu(false);
     const token = ++openToken;
     const repo = repoMap.get(label) || null;
@@ -854,6 +993,7 @@
     window.prompt('Link zum Teilen kopieren:', url);
   });
   document.addEventListener('pointerdown', event => {
+    if (edit && !edit.item.contains(event.target) && !press) { closeEdit(false); if (homeRefreshPending) setTimeout(flushHomeRefresh, 0); }
     if (!ui.toolbarMenu.hidden && !ui.toolbarMenu.contains(event.target) && !ui.toolbarMenuToggle.contains(event.target) && event.target !== ui.toolbarMenuBackdrop) {
       setToolbarMenu(false);
     }
@@ -881,17 +1021,18 @@
   });
   document.addEventListener('keydown', event => {
     if (event.defaultPrevented) return;
-    if (event.key === 'Escape' && edit) {
-      event.preventDefault(); endEdit(true);
-    } else if (event.key === 'Escape' && !ui.toolbarMenu.hidden) {
+    if (event.key === 'Escape' && (edit || press)) {
+      event.preventDefault(); const item = edit?.item; finishPress(false); closeEdit(); item?.querySelector('.app-item')?.focus({preventScroll:true}); return;
+    }
+    if (event.key === 'Escape' && !ui.toolbarMenu.hidden) {
       event.preventDefault();
       setToolbarMenu(false, true);
     }
   });
-  const handleMotionPreference = () => { if (reducedMotion.matches) { if (surfaceTransition) settleSurfaces(); settleToolbarPosition(); } };
+  const handleMotionPreference = () => { if (reducedMotion.matches) { if (surfaceTransition) settleSurfaces(); settleToolbarPosition(); settleFavoriteMotion(); } };
   if (reducedMotion.addEventListener) reducedMotion.addEventListener('change', handleMotionPreference);
   else reducedMotion.addListener(handleMotionPreference);
-  const handleViewport = () => { settleToolbarPosition(); setToolbarMenu(false); };
+  const handleViewport = () => { finishPress(false); closeEdit(); settleToolbarPosition(); settleFavoriteMotion(); setToolbarMenu(false); };
   if (mobile.addEventListener) mobile.addEventListener('change', handleViewport);
   else mobile.addListener(handleViewport);
   window.addEventListener('storage', event => {

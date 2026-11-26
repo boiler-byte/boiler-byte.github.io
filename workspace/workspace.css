@@ -219,22 +219,34 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .toolbar-menu-recent[hidden] + .toolbar-menu-footer { border-top: 0; }
 .toolbar-menu-footer .storage-notice { padding: 4px 9px; margin: 0; }
 
-/* v43: long-press editing in the overview; only the Favorites grid can reorder. */
-.home-apps .app-icon { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; transition: transform .16s ease; }
-.home-apps .app-icon img { pointer-events: none; -webkit-user-drag: none; }
-.app-card.is-editing { z-index: 2; }
-.app-card.is-editing .app-icon { transform: rotate(-7deg); }
-.app-card.is-holding .app-icon { transform: rotate(-7deg) scale(1.07); }
-.app-card.is-editing .app-item { border-color: var(--accent-muted); }
-.app-card.is-dragging .app-icon { opacity: .25; }
-.app-card.is-drop-target .app-item { outline: 2px dashed var(--accent); outline-offset: -3px; }
-.app-edit-controls { position: absolute; top: 5px; left: 5px; right: 5px; display: flex; justify-content: space-between; pointer-events: none; }
-.app-edit-controls button { display: grid; place-items: center; pointer-events: auto; width: 34px; height: 34px; padding: 0; background: #101216; border: 1px solid #42464e; border-radius: 50%; font-size: 22px; line-height: 1; color: var(--text); }
-.app-edit-controls button:hover { border-color: var(--accent); }
-.app-edit-menu { position: absolute; top: 42px; left: 5px; width: max(100% - 10px, 130px); max-width: 220px; padding: 5px; background: #171b22; border: 1px solid #42464e; border-radius: 10px; box-shadow: 0 6px 20px #0008; z-index: 3; }
-.app-card:nth-child(3n) .app-edit-menu { left: auto; right: 5px; }
-.app-edit-menu p { margin: 5px; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
-.app-edit-action { display: block; width: 100%; padding: 8px 6px; border: 0; border-radius: 5px; background: transparent; text-align: left; overflow-wrap: anywhere; }
-.app-edit-action:not(:disabled):hover { background: #30343a; }
-.app-drag-ghost { position: fixed; z-index: 100; pointer-events: none; transform: translate(-50%, -50%) rotate(-7deg) scale(1.08); box-shadow: 0 5px 18px #0009; opacity: .95; }
-@media (prefers-reduced-motion: reduce) { .home-apps .app-icon { transition: none; } }
+/* v43: long-press edit controls, context actions and favorites-only sorting. */
+.home-apps .app-card .app-item { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; transition: transform 150ms ease; }
+.home-apps.reorderable .app-item { touch-action: none; }
+.home-apps .app-card.is-editing { z-index: 3; }
+.home-apps .app-card.is-editing .app-item { transform: rotate(-3deg); border-color: var(--accent-muted); }
+.app-edit-control { position: absolute; z-index: 2; top: -8px; width: 34px; height: 34px; padding: 0; border: 1px solid #42464e; border-radius: 50%; background: #101216; color: var(--text); display: grid; place-items: center; font-size: 23px; line-height: 1; }
+.app-edit-more { left: -5px; }
+.app-edit-exit { right: -5px; }
+.app-edit-control:hover { border-color: var(--accent); color: var(--accent); }
+.app-card.is-editing .workspace-fav { visibility: hidden; }
+.app-context-menu { position: absolute; z-index: 5; min-width: 165px; width: max-content; padding: 5px; border: 1px solid var(--border); border-radius: 10px; background: var(--toolbar); box-shadow: 0 8px 26px #000a; overflow: auto; }
+.app-context-menu button { display: block; width: 100%; text-align: left; padding: 9px 10px; border: 0; border-radius: 6px; background: transparent; white-space: normal; }
+.app-context-menu button:not(:disabled):hover, .app-context-menu button:focus-visible { background: var(--surface); color: var(--accent); }
+.app-context-menu p { max-width: 220px; margin: 4px 8px; color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
+.home-apps .app-card.is-dragging { opacity: .25; }
+.app-drag-ghost { position: fixed; z-index: 50; pointer-events: none; opacity: .95; transform: rotate(-3deg); }
+.app-drag-ghost .app-item { background: var(--surface); border: 1px solid var(--accent-muted); border-radius: 13px; flex-direction: column; justify-content: center; text-align: center; padding: 14px 8px; margin: 0; }
+.app-drag-ghost .app-icon { width: 56px; height: 56px; font-size: 24px; }
+.app-drag-ghost .app-copy { flex: none; width: 100%; }
+.app-drag-ghost .app-name { white-space: normal; overflow-wrap: anywhere; }
+.app-drag-ghost .active-dot, .app-drag-ghost .app-edit-control, .app-drag-ghost .workspace-fav { display: none; }
+.workspace-fav-ghost.is-fav { width: 13px; height: 13px; color: var(--favorite-active); }
+@media (max-width: 430px) { .app-drag-ghost .app-icon { width: 44px; height: 44px; font-size: 20px; } }
+@media (prefers-reduced-motion: reduce) { .home-apps .app-card .app-item { transition: none; } }
+
+/* v44: favorite exits overlay the grid without taking up a slot or accepting input. */
+.home-apps.reorderable { position: relative; }
+.favorite-exit-layer { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.home-apps .favorite-exit-layer .favorite-exit { position: absolute; pointer-events: none; margin: 0; }
+.favorite-exit-layer * { pointer-events: none !important; }
+@media (prefers-reduced-motion: reduce) { .favorite-exit-layer { display: none; } }

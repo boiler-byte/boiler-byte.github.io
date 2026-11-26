@@ -5,7 +5,7 @@ const M = self.BoilerRoomOfflineModel;
 const scope = new URL(self.registration.scope);
 const url = path => new URL(path, scope).href;
 const prefix = M.prefix(scope);
-const shellCache = `${prefix}shell-v43`;
+const shellCache = `${prefix}shell-v44`;
 const dataCache = `${prefix}data-v1`;
 const indexCache = `${prefix}offline-index-v1`;
 const packagePrefix = `${prefix}offline-app-v1:`;

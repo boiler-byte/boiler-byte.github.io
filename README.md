@@ -1,10 +1,10 @@
-# Boiler Room – App-Plattform v43
+# Boiler Room – App-Plattform v44
 
 Vanilla JavaScript mit **klassischen `<script src="...">`-Dateien**. Keine ES-Module, keine Abhaengigkeiten, kein Build-Prozess.
 
 ## Installation
 
-Inhalt des ZIPs über den bisherigen v42-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **erhalten** (die Workspace-Zuordnungen koennen wie unten beschrieben umbenannt werden). Sie wird von `index.html` weiterhin vor allen Modulen geladen:
+Inhalt des ZIPs über den bisherigen v43-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **erhalten** (die Workspace-Zuordnungen koennen wie unten beschrieben umbenannt werden). Sie wird von `index.html` weiterhin vor allen Modulen geladen:
 
 ```html
 <script src="repos.js"></script>
@@ -12,16 +12,20 @@ Inhalt des ZIPs über den bisherigen v42-Projektstand kopieren. Die produktive `
 
 Ihre `originrepos` und `originrepogroups` haben weiterhin Vorrang vor den Fallback-Daten in `js/data.js`. Die Datei `repos.js` sowie eigene `img/`, `fonts/`, `icons/` und `manifest.json` sind nicht Teil dieses ZIPs und duerfen auf dem Host nicht geloescht werden.
 
-## Neu in v43: Workspace – App-Übersicht
+## Neu in v44: Animierte Favoriten im Workspace
 
-- App-Icon ca. 450 ms mit Finger, Stift oder Maus gedrückt halten: Das Icon kippt leicht. Nach dem Loslassen erscheinen links das Drei-Punkte-Kontextmenü und rechts ein rundes X zum Beenden des Edit-Modus. Die normale kurze Betätigung öffnet die App wie bisher.
-- Ausschließlich im ungesuchten Favoriten-Bereich können Apps nach dem Halten per Drag & Drop umgeordnet werden. Das Ziel wird markiert; die neue Reihenfolge wird gemeinsam mit dem Plattform-Launcher in `favoriteOrder` gespeichert. Gruppen, zuletzt verwendete Apps und Suchergebnisse können nicht umgeordnet werden.
-- Das Kontextmenü steht in allen Bereichen der App-Übersicht zur Verfügung. Beim Öffnen wird für `boiler_room_pwa: true` der vorhandene Versionsprüfmechanismus verwendet: frühestens nach 24 Stunden bei installierten bzw. sieben Tagen bei nicht installierten Paketen erfolgt ein erneuter Netzwerkabruf. Offline werden vorhandene Prüfergebnisse genutzt. Die Fristen gelten gemeinsam mit dem Offline-Manager.
-- „Update“ bei abweichendem Paketstand, „Installieren“ bei gültiger `boiler-room.json` und fehlendem oder unvollständigem Paket, „Deinstallieren“ bei vorhandenem Paket. Installation und Update benötigen die bestehende Offline-Freigabe, einen kompatiblen Manifeststand und eine Online-Verbindung. Bereits gespeicherte Pakete können auch ohne aktuelle Freigabe entfernt werden. Die Aktionen nutzen den vorhandenen Service Worker; Favoriten und Katalogeinträge werden nicht gelöscht.
-- Tastatur: Kontextmenü-Taste oder Umschalt+F10 aktiviert den Edit-Modus; Escape beendet ihn. Alt+Pfeiltaste auf dem ausgewählten Favoriten verschiebt ihn.
-- Shell-Cache `shell-v43`; vorhandene Offline-Pakete bleiben erhalten.
+- Bei sichtbarem Favoriten-Raster werden neu hinzugefügte Apps in 280 ms eingeblendet und leicht vergrößert. Entfernte Karten blenden in 220 ms aus und schrumpfen; sie sind sofort nicht mehr bedienbar.
+- Die verbleibenden Karten gleiten in 300 ms an ihre neuen Rasterpositionen (auch bei geänderter Favoritenreihenfolge aus einem anderen Tab). Unveränderte Karten werden nicht neu aufgebaut oder erneut animiert.
+- Änderungen aus der Hauptplattform werden genauso animiert wie lokale Änderungen. Beim ersten Laden, bei nicht sichtbaren Favoriten und bei aktivierter Systemeinstellung für reduzierte Bewegung werden die Karten ohne Übergang angezeigt. Die bestehende Drag-and-drop- und Stern-Animation bleibt erhalten.
+- Neuer Shell-Cache `shell-v44`; gespeicherte Einstellungen und Offline-Pakete bleiben erhalten.
 
-Prüfung: JavaScript-Syntax und beide Node.js-Offline-Testreihen bestanden. Der geplante Browser-End-to-End-Test wurde durch die Zugriffsbeschränkung auf den lokalen Testserver blockiert. Kein realer Touch-Gerätetest; die produktive `repos.js` liegt nicht vor.
+## Neu in v43: Workspace-App-Kontextmenü und Favoriten-Reihenfolge
+
+- App-Karten in der Workspace-Übersicht etwa 480 ms gedrückt halten (Maus, Touch oder Stift): Die Karte kippt leicht. Beim Loslassen erscheinen links das Drei-Punkte-Menü und rechts ein rundes × zum Verlassen des Edit-Modus. Auch Rechtsklick und Umschalt+F10 öffnen den Edit-Modus; Escape beendet ihn.
+- Nur im Favoriten-Raster kann die Karte nach dem langen Drücken per Drag-and-drop umsortiert werden. Die gemeinsame Einstellung `favoriteOrder` bleibt erhalten und wird auch von der Hauptplattform verwendet. Suchergebnisse, zuletzt verwendete Apps und Gruppen sind nicht sortierbar.
+- Das Kontextmenü bietet „Favorit hinzufügen“ bzw. „Favorit entfernen“. Der separate Stern wird beim Rendern bereits favorisierter Apps nicht mehr angezeigt. Beim Hinzufügen über den Stern läuft die bisherige Sprung-Animation zu Ende, bevor er verschwindet.
+- Bei `boiler_room_pwa: true` prüft das Öffnen des Kontextmenüs das Manifest automatisch, sofern das bestehende Prüfintervall verstrichen ist (24 Stunden bei installierten, sieben Tage bei nicht installierten Apps). Offline wird nur der vorhandene Versionscache gelesen. Installieren wird bei einem gültigen, offlinefähigen Manifest für noch nicht installierte bzw. unvollständige Pakete angeboten; Update bei einer verfügbaren neuen Paketversion; Deinstallieren bei vorhandenen Paketen (auch nach Entzug der Freigabe).
+- Installieren, Aktualisieren und Entfernen nutzen denselben Service Worker wie der Offline-Manager. Bestehende Offline-Pakete und Einstellungen bleiben erhalten; neuer Shell-Cache `shell-v43`.
 
 ## Neu in v42: Workspace-Toolbar-Dropdown
 
@@ -222,7 +226,7 @@ Keine Authentifizierung, Weiterleitungen (außer der üblichen Verzeichnis-URL, 
 
 Der Manager bleibt aus der Workspace-Sidebar erreichbar. Einzel-/Sammelbereitstellung, Reparatur, Versionsupdate und Entfernen bleiben erhalten. Updates werden atomar gespeichert; bei einem fehlgeschlagenen Download bleibt das alte Paket erhalten. Installierte Pakete können offline entfernt werden, ohne Favoriten oder App-Nutzerdaten zu löschen. Speicher ist browserprofilbezogen und kann vom Browser freigegeben werden.
 
-Produktive `repos.js` und eigene Ressourcen erhalten; `repo.offline` wird ignoriert und kann gelöscht werden. Jede kompatible App benötigt eine eigene `boiler-room.json`. Bestehende v24-Pakete werden nicht pauschal gelöscht; sie bleiben nur dann als Offline-Einstieg nutzbar, wenn ihre gespeicherte URL zu `repo.url` passt. Sie können nach dem Manifest-Update neu bereitgestellt oder entfernt werden. Aktuelle Shell: `shell-v43`. Nach dem Deployment alle alten Workspace-Tabs/PWA-Fenster schließen und online erneut öffnen, damit der neue Worker aktiviert wird.
+Produktive `repos.js` und eigene Ressourcen erhalten; `repo.offline` wird ignoriert und kann gelöscht werden. Jede kompatible App benötigt eine eigene `boiler-room.json`. Bestehende v24-Pakete werden nicht pauschal gelöscht; sie bleiben nur dann als Offline-Einstieg nutzbar, wenn ihre gespeicherte URL zu `repo.url` passt. Sie können nach dem Manifest-Update neu bereitgestellt oder entfernt werden. Aktuelle Shell: `shell-v44`. Nach dem Deployment alle alten Workspace-Tabs/PWA-Fenster schließen und online erneut öffnen, damit der neue Worker aktiviert wird.
 
 Beispiel: `workspace/apps/offline-demo/` enthält den Notizblock samt Manifest und Changelog. Bei produktiver `repos.js` kann er optional als normaler Repo-Eintrag mit `url: 'workspace/apps/offline-demo/index.html'` und `boiler_room_pwa: true` aufgenommen werden.
 
