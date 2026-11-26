@@ -60,7 +60,18 @@
       if (revision !== offlineRevision) return;
       offlineRecords = new Map(records.map(record => [record.id, record]));
       if (render) {
-        if (edit || press) homeRefreshPending = true; else renderHome();
+        if (edit || press) {
+          homeRefreshPending = true;
+          if (!press) {
+            for (const grid of [ui.homeApps, ui.homeWorkspaceApps]) {
+              for (const button of grid.querySelectorAll('.app-item')) {
+                const repo = repoMap.get(button.dataset.label);
+                if (repo) updateAppItemStatus(button, repo);
+              }
+            }
+            if (edit?.menu) positionContext(edit);
+          }
+        } else renderHome();
         if (!ui.toolbarMenu.hidden) renderToolbarRecent();
       }
     } catch (_) { /* online URLs remain usable if browser storage is unavailable */ }
@@ -150,13 +161,16 @@
     empty.className = 'home-empty'; empty.textContent = message;
     return empty;
   }
+  function updateAppItemStatus(button, repo) {
+    const installed = Boolean(B.offline.localEntry(repo, offlineRecords.get(repo.label)));
+    const typeLabel = resolveURL(repo.url) ? (types[repo.type]?.label || repo.type || 'App') : 'Information';
+    button.classList.toggle('is-installed', installed);
+    button.title = repo.label;
+    // Keep the type and installation status accessible without visible secondary text.
+    button.setAttribute('aria-label', repo.label + ' · ' + typeLabel + (installed ? ' · Offline installiert' : ''));
+  }
   function updateFavoriteCard(card, repo) {
-    const offline = Boolean(B.offline.localEntry(repo, offlineRecords.get(repo.label)));
-    const button = card.querySelector('.app-item');
-    const type = card.querySelector('.app-type');
-    const label = types[repo.type]?.label || repo.type || 'App';
-    type.textContent = label + (offline ? ' · Offline' : '');
-    button.title = repo.label + (offline ? ' · Offline-Paket vorhanden' : '');
+    updateAppItemStatus(card.querySelector('.app-item'), repo);
     // A card inherited from a different workspace might still have its star.
     card.querySelector('.workspace-fav')?.remove();
   }
@@ -538,15 +552,11 @@
     name.className = 'app-name';
     name.textContent = repo.label;
     const type = document.createElement('span');
-    type.className = 'app-type';
+    type.className = 'app-type-dot';
     type.dataset.type = repo.type || '';
-    type.textContent = resolveURL(repo.url) ? (types[repo.type]?.label || repo.type || 'App') : 'Information';
-    const offlineEntry = B.offline.localEntry(repo, offlineRecords.get(repo.label));
-    if (offlineEntry) {
-      type.textContent += ' · Offline';
-      button.title = repo.label + ' · Offline-Paket vorhanden';
-    }
-    copy.append(name, type);
+    type.setAttribute('aria-hidden', 'true');
+    copy.append(type, name);
+    updateAppItemStatus(button, repo);
     const dot = document.createElement('span');
     dot.className = 'active-dot';
     dot.setAttribute('aria-hidden', 'true');
@@ -591,6 +601,7 @@
     closeEdit(false);
     edit = { item, repo, menu: null, busy: false, description: null, checking: false };
     item.classList.add('is-editing');
+    showEditControls(edit);
     return edit;
   }
   function showEditControls(current) {
@@ -712,19 +723,18 @@
       press = g;
       g.timer = setTimeout(() => {
         if (press !== g || !item.isConnected) return;
-        g.held = true; g.current = beginEdit(item, repo);
+        g.held = true; beginEdit(item, repo);
         try { ui.homeView.setPointerCapture(g.id); } catch (_) {}
       }, HOLD_MS);
     });
     button.addEventListener('contextmenu', event => {
       event.preventDefault();
       if (press) return; // touch-generated contextmenu during a long press
-      const current = edit?.item === item ? edit : beginEdit(item, repo);
-      showEditControls(current);
+      if (edit?.item !== item) beginEdit(item, repo);
     });
     button.addEventListener('keydown', event => {
       if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
-        event.preventDefault(); showEditControls(edit?.item === item ? edit : beginEdit(item, repo));
+        event.preventDefault(); if (edit?.item !== item) beginEdit(item, repo);
         item.querySelector('.app-edit-more')?.focus();
       }
     });
@@ -768,8 +778,8 @@
       g.ghost.remove(); g.item.classList.remove('is-dragging');
       if (commit) saveDragOrder(g); else g.grid.append(...g.original);
     }
-    if (g.held && commit) showEditControls(g.current);
-    else if (g.held) closeEdit(false);
+    // A drop ends editing; a stationary long press keeps the controls open.
+    if (g.dragging || (g.held && !commit)) closeEdit(false);
     try { if (ui.homeView.hasPointerCapture(g.id)) ui.homeView.releasePointerCapture(g.id); } catch (_) {}
   }
   document.addEventListener('pointermove', event => {

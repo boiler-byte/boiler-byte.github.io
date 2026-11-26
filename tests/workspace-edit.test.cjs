@@ -57,14 +57,16 @@ vm.runInContext(fs.readFileSync(path.join(root,'workspace.js'),'utf8'),context);
 const flush=()=>new Promise(r=>setImmediate(r));
 const grid=ui('homeWorkspaceApps'),cards=()=>grid.querySelectorAll('.app-card');
 const button=(c,label)=>c.querySelectorAll('button').find(b=>b.textContent===label);
-function press(c,type='mouse'){const b=c.querySelector('.app-item');b.emit('pointerdown',{isPrimary:true,button:0,pointerId:1,pointerType:type,clientX:50,clientY:50});const t=[...timers.entries()].at(-1);timers.delete(t[0]);t[1]();assert(c.classList.contains('is-editing'));assert(!c.querySelector('.app-edit-more'));}
+function press(c,type='mouse'){const b=c.querySelector('.app-item');b.emit('pointerdown',{isPrimary:true,button:0,pointerId:1,pointerType:type,clientX:50,clientY:50});const t=[...timers.entries()].at(-1);timers.delete(t[0]);t[1]();assert(c.classList.contains('is-editing'));assert(c.querySelector('.app-edit-more'));assert(c.querySelector('.app-edit-exit'));}
 function release(){document.emit('pointerup',{pointerId:1});}
+function assertClosed(c){assert(!c.classList.contains('is-editing'));assert(!c.classList.contains('is-dragging'));assert(!c.classList.contains('edit-ready'));assert(!c.querySelector('.app-edit-more'));assert(!c.querySelector('.app-edit-exit'));assert(!document.body.querySelector('.app-drag-ghost'));}
 function menu(c){c.querySelector('.app-edit-more').click();}
 (async()=>{
  await flush();assert.equal(cards().length,2);assert.equal(grid.querySelectorAll('.workspace-fav').length,0);
- let demo=cards()[0];press(demo);release();menu(demo);await flush();assert.deepEqual(discoveries,[['Demo',false,false]]);assert(button(demo,'Installieren'));button(demo,'Installieren').click();await flush();assert(button(demo,'Deinstallieren'));assert(!button(demo,'Installieren'));
+ let demo=cards()[0];press(demo);release();assert(demo.classList.contains('is-editing'));assert.equal(demo.querySelectorAll('.app-edit-control').length,2);menu(demo);await flush();assert.deepEqual(discoveries,[['Demo',false,false]]);assert(button(demo,'Installieren'));button(demo,'Installieren').click();await flush();assert(button(demo,'Deinstallieren'));assert(!button(demo,'Installieren'));
  results.set('Demo',desc(repos[0],2));menu(demo);menu(demo);await flush();assert(button(demo,'Update'));button(demo,'Update').click();await flush();assert(!button(demo,'Update'));button(demo,'Deinstallieren').click();await flush();assert(button(demo,'Installieren'));assert.deepEqual(operations,['install','install','remove']);demo.querySelector('.app-edit-exit').click();await flush();
- demo=cards()[0];press(demo,'touch');hit=cards()[1];document.emit('pointermove',{pointerId:1,clientX:160,clientY:50});release();assert.deepEqual(stores.favoriteOrder,['Other','Demo']);demo.querySelector('.app-edit-exit').click();
+ demo=cards()[0];press(demo,'touch');hit=cards()[1];document.emit('pointermove',{pointerId:1,clientX:160,clientY:50});release();assert.deepEqual(stores.favoriteOrder,['Other','Demo']);assertClosed(demo);
+ press(demo);hit=demo;document.emit('pointermove',{pointerId:1,clientX:160,clientY:50});release();assertClosed(demo);assert.deepEqual(stores.favoriteOrder,['Other','Demo']);
  const other=cards()[0];press(other);release();menu(other);await flush();assert(!button(other,'Installieren'));assert(!discoveries.some(x=>x[0]==='Other'));button(other,'Favorit entfernen').click();assert.deepEqual(stores.favorites,['Demo']);
  ui('homeSearch').value='New';ui('homeSearch').emit('input');const search=ui('homeApps').querySelector('.app-card');assert(search.querySelector('.workspace-fav'));search.querySelector('.workspace-fav').click();const added=ui('homeApps').querySelector('.app-card');assert(!added.querySelector('.workspace-fav'));assert(stores.favorites.includes('New'));
  navigator.onLine=false;press(added);release();menu(added);await flush();assert.deepEqual(discoveries.at(-1),['New',false,true]);assert(button(added,'Installieren').disabled);
@@ -72,6 +74,7 @@ function menu(c){c.querySelector('.app-edit-more').click();}
  const before=stores.favoriteOrder.slice();
  ui('workspaceSelect').value='group:all';ui('workspaceSelect').emit('change');
  assert(!grid.classList.contains('reorderable'));const groupFirst=cards()[0];press(groupFirst,'touch');hit=cards()[1];document.emit('pointermove',{pointerId:1,clientX:160,clientY:50});release();assert.deepEqual(stores.favoriteOrder,before);assert.equal(cards()[0],groupFirst);groupFirst.querySelector('.app-edit-exit').click();
- ui('workspaceSelect').value='favorites';ui('workspaceSelect').emit('change');const original=cards().map(c=>c.dataset.label);press(cards()[0]);hit=cards()[1];document.emit('pointermove',{pointerId:1,clientX:160,clientY:50});document.emit('pointercancel',{pointerId:1});assert.deepEqual(cards().map(c=>c.dataset.label),original);assert.deepEqual(stores.favoriteOrder,before);
+ ui('workspaceSelect').value='favorites';ui('workspaceSelect').emit('change');const original=cards().map(c=>c.dataset.label);press(cards()[0]);hit=cards()[1];document.emit('pointermove',{pointerId:1,clientX:160,clientY:50});document.emit('pointercancel',{pointerId:1});assert.deepEqual(cards().map(c=>c.dataset.label),original);assert.deepEqual(stores.favoriteOrder,before);assertClosed(cards()[0]);
+ press(cards()[0]);document.emit('pointercancel',{pointerId:1});assertClosed(cards()[0]);
  console.log('OK: long press, edit controls, favorites-only drag and shared order, favorite button hiding, PWA opt-in, install/update/remove, offline cache-only check.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

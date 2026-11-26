@@ -64,13 +64,14 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .app-item.is-active::before { position: absolute; content: ''; height: 24px; width: 2px; left: -1px; border-radius: 2px; background: var(--accent); }
 .app-icon { display: grid; place-items: center; position: relative; width: 36px; height: 36px; flex: none; border-radius: 8px; background: #252b33; color: #d3dbe4; overflow: hidden; border: 1px solid #3a424e; font-size: 15px; font-weight: 600; }
 .app-icon img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #252b33; }
-.app-copy { display: grid; gap: 1px; flex: 1; min-width: 0; }
-.app-name, .app-type { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.app-name { font-size: 13px; font-weight: 500; }
-.app-type { font-size: 11px; color: var(--muted); }
-.app-type[data-type="game"] { color: var(--game); }
-.app-type[data-type="tool"] { color: var(--tool); }
-.app-type[data-type="misc"] { color: var(--misc); }
+/* v47: type dot and larger icon for installed offline packages. */
+.app-copy { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+.app-name { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 13px; font-weight: 500; }
+.app-type-dot { display: block; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+.app-type-dot[data-type="game"] { background: var(--game); }
+.app-type-dot[data-type="tool"] { background: var(--tool); }
+.app-type-dot[data-type="misc"] { background: var(--misc); }
+.app-item.is-installed .app-icon { width: 44px; height: 44px; font-size: 19px; }
 .app-item .active-dot { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); visibility: hidden; margin-right: 2px; }
 .app-item.is-active .active-dot { visibility: visible; }
 .list-empty { margin: 5px 9px; color: var(--muted); font-size: 12px; }
@@ -128,17 +129,19 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .home-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .home-heading h3 { font-size: 14px; font-weight: 600; color: var(--muted); margin: 0; }
 .home-apps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.home-apps .app-item { background: var(--surface); border-color: var(--border); border-radius: 13px; flex-direction: column; justify-content: center; text-align: center; gap: 10px; min-height: 138px; padding: 14px 8px; margin: 0; }
+.home-apps .app-item { background: var(--surface); border-color: var(--border); border-radius: 13px; flex-direction: column; justify-content: center; text-align: center; gap: 10px; min-height: 154px; padding: 14px 8px; margin: 0; }
 .home-apps .app-item:hover { background: #252b33; border-color: var(--accent-muted); }
-.home-apps .app-icon { width: 56px; height: 56px; border-radius: 13px; font-size: 24px; }
-.home-apps .app-copy { flex: none; width: 100%; min-width: 0; }
+.home-apps .app-icon, .app-drag-ghost .app-icon { width: 56px; height: 56px; border-radius: 13px; font-size: 24px; }
+.home-apps .app-item.is-installed .app-icon, .app-drag-ghost .app-item.is-installed .app-icon { width: 68px; height: 68px; font-size: 29px; }
+.home-apps .app-copy { flex: none; width: 100%; min-width: 0; justify-content: center; }
 .home-apps .app-name { white-space: normal; overflow-wrap: anywhere; }
 .home-apps .active-dot { display: none; }
 .home-empty { grid-column: 1 / -1; color: var(--muted); margin: 8px 0; }
 @media (max-width: 430px) {
   .home-apps { gap: 8px; }
-  .home-apps .app-item { min-height: 116px; padding: 10px 5px; gap: 8px; }
-  .home-apps .app-icon { width: 44px; height: 44px; font-size: 20px; }
+  .home-apps .app-item { min-height: 134px; padding: 10px 5px; gap: 8px; }
+  .home-apps .app-icon, .app-drag-ghost .app-icon { width: 44px; height: 44px; font-size: 20px; }
+  .home-apps .app-item.is-installed .app-icon, .app-drag-ghost .app-item.is-installed .app-icon { width: 54px; height: 54px; font-size: 24px; }
   .home-apps .app-name { font-size: 12px; }
 }
 
@@ -187,6 +190,7 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .toolbar-menu-heading { padding: 4px 9px; }
 .toolbar-recent-apps .app-item { min-height: 40px; padding: 4px 8px; }
 .toolbar-recent-apps .app-icon { width: 32px; height: 32px; }
+.toolbar-recent-apps .app-item.is-installed .app-icon { width: 40px; height: 40px; }
 .toolbar-menu-footer { flex: none; display: grid; gap: 3px; padding: 6px 3px 0; border-top: 1px solid var(--border); }
 .toolbar-menu-offline, .toolbar-position-toggle { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 44px; padding: 7px 9px; border-radius: 8px; background: transparent; text-align: left; font-size: 12px; }
 .toolbar-menu-offline { border: 1px solid transparent; color: var(--accent-muted); }
@@ -239,12 +243,10 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .home-apps .app-card.is-dragging { opacity: .25; }
 .app-drag-ghost { position: fixed; z-index: 50; pointer-events: none; opacity: .95; transform: rotate(-3deg); }
 .app-drag-ghost .app-item { background: var(--surface); border: 1px solid var(--accent-muted); border-radius: 13px; flex-direction: column; justify-content: center; text-align: center; padding: 14px 8px; margin: 0; }
-.app-drag-ghost .app-icon { width: 56px; height: 56px; font-size: 24px; }
-.app-drag-ghost .app-copy { flex: none; width: 100%; }
+.app-drag-ghost .app-copy { flex: none; width: 100%; justify-content: center; }
 .app-drag-ghost .app-name { white-space: normal; overflow-wrap: anywhere; }
 .app-drag-ghost .active-dot, .app-drag-ghost .app-edit-control, .app-drag-ghost .workspace-fav { display: none; }
 .workspace-fav-ghost.is-fav { width: 13px; height: 13px; color: var(--favorite-active); }
-@media (max-width: 430px) { .app-drag-ghost .app-icon { width: 44px; height: 44px; font-size: 20px; } }
 @media (prefers-reduced-motion: reduce) { .home-apps .app-card .app-item { transition: none; } }
 
 /* v44: favorite exits overlay the grid without taking up a slot or accepting input. */

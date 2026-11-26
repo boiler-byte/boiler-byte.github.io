@@ -1,16 +1,29 @@
-# Boiler Room – App-Plattform v45
+# Boiler Room – App-Plattform v47
 
 Vanilla JavaScript mit **klassischen `<script src="...">`-Dateien**. Keine ES-Module, keine Abhaengigkeiten, kein Build-Prozess.
 
 ## Installation
 
-Inhalt des ZIPs über den bisherigen v44-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **erhalten** (die Workspace-Zuordnungen koennen wie unten beschrieben umbenannt werden). Sie wird von `index.html` weiterhin vor allen Modulen geladen:
+Inhalt des ZIPs über den bisherigen v46-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **erhalten** (die Workspace-Zuordnungen koennen wie unten beschrieben umbenannt werden). Sie wird von `index.html` weiterhin vor allen Modulen geladen:
 
 ```html
 <script src="repos.js"></script>
 ```
 
 Ihre `originrepos` und `originrepogroups` haben weiterhin Vorrang vor den Fallback-Daten in `js/data.js`. Die Datei `repos.js` sowie eigene `img/`, `fonts/`, `icons/` und `manifest.json` sind nicht Teil dieses ZIPs und duerfen auf dem Host nicht geloescht werden.
+
+## Neu in v47: Workspace-App-Items
+
+- Ein kleiner, vertikal zentrierter Typ-Punkt vor dem App-Titel ersetzt den bisherigen Typ-Text. Die bestehenden Farben bleiben erhalten (Game, Tool, Misc; unbekannte Typen neutral).
+- Installierte, zum Repo passende vollständige Offline-Pakete werden durch größere App-Icons statt eines sichtbaren Offline-Hinweises dargestellt. Im Raster: 68 statt 56 px, auf kleinen Displays 54 statt 44 px; im Toolbar-Dropdown 40 statt 32 px. Typ und Installationsstatus bleiben für Screenreader zugänglich.
+- Favoriten, Suchergebnisse, zuletzt verwendete Apps und Drag-Vorschau verwenden die gleiche Darstellung. Die bestehende Offline-Statusaktualisierung aktualisiert auch das Icon; während einer laufenden Drag-Geste wird die Aktualisierung weiterhin zurückgestellt.
+- Neuer Shell-Cache `shell-v47`; gespeicherte Einstellungen und Offline-Pakete bleiben erhalten.
+
+## Neu in v46: Workspace-App-Edit-Modus
+
+- Nach 480 ms Gedrückthalten erscheinen Kontext- und Schließen-Button sofort zusammen mit der Neigung der App-Karte, noch bevor Maus oder Finger losgelassen werden.
+- Nach einem Drag-and-drop im Favoriten-Raster wird die Reihenfolge gespeichert und der Edit-Modus direkt beendet (auch wenn die Karte am ursprünglichen Platz abgelegt wird). Ein langes Drücken ohne Drag lässt den Edit-Modus offen. Bei Abbruch wird die ursprüngliche Reihenfolge wiederhergestellt.
+- Neuer Shell-Cache `shell-v46`; gespeicherte Einstellungen und Offline-Pakete bleiben erhalten.
 
 ## Neu in v45: Workspace installieren im Toolbar-Dropdown
 
@@ -232,7 +245,7 @@ Keine Authentifizierung, Weiterleitungen (außer der üblichen Verzeichnis-URL, 
 
 Der Manager bleibt aus der Workspace-Sidebar erreichbar. Einzel-/Sammelbereitstellung, Reparatur, Versionsupdate und Entfernen bleiben erhalten. Updates werden atomar gespeichert; bei einem fehlgeschlagenen Download bleibt das alte Paket erhalten. Installierte Pakete können offline entfernt werden, ohne Favoriten oder App-Nutzerdaten zu löschen. Speicher ist browserprofilbezogen und kann vom Browser freigegeben werden.
 
-Produktive `repos.js` und eigene Ressourcen erhalten; `repo.offline` wird ignoriert und kann gelöscht werden. Jede kompatible App benötigt eine eigene `boiler-room.json`. Bestehende v24-Pakete werden nicht pauschal gelöscht; sie bleiben nur dann als Offline-Einstieg nutzbar, wenn ihre gespeicherte URL zu `repo.url` passt. Sie können nach dem Manifest-Update neu bereitgestellt oder entfernt werden. Aktuelle Shell: `shell-v45`. Nach dem Deployment alle alten Workspace-Tabs/PWA-Fenster schließen und online erneut öffnen, damit der neue Worker aktiviert wird.
+Produktive `repos.js` und eigene Ressourcen erhalten; `repo.offline` wird ignoriert und kann gelöscht werden. Jede kompatible App benötigt eine eigene `boiler-room.json`. Bestehende v24-Pakete werden nicht pauschal gelöscht; sie bleiben nur dann als Offline-Einstieg nutzbar, wenn ihre gespeicherte URL zu `repo.url` passt. Sie können nach dem Manifest-Update neu bereitgestellt oder entfernt werden. Aktuelle Shell: `shell-v47`. Nach dem Deployment alle alten Workspace-Tabs/PWA-Fenster schließen und online erneut öffnen, damit der neue Worker aktiviert wird.
 
 Beispiel: `workspace/apps/offline-demo/` enthält den Notizblock samt Manifest und Changelog. Bei produktiver `repos.js` kann er optional als normaler Repo-Eintrag mit `url: 'workspace/apps/offline-demo/index.html'` und `boiler_room_pwa: true` aufgenommen werden.
 

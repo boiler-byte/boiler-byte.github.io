@@ -12,11 +12,13 @@ WS = ROOT / 'workspace'
 html = re.sub(r'<script\b[^>]*>.*?</script>|<link\b[^>]*>', '', (WS / 'index.html').read_text(), flags=re.S)
 css = (WS / 'workspace.css').read_text()
 mock = '''() => {
-  const repos = ['A','B','C','D','E'].map(label => ({label, type:'tool', url:'apps/'+label+'/index.html'}));
+  const repos = ['A','B','C','D','E'].map(label => ({label, type:({A:'game',B:'tool',C:'misc',D:'unknown'})[label]||'tool', url:'apps/'+label+'/index.html'}));
+  let installed = [];
+  window.setInstalled = labels => {installed=labels; window.dispatchEvent(new Event('online'))};
   const stores = {workspace:{selected:'favorites'}, favorites:['A','B','C','D'], favoriteOrder:['A','B','C','D'], workspaceRecentApps:['E']};
   window.BoilerRoom = {data:{repos, types:{tool:{label:'Tool'}}, getGroups:()=>new Map([['all',{label:'Alle',repos}]])},
     storage:{init(){},get:k=>structuredClone(stores[k]??false),set:(k,v)=>{stores[k]=structuredClone(v)},isAvailable:()=>true},
-    offline:{async snapshot(){return []}, localEntry:()=>null, supported:false},
+    offline:{async snapshot(){return installed.map(id=>({id,complete:true}))}, localEntry:(repo,record)=>record?.complete?repo.url:null, supported:false},
     searchRelevance:{normalize:s=>s.toLowerCase(),score:(r,q)=>r.label.toLowerCase().includes(q)?0:-1},
     toast:{showFavorite(){},showMessage(){}}};
   window.setFavorites = labels => {stores.favorites=labels; stores.favoriteOrder=labels; window.dispatchEvent(new StorageEvent('storage',{key:'boilerRoom'}))};
@@ -36,6 +38,34 @@ with sync_playwright() as p:
     page.evaluate('''(source) => { const location={href:'https://example.test/project/workspace/index.html', search:''}; const history={replaceState(){}}; eval(source); }''', source)
     assert page.evaluate('labels()') == ['A','B','C','D']
     assert page.evaluate('animations("A")') == []
+    # v47: existing favorite nodes update their installation status in place.
+    card_a=page.locator('#homeWorkspaceApps > [data-label="A"]')
+    card_b=page.locator('#homeWorkspaceApps > [data-label="B"]')
+    card_c=page.locator('#homeWorkspaceApps > [data-label="C"]')
+    card_d=page.locator('#homeWorkspaceApps > [data-label="D"]')
+    assert page.locator('.app-type').count()==0
+    for card,color in [(card_a,'rgb(255, 155, 89)'),(card_b,'rgb(116, 204, 228)'),(card_c,'rgb(123, 217, 162)'),(card_d,'rgb(160, 170, 185)')]:
+        dot=card.locator('.app-type-dot')
+        assert dot.evaluate('(e)=>getComputedStyle(e).backgroundColor')==color
+        assert dot.get_attribute('aria-hidden')=='true'
+        a=dot.bounding_box(); b=card.locator('.app-name').bounding_box()
+        assert a['x']+a['width']<=b['x']
+        assert abs(a['y']+a['height']/2-b['y']-b['height']/2)<1
+    page.evaluate("""window.v47Node=document.querySelector('#homeWorkspaceApps > [data-label="A"]'); setInstalled(["A","E"])""")
+    page.wait_for_function('v47Node.querySelector(".app-item").classList.contains("is-installed")')
+    assert page.evaluate("""v47Node===document.querySelector('#homeWorkspaceApps > [data-label="A"]')""")
+    assert card_a.locator('.app-icon').bounding_box()['width']==68
+    assert card_b.locator('.app-icon').bounding_box()['width']==56
+    assert page.locator('#homeApps .app-icon').bounding_box()['width']==68
+    assert 'Offline' not in card_a.inner_text()
+    assert 'Offline installiert' in card_a.locator('.app-item').get_attribute('aria-label')
+    page.set_viewport_size({'width':390,'height':844})
+    assert card_a.locator('.app-icon').bounding_box()['width']==54
+    assert card_b.locator('.app-icon').bounding_box()['width']==44
+    page.set_viewport_size({'width':1024,'height':850})
+    page.evaluate('setInstalled([])')
+    page.wait_for_function('!v47Node.querySelector(".app-item").classList.contains("is-installed")')
+    assert card_a.locator('.app-icon').bounding_box()['width']==56
     # Add using the real local star on the recent card; the existing star animation remains.
     page.locator('#homeApps .workspace-fav').click()
     assert page.evaluate('labels()') == ['A','B','C','D','E']
@@ -95,6 +125,37 @@ with sync_playwright() as p:
     assert page.locator('.favorite-exit-layer > [data-label="B"]').count() == 1
     page.wait_for_timeout(350)
     assert page.locator('.favorite-exit-layer').count() == 0
+    # v46: real mouse hold reveals both controls before release; drop exits edit.
+    page.evaluate('setFavorites(["B","C"])')
+    page.wait_for_timeout(350)
+    card=page.locator('#homeWorkspaceApps > [data-label="B"]')
+    target=page.locator('#homeWorkspaceApps > [data-label="C"]')
+    def center(locator):
+        rect=locator.bounding_box()
+        return rect['x']+rect['width']/2, rect['y']+rect['height']/2
+    x,y=center(card.locator('.app-item'))
+    page.mouse.move(x,y)
+    page.mouse.down()
+    page.wait_for_timeout(550)
+    assert card.locator('.app-edit-more').is_visible()
+    assert card.locator('.app-edit-exit').is_visible()
+    page.mouse.up()
+    assert card.locator('.app-edit-more').is_visible()
+    card.locator('.app-edit-exit').click()
+    assert card.locator('.app-edit-more').count()==0
+    page.wait_for_timeout(200)
+    x,y=center(card.locator('.app-item'))
+    page.mouse.move(x,y)
+    page.mouse.down()
+    page.wait_for_timeout(550)
+    assert card.locator('.app-edit-exit').is_visible()
+    tx,ty=center(target.locator('.app-item'))
+    page.mouse.move(tx,ty,steps=8)
+    assert page.locator('.app-drag-ghost').count()==1
+    page.mouse.up()
+    assert page.evaluate('labels()') == ['C','B']
+    assert page.locator('.app-drag-ghost, .app-card.is-editing, .app-edit-control').count()==0
+    assert card.locator('.app-item').is_visible()
     # v45: real dropdown layout with a simulated browser install event.
     page.evaluate('''() => {
       const original=window.matchMedia.bind(window);
