@@ -5,7 +5,7 @@ const M = self.BoilerRoomOfflineModel;
 const scope = new URL(self.registration.scope);
 const url = path => new URL(path, scope).href;
 const prefix = M.prefix(scope);
-const shellCache = `${prefix}shell-v30`;
+const shellCache = `${prefix}shell-v43`;
 const dataCache = `${prefix}data-v1`;
 const indexCache = `${prefix}offline-index-v1`;
 const packagePrefix = `${prefix}offline-app-v1:`;
@@ -15,7 +15,7 @@ const entry = url('index.html');
 const manager = url('offline.html');
 const shell = [entry, manager, url('workspace.css'), url('workspace.js'), url('pwa.js'),
   url('offline-model.js'), url('offline-client.js'), url('offline-manager.js'), url('offline.css'),
-  url('../js/data.js'), url('../js/storage.js'), url('../js/search-relevance.js'),
+  url('../js/data.js'), url('../js/storage.js'), url('../js/favorites.js'), url('../js/search-relevance.js'), url('../js/toast.js'), url('../css/toast.css'),
   url('manifest.webmanifest'), url('icons/icon-192.png'), url('icons/icon-512.png'),
   url('icons/icon-maskable-512.png'), url('icons/apple-touch-icon.png')];
 const shellSet = new Set(shell);

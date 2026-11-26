@@ -13,17 +13,17 @@
     setTimeout(() => toast.remove(), 210);
   }
 
-  function showFavorite(label, added) {
+  function show(messageText, symbolText, variant = '') {
     if (!stack) return;
     const toast = document.createElement('div');
-    toast.className = 'toast' + (added ? ' toast-added' : ' toast-removed');
+    toast.className = 'toast' + (variant ? ' toast-' + variant : '');
     const symbol = document.createElement('span');
     symbol.className = 'toast-symbol';
-    symbol.textContent = added ? '★' : '☆';
+    symbol.textContent = symbolText;
     symbol.setAttribute('aria-hidden', 'true');
     const message = document.createElement('span');
     message.className = 'toast-message';
-    message.textContent = '„' + label + '“ ' + (added ? 'zu Favoriten hinzugefügt' : 'aus Favoriten entfernt');
+    message.textContent = messageText;
     const close = document.createElement('button');
     close.type = 'button';
     close.className = 'toast-close';
@@ -36,5 +36,8 @@
     toast._dismissTimer = setTimeout(() => dismiss(toast), DURATION_MS);
   }
 
-  B.toast = { showFavorite };
+  function showFavorite(label, added) {
+    show('„' + label + '“ ' + (added ? 'zu Favoriten hinzugefügt' : 'aus Favoriten entfernt'), added ? '★' : '☆', added ? 'added' : 'removed');
+  }
+  B.toast = { showFavorite, showMessage: text => show(text, '✓', 'info') };
 })(window.BoilerRoom);

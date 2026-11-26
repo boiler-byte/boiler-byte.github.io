@@ -39,6 +39,7 @@
   // ======================================================
   // REPOS
   // ======================================================
+  // Offline-Manager: boiler_room_pwa: true (boolesch) zur expliziten Freigabe.
   // Optionales "icon" (Emoji/Symbol) für kompakte Ansichten.
   // Optionales "status" ("beta" | "alpha") für Badge.
   // Optionales "preview" (Bildpfad): bei Card-Hover statt "img";
@@ -52,6 +53,7 @@
         type: 'tool',
         workspace: 'offline-demo',
         url: 'workspace/apps/offline-demo/index.html',
+        boiler_room_pwa: true,
         year: 2026,
         tags: ['Offline', 'Lokal']
     },

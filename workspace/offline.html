@@ -24,7 +24,7 @@
     <div class="offline-intro">
       <p class="eyebrow">Workspace · Lokale Bereitstellung</p>
       <h1>Offline-Manager</h1>
-      <p>Speichere einzelne Apps oder alle verfügbaren Apps eines Workspaces auf diesem Gerät. Offline-Pakete bleiben auch ohne Internetverbindung im Workspace nutzbar.</p>
+      <p>Speichere einzelne freigegebene Apps oder alle freigegebenen Apps eines Workspaces auf diesem Gerät. Offline-Pakete bleiben auch ohne Internetverbindung im Workspace nutzbar.</p>
     </div>
     <section class="offline-panel" aria-labelledby="selectionTitle">
       <div class="offline-panel-head">
@@ -33,16 +33,16 @@
           <select id="offlineWorkspace"></select>
         </div>
         <div class="offline-bulk">
-          <button id="checkVersions" class="offline-button secondary" type="button" disabled>Versionen prüfen</button>
+          <button id="checkVersions" class="offline-button secondary offline-check-button" type="button" disabled><span id="checkVersionsLabel">Versionen prüfen</span><small id="lastVersionCheck">Noch nicht geprüft</small></button>
           <button id="updateAll" class="offline-button primary" type="button" hidden disabled>Alle Aktualisieren</button>
           <button id="installAll" class="offline-button primary" type="button" disabled>Bereitstellen</button>
           <button id="removeAll" class="offline-button secondary" type="button" disabled>Entfernen</button>
         </div>
       </div>
-      <div class="offline-metrics" aria-live="polite" aria-atomic="true">
-        <div><strong id="metricReady">–</strong><span>Aktuell bereit</span></div>
-        <div><strong id="metricPending">–</strong><span>Bereitstellbar / Update</span></div>
-        <div><strong id="metricUnsupported">–</strong><span>Ohne Offline-Paket</span></div>
+      <div class="offline-metrics" role="group" aria-label="Apps nach Offline-Status filtern">
+        <button id="filterReady" class="offline-metric" type="button" aria-pressed="false" aria-controls="offlineList"><strong id="metricReady">–</strong><span>Aktuell bereit</span></button>
+        <button id="filterPending" class="offline-metric" type="button" aria-pressed="false" aria-controls="offlineList"><strong id="metricPending">–</strong><span>Bereitstellbar / Update</span></button>
+        <button id="filterUnsupported" class="offline-metric" type="button" aria-pressed="false" aria-controls="offlineList"><strong id="metricUnsupported">–</strong><span>Ohne Offline-Paket</span></button>
       </div>
       <progress id="coverage" class="offline-coverage" max="1" value="0" aria-label="Offline-Abdeckung"></progress>
       <p id="workspaceSummary" class="offline-summary">Offline-Status wird ermittelt …</p>
@@ -61,7 +61,7 @@
     </section>
     <section class="offline-footnote" aria-labelledby="storageTitle">
       <h2 id="storageTitle">Gerätespeicher</h2>
-      <p id="storageSummary">Offline-Dateien werden im Browserprofil gespeichert. Apps werden über ihre boiler-room.json erkannt; nur explizit deklarierte Dateien werden gespeichert.</p>
+      <p id="storageSummary">Offline-Dateien werden im Browserprofil gespeichert. Freigegebene Apps werden über ihre boiler-room.json geprüft; nur explizit deklarierte Dateien werden gespeichert.</p>
       <button id="protectStorage" class="offline-button secondary" type="button" hidden>Dauerhaften Speicher anfragen</button>
       <p>Das Entfernen eines Pakets löscht nur dessen Offline-Dateien, nicht Favoriten, Workspace-Einstellungen oder App-Nutzerdaten. Apps anderer Origins können nicht zentral offline gestartet werden. Bei lokalen Spiegel-URLs können pfadabhängige App-Daten abweichen. Browser können nicht geschützten Speicher bei Bedarf freigeben.</p>
       <p>Bereitgestellte Pakete werden im Workspace anstelle der Online-URL geöffnet. API-Funktionen und nicht deklarierte Dateien benötigen ggf. weiterhin Internet.</p>

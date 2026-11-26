@@ -2,17 +2,35 @@
 (function (B) {
   'use strict';
   const $ = id => document.getElementById(id);
-  const ui = Object.fromEntries(['workspaceBack','connectionStatus','offlineWorkspace','checkVersions','updateAll','installAll','removeAll','metricReady','metricPending',
+  const ui = Object.fromEntries(['workspaceBack','connectionStatus','offlineWorkspace','checkVersions','checkVersionsLabel','lastVersionCheck','filterReady','filterPending','filterUnsupported','updateAll','installAll','removeAll','metricReady','metricPending',
     'metricUnsupported','coverage','workspaceSummary','serviceNotice','operationPanel','operationText','operationProgress','offlineSearch',
     'offlineList','storageSummary','protectStorage'].map(id => [id, $(id)]));
   const groups = B.data.getGroups();
   const catalog = new Map();
   for (const repo of B.data.repos) if (repo && typeof repo.label === 'string' && repo.label.trim() && !catalog.has(repo.label)) catalog.set(repo.label, repo);
+  // Preserve canonical first-entry identity, then require explicit boolean opt-in.
+  for (const [id, repo] of catalog) if (repo.boiler_room_pwa !== true) catalog.delete(id);
   B.storage.init();
   let installed = new Map(), descriptions = new Map(), busy = false, available = false, checked = false, revision = 0;
-  let activeRefresh = null, checking = false;
+  let activeRefresh = null, checking = false, metricFilter = null;
+  const metricMatches = {
+    ready: i => ['ready','saved'].includes(i.state) && i.record?.mode === 'full',
+    pending: i => i.state === 'update' || (i.description.kind === 'package' && ['missing','incomplete'].includes(i.state)),
+    unsupported: i => i.description.kind === 'unsupported'
+  };
+  const metricButtons = { ready:ui.filterReady, pending:ui.filterPending, unsupported:ui.filterUnsupported };
+  function renderLastCheck() {
+    const timestamps = members().filter(repo => B.offline.describe(repo).kind === 'candidate')
+      .map(repo => descriptions.get(repo.label)?.checkedAt).filter(t => Number.isFinite(t) && t > 0);
+    const latest = timestamps.length ? Math.max(...timestamps) : 0;
+    const minutes = Math.floor(Math.max(0,Date.now()-latest)/60000);
+    const unit = minutes < 60 ? 'Minute' : minutes < 1440 ? 'Stunde' : 'Tag';
+    const n = minutes < 60 ? minutes : minutes < 1440 ? Math.floor(minutes/60) : Math.floor(minutes/1440);
+    ui.lastVersionCheck.textContent = !latest ? 'Noch nicht geprüft' : minutes === 0 ? 'Zuletzt: gerade eben' : `Zuletzt: vor ${n} ${unit}${n === 1 ? '' : unit === 'Tag' ? 'en' : 'n'}`;
+    ui.lastVersionCheck.title = latest ? 'Letzte Manifestprüfung im gewählten Bereich: ' + new Date(latest).toLocaleString('de-DE') : '';
+  }
   const states = { ready: 'Offline bereit', update: 'Update verfügbar', incomplete: 'Unvollständig', missing: 'Bereitstellbar', unsupported: 'Kein Offline-Paket', info: 'Information', obsolete: 'Nicht mehr zugeordnet', unknown: 'Manifest nicht geprüft', saved: 'Offline gespeichert' };
-  const selections = new Map([['all','Alle Apps'],['favorites','Mein Workspace'], ...[...groups].map(([id,g]) => ['group:'+id,g.label])]);
+  const selections = new Map([['all','Alle Apps'],['favorites','Favoriten'], ...[...groups].map(([id,g]) => ['group:'+id,g.label])]);
   for (const [value,label] of selections) ui.offlineWorkspace.append(new Option(label,value));
   const requested = new URLSearchParams(location.search).get('workspace');
   const stored = B.storage.get('workspace').selected;
@@ -28,7 +46,7 @@
   }
   function members() {
     const selection = ui.offlineWorkspace.value;
-    if (selection === 'all') return [...catalog.values(), ...[...installed.values()].filter(r => !catalog.has(r.id)).map(r => ({ label:r.id, removed:true }))];
+    if (selection === 'all') return [...catalog.values()];
     if (selection === 'favorites') {
       const favorites = B.storage.get('favorites'); const set = new Set(favorites);
       return [...new Set([...B.storage.get('favoriteOrder').filter(id => set.has(id)), ...favorites])].map(id => catalog.get(id)).filter(Boolean);
@@ -55,7 +73,7 @@
     const row = node('article','offline-row');
     const title = node('div','offline-row-name');
     const icon = node('span','app-icon',repo.icon || repo.label.slice(0,1).toLocaleUpperCase('de')); icon.setAttribute('aria-hidden','true');
-    const copy = node('div'); copy.append(node('strong','',repo.label),node('small','',repo.removed ? 'Nicht mehr im Katalog' : B.data.types[repo.type]?.label || 'App'));
+    const copy = node('div'); copy.append(node('strong','',repo.label),node('small','',B.data.types[repo.type]?.label || 'App'));
     title.append(icon,copy);
     const status = node('div','offline-state'); status.dataset.state = checked ? state : 'unknown';
     status.append(node('span','',checked ? ((B.offline.statusLabel(state, description) || states[state]) + (['ready','saved'].includes(state) && record?.mode === 'partial' ? ' (teilweise)' : '')) : 'Status wird geprüft …'));
@@ -78,14 +96,14 @@
   }
   function render() {
     const items = entries();
-    const ready = items.filter(i => ['ready','saved'].includes(i.state) && i.record?.mode === 'full').length;
+    const ready = items.filter(metricMatches.ready).length;
     const partial = items.filter(i => ['ready','saved'].includes(i.state) && i.record?.mode === 'partial').length;
     const unknown = items.filter(i => i.state === 'unknown').length;
     const provisionable = items.filter(i => i.description.kind === 'package' && ['missing','incomplete'].includes(i.state)).length;
     const updates = items.filter(i => i.state === 'update').length;
-    const pending = provisionable + updates;
-    const unsupported = items.filter(i => i.description.kind === 'unsupported').length;
-    const launchable = items.filter(i => i.description.kind !== 'info' && !i.repo.removed).length;
+    const pending = items.filter(metricMatches.pending).length;
+    const unsupported = items.filter(metricMatches.unsupported).length;
+    const launchable = items.filter(i => i.description.kind !== 'info').length;
     const removable = items.filter(i => i.record).length;
     ui.metricReady.textContent = checked ? ready : '–'; ui.metricPending.textContent = checked ? pending : '–'; ui.metricUnsupported.textContent = checked ? unsupported : '–';
     ui.coverage.max = launchable || 1; ui.coverage.value = checked ? ready : 0;
@@ -95,22 +113,27 @@
     ui.updateAll.hidden = !updates;
     ui.updateAll.textContent = updates ? `Alle Aktualisieren (${updates})` : 'Alle Aktualisieren';
     ui.updateAll.disabled = !canInstall() || !updates;
-    ui.checkVersions.textContent = checking && activeRefresh?.allowNetwork ? 'Versionen werden geprüft …' : 'Versionen prüfen';
+    ui.checkVersionsLabel.textContent = checking && activeRefresh?.allowNetwork ? 'Versionen werden geprüft …' : 'Versionen prüfen';
     ui.checkVersions.disabled = !canInstall() || !items.some(i => B.offline.describe(i.repo).kind === 'candidate');
     ui.removeAll.textContent = removable ? `Entfernen (${removable})` : 'Entfernen';
     ui.installAll.disabled = !canInstall() || !provisionable;
     ui.removeAll.disabled = !canRemove() || !removable;
     ui.offlineWorkspace.disabled = busy || Boolean(activeRefresh?.force);
     const query = B.searchRelevance.normalize(ui.offlineSearch.value);
-    const visible = query ? items.filter(i => B.searchRelevance.score(i.repo,query) >= 0) : items;
+    renderLastCheck();
+    for (const [key,btn] of Object.entries(metricButtons)) {
+      btn.disabled = !checked;
+      btn.setAttribute('aria-pressed',String(metricFilter === key));
+    }
+    const visible = items.filter(i => (!metricFilter || metricMatches[metricFilter](i)) && (!query || B.searchRelevance.score(i.repo,query) >= 0));
     const fragment = document.createDocumentFragment(); visible.forEach(item => fragment.append(makeRow(item)));
-    if (!visible.length) fragment.append(node('p','offline-empty',query ? 'Keine passenden Apps.' : 'Keine Apps in diesem Bereich.'));
+    if (!visible.length) fragment.append(node('p','offline-empty',query || metricFilter ? 'Keine passenden Apps.' : 'Keine Apps in diesem Bereich.'));
     ui.offlineList.replaceChildren(fragment);
     ui.connectionStatus.textContent = navigator.onLine ? 'Online' : 'Offline'; ui.connectionStatus.dataset.offline = String(!navigator.onLine);
   }
   async function storageStatus() {
     const count = [...installed.values()].reduce((n,r) => n+r.files.length,0);
-    let text = `${installed.size} gespeicherte Pakete · ${count} deklarierte Dateien in diesem Browserprofil.`;
+    let text = `${installed.size} gespeicherte Pakete freigegebener Apps · ${count} deklarierte Dateien in diesem Browserprofil.`;
     try {
       if (navigator.storage?.persisted) {
         const persistent = await navigator.storage.persisted();
@@ -140,12 +163,12 @@
     try {
       const list = await B.offline.request('list');
       if (token !== revision) return;
-      installed = new Map(list.map(r => [r.id,r])); available = true; checked = true;
+      installed = new Map(list.filter(r => catalog.has(r.id)).map(r => [r.id,r])); available = true; checked = true;
       if (!busy) setNotice('');
     } catch (error) {
       const list = await B.offline.snapshot().catch(() => []);
       if (token !== revision) return;
-      installed = new Map(list.map(r=>[r.id,r])); available = false; checked = true;
+      installed = new Map(list.filter(r => catalog.has(r.id)).map(r=>[r.id,r])); available = false; checked = true;
       setNotice(error.message);
     }
     render(); storageStatus();
@@ -184,7 +207,7 @@
             ui.operationText.textContent = `${i+1}/${items.length} · ${label} · ${p.done}/${p.total} Dateien`;
             ui.operationProgress.value = i + p.done / p.total;
           }); installed.set(label,result);
-          descriptions.set(label, {kind:'package', pkg:result, checkedAt:Date.now()});
+          descriptions.set(label, {kind:'package', pkg:result, checkedAt:descriptions.get(label)?.checkedAt});
         } else { await B.offline.request('remove',{id:label}); installed.delete(label); }
         succeeded++;
       } catch (error) { errors.push(`${label}: ${error.message}`); }
@@ -209,8 +232,11 @@
   ui.updateAll.addEventListener('click',()=>run(entries().filter(i=>i.state === 'update'),'update'));
   ui.installAll.addEventListener('click',()=>run(entries().filter(i=>i.description.kind === 'package' && ['missing','incomplete'].includes(i.state)),'install'));
   ui.removeAll.addEventListener('click',()=>run(entries().filter(i=>i.record),'remove'));
-  ui.offlineWorkspace.addEventListener('change',()=>{ ui.offlineSearch.value=''; syncLink(); render(); refresh(); });
+  ui.offlineWorkspace.addEventListener('change',()=>{ ui.offlineSearch.value=''; metricFilter=null; syncLink(); render(); refresh(); });
   ui.offlineSearch.addEventListener('input',render);
+  for (const [key,btn] of Object.entries(metricButtons)) btn.addEventListener('click',()=>{ metricFilter=metricFilter===key ? null : key; render(); });
+  // Only update the displayed age; never request manifests on a timer.
+  setInterval(renderLastCheck, 30000);
   ui.protectStorage.addEventListener('click',async()=>{
     try { const result = await navigator.storage.persist(); await storageStatus(); if (!result) setNotice('Der Browser hat dauerhaften Speicher nicht freigegeben.'); }
     catch (error) { setNotice(error.message); }

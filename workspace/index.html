@@ -12,99 +12,112 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Workspace">
   <link rel="stylesheet" href="workspace.css">
+  <link rel="stylesheet" href="../css/toast.css">
   <script src="pwa.js" defer></script>
   <script src="../repos.js"></script>
 </head>
 <body>
   <div class="workspace" id="workspace">
-    <button id="backdrop" class="backdrop" type="button" aria-label="Sidebar schließen" tabindex="-1" hidden></button>
-    <aside id="sidebar" class="sidebar" aria-label="Workspace-Navigation">
-      <header class="sidebar-header">
-        <div class="brand workspace-picker">
-          <span class="brand-mark" aria-hidden="true">db</span>
-          <span class="brand-copy" aria-hidden="true"><strong id="workspaceLabel">Mein Workspace</strong><small>der Boiler Room</small></span>
-          <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
-          <select id="workspaceSelect" aria-label="Workspace auswählen" title="Workspace auswählen"></select>
-        </div>
-        <button id="sidebarClose" class="icon-button sidebar-close" type="button" title="Sidebar schließen" aria-label="Sidebar schließen">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
-        </button>
-      </header>
-      <div class="app-heading"><span class="eyebrow">Apps</span><span id="appCount" class="app-count" aria-live="polite">0</span></div>
-      <div class="app-search" id="appSearchWrap" role="search" aria-label="Apps im gesamten Katalog suchen">
-        <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4.5 4.5"/></svg>
-        <input id="appSearch" type="search" placeholder="Apps suchen …" aria-label="Apps im gesamten Katalog suchen" autocomplete="off" enterkeyhint="search" spellcheck="false" aria-controls="appList">
-        <button id="appSearchClear" type="button" class="search-clear" title="Suche zurücksetzen" aria-label="Suche zurücksetzen" hidden>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
-        </button>
-      </div>
-      <nav id="appList" class="app-list" aria-label="Apps im Workspace"></nav>
-      <div class="sidebar-footer">
-        <p id="storageNotice" class="storage-notice" hidden>Speichern im Browser nicht verfügbar.</p>
-        <p id="offlineNotice" class="storage-notice" role="status" hidden>Offline · Bereitgestellte Pakete sind lokal nutzbar.</p>
-        <button id="installWorkspace" class="back-link install-link" type="button" hidden>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 15v5h16v-5"/></svg>
-          <span>Workspace installieren</span>
-        </button>
-        <a id="offlineManagerLink" class="back-link offline-manager-link" href="offline.html">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 15v5h16v-5"/></svg>
-          <span>Offline-Manager</span>
-        </a>
-        <a class="back-link" href="../index.html">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6-6 6 6 6M4 12h16"/></svg>
-          <span>Boiler Room</span>
-        </a>
-      </div>
-    </aside>
     <main class="main" id="main">
       <header class="toolbar">
-        <button id="sidebarToggle" class="icon-button" type="button" aria-controls="sidebar" aria-expanded="true" aria-label="Sidebar ausblenden" title="Sidebar ausblenden">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg>
+        <div class="current" id="current" title="Workspace · der Boiler Room">
+          <span id="currentIcon" class="current-icon" aria-hidden="true"><span class="brand-mark">db</span></span>
+          <div class="current-copy" aria-live="polite">
+            <h1 id="currentApp">Workspace</h1>
+            <span id="currentWorkspace" class="current-workspace">der Boiler Room</span>
+          </div>
+        </div>
+        <button id="homeApp" class="icon-button" type="button" title="App-Übersicht" aria-label="App-Übersicht">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3zM9 20v-7h6v7"/></svg>
         </button>
-        <div class="toolbar-divider" aria-hidden="true"></div>
-        <div class="current" aria-live="polite">
-          <span id="currentWorkspace" class="current-workspace">Mein Workspace</span>
-          <h1 id="currentApp">Workspace</h1>
-        </div>
-        <div class="toolbar-actions">
-          <button id="homeApp" class="icon-button" type="button" title="App-Übersicht" aria-label="App-Übersicht">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3zM9 20v-7h6v7"/></svg>
-          </button>
-          <button id="reloadApp" class="icon-button" type="button" title="App neu laden" aria-label="App neu laden" disabled>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2 6M20 4v7h-7"/></svg>
-          </button>
-          <a id="externalApp" class="icon-button" title="App in neuem Tab öffnen" aria-label="App in neuem Tab öffnen" target="_blank" rel="noopener noreferrer" hidden>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 4h7v7M20 4l-9 9M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
-          </a>
-        </div>
+        <button id="toolbarMenuToggle" class="icon-button" type="button" aria-expanded="false" aria-controls="toolbarMenu" aria-label="Toolbar-Menü öffnen" title="Toolbar-Menü öffnen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+        </button>
+        <section id="toolbarMenu" class="toolbar-menu" aria-label="Toolbar-Menü" hidden>
+          <div class="toolbar-menu-actions">
+            <button id="reloadApp" class="icon-button" type="button" title="App neu laden" aria-label="App neu laden" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2 6M20 4v7h-7"/></svg>
+            </button>
+            <a id="externalApp" class="icon-button" title="App in neuem Tab öffnen" aria-label="App in neuem Tab öffnen" target="_blank" rel="noopener noreferrer" aria-disabled="true" tabindex="-1">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 4h7v7M20 4l-9 9M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+            </a>
+            <button id="shareApp" class="icon-button" type="button" title="Teilen" aria-label="Teilen">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"/></svg>
+            </button>
+          </div>
+          <div id="toolbarRecentSection" class="toolbar-menu-recent" hidden>
+            <div class="eyebrow toolbar-menu-heading">Zuletzt verwendet</div>
+            <div id="toolbarRecentApps" class="toolbar-recent-apps"></div>
+          </div>
+          <div class="toolbar-menu-footer">
+            <p id="storageNotice" class="storage-notice" hidden>Speichern im Browser nicht verfügbar.</p>
+            <p id="offlineNotice" class="storage-notice" role="status" hidden>Offline · Bereitgestellte Pakete sind lokal nutzbar.</p>
+            <button id="installWorkspace" class="toolbar-menu-offline install-link" type="button" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 15v5h16v-5"/></svg>
+              <span>Workspace installieren</span>
+            </button>
+            <a id="boilerRoomLink" class="toolbar-menu-offline" href="../index.html">
+              <span class="brand-mark" aria-hidden="true">db</span>
+              <span>der Boiler Room</span>
+            </a>
+            <a id="offlineManagerLink" class="toolbar-menu-offline offline-manager-link" href="offline.html">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 15v5h16v-5"/></svg>
+              <span>Offline-Manager</span>
+            </a>
+            <button id="toolbarPositionToggle" class="toolbar-position-toggle" type="button" aria-pressed="false" aria-label="Toolbar nach unten verschieben" title="Toolbar nach unten verschieben">
+              <svg class="toolbar-position-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 8h18"/></svg>
+              <span>Toolbar</span>
+              <svg class="toolbar-position-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16m-6-6 6 6 6-6"/></svg>
+            </button>
+          </div>
+        </section>
       </header>
       <div class="app-stage" id="appStage">
-        <section id="homeView" class="home-view" aria-labelledby="homeTitle">
+        <section id="homeView" class="home-view" aria-labelledby="homePageTitle">
           <div class="home-content">
-            <h2>Apps</h2>
-            <div class="app-search home-search" role="search" aria-label="App-Katalog durchsuchen">
+            <div class="home-page-heading">
+              <h2 id="homePageTitle">Apps</h2>
+              <button id="homeSearchToggle" class="icon-button" type="button" aria-controls="homeSearchWrap" aria-expanded="false" title="Suche öffnen" aria-label="Suche öffnen">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4.5 4.5"/></svg>
+              </button>
+            </div>
+            <div id="homeSearchWrap" class="app-search home-search" role="search" aria-label="App-Katalog durchsuchen" hidden>
               <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4.5 4.5"/></svg>
-              <input id="homeSearch" type="search" placeholder="Alle Apps suchen …" aria-label="Alle Apps suchen" autocomplete="off" enterkeyhint="search" spellcheck="false" aria-controls="homeApps">
+              <input id="homeSearch" type="search" placeholder="Alle Apps suchen …" aria-label="Alle Apps suchen" autocomplete="off" enterkeyhint="search" spellcheck="false" aria-controls="homeApps homeWorkspaceApps">
               <button id="homeSearchClear" class="search-clear" type="button" aria-label="Suche zurücksetzen" title="Suche zurücksetzen" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
             </div>
-            <div class="home-heading"><h3 id="homeTitle">Zuletzt verwendet</h3><span id="homeCount" class="app-count" aria-live="polite"></span></div>
-            <div id="homeApps" class="home-apps"></div>
+            <section id="homeRecentSection" class="home-section" aria-labelledby="homeTitle" hidden>
+              <div class="home-heading"><h3 id="homeTitle">Zuletzt verwendet</h3><span id="homeCount" class="app-count" aria-live="polite"></span></div>
+              <div id="homeApps" class="home-apps"></div>
+            </section>
+            <section id="homeWorkspaceSection" class="home-section" aria-labelledby="homeWorkspaceTitle">
+              <div class="home-heading"><div class="home-group-picker">
+                <h3 id="homeWorkspaceTitle">Favoriten</h3>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+                <select id="workspaceSelect" aria-label="Workspace-Gruppe auswählen" title="Workspace-Gruppe auswählen"></select>
+              </div><span id="homeWorkspaceCount" class="app-count" aria-live="polite"></span></div>
+              <div id="homeWorkspaceApps" class="home-apps"></div>
+            </section>
           </div>
         </section>
         <div class="empty-view" id="emptyView" hidden>
           <div class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M13 9h4M13 13h4"/></svg></div>
           <h2 id="emptyTitle">Dein Workspace</h2>
-          <p id="emptyDescription">Wähle eine App in der Sidebar aus.</p>
+          <p id="emptyDescription">Wähle eine App in der App-Übersicht aus.</p>
           <a id="emptyLink" class="primary-link" href="../index.html" hidden>Zum Boiler Room</a>
         </div>
         <div id="frames" class="frames" hidden></div>
         <div id="loading" class="loading" role="status" hidden><span class="spinner" aria-hidden="true"></span> App wird geladen …</div>
+        <button id="toolbarMenuBackdrop" class="toolbar-menu-backdrop" type="button" aria-label="Toolbar-Menü schließen" tabindex="-1" hidden></button>
       </div>
     </main>
   </div>
+  <div id="toastStack" class="toast-stack" role="status" aria-live="polite" aria-atomic="false"></div>
   <script>window.BoilerRoom = window.BoilerRoom || {};</script>
   <script src="../js/data.js"></script>
   <script src="../js/storage.js"></script>
+  <script src="../js/toast.js"></script>
+  <script src="../js/favorites.js"></script>
   <script src="../js/search-relevance.js"></script>
   <script src="offline-model.js"></script>
   <script src="offline-client.js"></script>

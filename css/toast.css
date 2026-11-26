@@ -46,3 +46,6 @@
 @media (prefers-reduced-motion: reduce) {
   .toast, .toast-leaving { animation: none; }
 }
+
+.toast.toast-info { border-color: rgba(116,204,228,.35); box-shadow: 0 10px 38px rgba(0,0,0,.55); }
+.toast.toast-info .toast-symbol { color: var(--cyan-base); }

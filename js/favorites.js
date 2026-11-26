@@ -3,16 +3,14 @@
   'use strict';
 
   const repos = B.data.repos;
-  const updateFavCount = () => B.filters.updateFavCount();
+  const updateFavCount = () => B.filters?.updateFavCount();
 
   let favorites = new Set();
   let favOrder = [];
 
   function loadFavorites() {
     const arr = B.storage.get('favorites');
-    if (Array.isArray(arr)) {
-      favorites = new Set(arr.filter(x => typeof x === 'string'));
-    }
+    favorites = new Set(Array.isArray(arr) ? arr.filter(x => typeof x === 'string') : []);
   }
 
   function saveFavorites() {
@@ -21,7 +19,7 @@
 
   function loadFavOrder() {
     const arr = B.storage.get('favoriteOrder');
-    if (Array.isArray(arr)) favOrder = arr.filter(x => typeof x === 'string');
+    favOrder = Array.isArray(arr) ? arr.filter(x => typeof x === 'string') : [];
   }
 
   function saveFavOrder() {
@@ -72,6 +70,9 @@
   }
 
   function toggleFavorite(label) {
+    // Read the current shared state before changing it (e.g. another tab).
+    loadFavorites();
+    loadFavOrder();
     if (favorites.has(label)) {
       favorites.delete(label);
     } else {

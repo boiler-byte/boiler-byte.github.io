@@ -1,10 +1,10 @@
-# Boiler Room – App-Plattform v30
+# Boiler Room – App-Plattform v43
 
 Vanilla JavaScript mit **klassischen `<script src="...">`-Dateien**. Keine ES-Module, keine Abhaengigkeiten, kein Build-Prozess.
 
 ## Installation
 
-Inhalt des ZIPs über den bisherigen v29-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **erhalten** (die Workspace-Zuordnungen koennen wie unten beschrieben umbenannt werden). Sie wird von `index.html` weiterhin vor allen Modulen geladen:
+Inhalt des ZIPs über den bisherigen v42-Projektstand kopieren. Die produktive `repos.js` (Plural) im Stammverzeichnis **erhalten** (die Workspace-Zuordnungen koennen wie unten beschrieben umbenannt werden). Sie wird von `index.html` weiterhin vor allen Modulen geladen:
 
 ```html
 <script src="repos.js"></script>
@@ -12,7 +12,133 @@ Inhalt des ZIPs über den bisherigen v29-Projektstand kopieren. Die produktive `
 
 Ihre `originrepos` und `originrepogroups` haben weiterhin Vorrang vor den Fallback-Daten in `js/data.js`. Die Datei `repos.js` sowie eigene `img/`, `fonts/`, `icons/` und `manifest.json` sind nicht Teil dieses ZIPs und duerfen auf dem Host nicht geloescht werden.
 
-## Neu in v30: Workspace-App-Übersicht
+## Neu in v43: Workspace – App-Übersicht
+
+- App-Icon ca. 450 ms mit Finger, Stift oder Maus gedrückt halten: Das Icon kippt leicht. Nach dem Loslassen erscheinen links das Drei-Punkte-Kontextmenü und rechts ein rundes X zum Beenden des Edit-Modus. Die normale kurze Betätigung öffnet die App wie bisher.
+- Ausschließlich im ungesuchten Favoriten-Bereich können Apps nach dem Halten per Drag & Drop umgeordnet werden. Das Ziel wird markiert; die neue Reihenfolge wird gemeinsam mit dem Plattform-Launcher in `favoriteOrder` gespeichert. Gruppen, zuletzt verwendete Apps und Suchergebnisse können nicht umgeordnet werden.
+- Das Kontextmenü steht in allen Bereichen der App-Übersicht zur Verfügung. Beim Öffnen wird für `boiler_room_pwa: true` der vorhandene Versionsprüfmechanismus verwendet: frühestens nach 24 Stunden bei installierten bzw. sieben Tagen bei nicht installierten Paketen erfolgt ein erneuter Netzwerkabruf. Offline werden vorhandene Prüfergebnisse genutzt. Die Fristen gelten gemeinsam mit dem Offline-Manager.
+- „Update“ bei abweichendem Paketstand, „Installieren“ bei gültiger `boiler-room.json` und fehlendem oder unvollständigem Paket, „Deinstallieren“ bei vorhandenem Paket. Installation und Update benötigen die bestehende Offline-Freigabe, einen kompatiblen Manifeststand und eine Online-Verbindung. Bereits gespeicherte Pakete können auch ohne aktuelle Freigabe entfernt werden. Die Aktionen nutzen den vorhandenen Service Worker; Favoriten und Katalogeinträge werden nicht gelöscht.
+- Tastatur: Kontextmenü-Taste oder Umschalt+F10 aktiviert den Edit-Modus; Escape beendet ihn. Alt+Pfeiltaste auf dem ausgewählten Favoriten verschiebt ihn.
+- Shell-Cache `shell-v43`; vorhandene Offline-Pakete bleiben erhalten.
+
+Prüfung: JavaScript-Syntax und beide Node.js-Offline-Testreihen bestanden. Der geplante Browser-End-to-End-Test wurde durch die Zugriffsbeschränkung auf den lokalen Testserver blockiert. Kein realer Touch-Gerätetest; die produktive `repos.js` liegt nicht vor.
+
+## Neu in v42: Workspace-Toolbar-Dropdown
+
+- Der Link zur Startseite heißt jetzt „der Boiler Room“. Der bisherige Linkspfeil wird durch das bestehende `db`-Brand ersetzt, kompakt auf 28 × 28 px. Linkziel und Position bleiben unverändert.
+- Shell-Cache `shell-v42`; bestehende Offline-Pakete bleiben erhalten.
+
+## Neu in v41: Favoriten und Offline-Freigabe
+
+- Die bisherige Gruppe „Mein Workspace“ heißt jetzt „Favoriten“, sowohl in der Workspace-App-Übersicht als auch in der Auswahl des Offline-Managers. Die interne ID `favorites` und gespeicherte Einstellungen bleiben unverändert.
+- Der Offline-Manager berücksichtigt ausschließlich Repo-Einträge mit `boiler_room_pwa: true` (boolescher Wert). Fehlende Attribute, `false`, Strings oder Zahlen werden nicht akzeptiert. Dies gilt für alle Gruppen, Favoriten, den Gesamtkatalog, Suche, Kennzahlen, Versionsprüfungen und Einzel-/Sammelaktionen.
+- Bereits gespeicherte Pakete nicht mehr freigegebener oder entfernter Repos werden nicht mehr angezeigt oder mitgezählt, aber auch nicht automatisch gelöscht. Die normale Workspace-App-Übersicht und App-Starts werden nicht nach diesem Attribut gefiltert.
+- In der produktiven `repos.js` muss das Attribut für jede gewünschte App explizit ergänzt werden. Beispiel:
+
+```js
+{
+  label: 'Offline-Notizblock',
+  url: 'workspace/apps/offline-demo/index.html',
+  boiler_room_pwa: true
+}
+```
+
+Die App benötigt weiterhin ein gültiges Manifest `boiler-room.json` und muss die bisherigen Offline-Voraussetzungen erfüllen. Das enthaltene Fallback-Repo des Offline-Notizblocks ist bereits freigegeben. Shell-Cache `shell-v41`; bestehende Offline-Pakete bleiben erhalten.
+
+Prüfung: JavaScript-Syntax und beide Node.js-Offline-Testreihen bestanden. Der Manager-Test prüft die strikte Freigabe einschließlich fehlender, falscher und nichtboolescher Werte, vorhandener Pakete ausgeschlossener Apps, aller Auswahlbereiche, Kennzahlen, Suche, Versionsprüfung sowie Sammelaktionen. Die produktive `repos.js` liegt nicht vor; kein erneuter Browser-/Gerätetest.
+
+## Neu in v40: Teilen und Offline-Manager
+
+- Teilen-Icon in der ersten Dropdown-Zeile. Bei aktiver App wird die originale Katalog-URL geteilt, in der Übersicht ein Workspace-Link zur gewählten Gruppe bzw. Favoriten. Native Web Share API, alternativ Zwischenablage mit Toast, zuletzt Kopierdialog.
+- Unter „Versionen prüfen“ erscheint das Alter der jüngsten gespeicherten Manifestprüfung im gewählten Bereich (inklusive automatischer Prüfungen). Die Anzeige aktualisiert sich alle 30 Sekunden ohne Netzwerkabruf; der Tooltip enthält den absoluten Zeitpunkt. Eine Prüfung kann auch einen nicht erreichbaren Server ergeben.
+- Die drei Offline-Metriken sind einzeln umschaltbare Statusfilter. Erneutes Anklicken hebt den Filter auf; bei Gruppenwechsel wird er zurückgesetzt. Die Suche wirkt zusätzlich. Kennzahlen und Sammelaktionen beziehen sich weiterhin auf den gesamten gewählten Bereich.
+- Shell-Cache `shell-v40`; vorhandene Offline-Pakete bleiben erhalten.
+
+Prüfung: JavaScript-Syntax und beide Offline-Testreihen bestanden. Chromium mit eingebetteten Projektdateien, Testkatalog, simuliertem localStorage, Test-iFrames und simulierten Share-/Clipboard-/Offline-Schnittstellen: Toolbar bei 320 bis 1280 px, Filter und Zeitangabe bei 320, 390, 700 und 1280 px geprüft. Native Teilen-Oberfläche, produktive App-URLs und echter Service-Worker-Betrieb wurden nicht getestet.
+
+## Neu in v39: Workspace-Toolbar
+
+- In der App-Übersicht zeigt `current` die bisherige db-Marke und die beiden Zeilen „Workspace“ (hell) sowie „der Boiler Room“ (gedämpft). Der gewählte Gruppenname bleibt in der App-Übersicht sichtbar.
+- Bei geöffneter App werden das App-Icon aus dem Katalog in Graustufen und der gedämpfte App-Titel angezeigt. Bei fehlenden oder fehlerhaften Bildern wird wie in den Cards das Repo-Icon bzw. der Anfangsbuchstabe verwendet.
+- Bis einschließlich 700 px (vorhandener mobiler Breakpoint) werden beide Textzeilen optisch ausgeblendet, das jeweilige Icon bleibt sichtbar. Der Titel bleibt für Screenreader verfügbar.
+- Home ist in allen Bildschirmgrößen und beiden Toolbar-Positionen unabhängig von der Titellänge mittig; das Menü bleibt rechts. Die bisherigen App- und Toolbar-Animationen bleiben erhalten.
+- Shell-Cache `shell-v39`; vorhandene Offline-Pakete bleiben erhalten.
+
+Prüfung: JavaScript-Syntax und beide Offline-Testreihen bestanden. Chromium mit eingebettetem HTML/CSS/JS, Testkatalog, simuliertem localStorage und Test-iFrames bei 320, 390, 700, 701, 768 und 1280 px: beide Current-Zustände, Farben, Graustufen, mobiler Breakpoint, exakte Home-Zentrierung oben und unten sowie Gruppenauswahl, Suche, App-Wechsel und Dropdown geprüft. Produktive App-Bilder/-URLs und echter Service-Worker-Betrieb wurden nicht getestet.
+
+## Neu in v38: Workspace ohne Sidebar
+
+- Der bisherige Titel „Workspace Apps“ zeigt den Namen der ausgewählten Gruppe. Die Überschrift mit Pfeil öffnet die native Gruppenauswahl (inkl. „Mein Workspace“ für Favoriten). Bei Auswahl werden die Apps, der Toolbar-Titel, der Offline-Manager-Link sowie die gespeicherte Gruppe aktualisiert. Die katalogweite Suche mit maximal 27 Treffern bleibt erhalten.
+- Sidebar, Drawer, Sidebar-Schalter, Sidebar-Suche und zugehörige Styles/Events sind entfernt. Toolbar und App-Bereich nutzen die gesamte verfügbare Breite. Das bisherige Speicherfeld `sidebarCollapsed` bleibt aus Kompatibilitätsgründen bestehen, wird aber nicht mehr ausgewertet.
+- Das Toolbar-Dropdown enthält einen direkten Link zum Boiler Room (`../index.html`). PWA-Installationsbutton und Speicher-/Offline-Hinweise sind ebenfalls aus der Sidebar dorthin umgezogen. Offline-Manager und animierter Toolbar-Positionswechsel bleiben verfügbar.
+- Die gesamte Sektion „Zuletzt verwendet“ im Toolbar-Dropdown erscheint nur mit aktivem App-iFrame. In der App-Übersicht bleibt die Nutzungshistorie weiterhin sichtbar, sofern vorhanden. Die bisherigen neun letzten Apps bleiben gespeichert.
+- Shell-Cache auf `shell-v38` aktualisiert; installierte Offline-Pakete bleiben erhalten.
+
+Prüfung: JavaScript-Syntax und beide Offline-Testreihen bestanden. Chromium mit eingebettetem HTML/CSS/JS, simuliertem localStorage, Testkatalog und Test-iFrames bei 320×568, 390×800, 700×390, 768×800 und 1280×800: Gruppenauswahl, Favoriten-Gruppe, katalogweite Suche, volle Breite ohne Sidebar, Menü-Links, Historie nur bei aktiver App, App-Wechsel und Toolbar-Position geprüft. Produktive App-URLs, native PWA-Installation und realer Service-Worker-Betrieb wurden nicht getestet.
+
+## Neu in v37: Workspace-Toolbar-Dropdown
+
+- Offline-Manager aus der Sidebar in das Toolbar-Dropdown verschoben, direkt oberhalb des Positionsbuttons. Der Link behält die Auswahl des aktuellen Workspaces bei.
+- Statt eines Switches gibt es einen Toggle-Button „Toolbar“ mit Richtungspfeil: nach unten bei oberer Toolbar, nach oben bei unterer Toolbar. Die bisherige gespeicherte Position bleibt erhalten.
+- Beim Umschalten gleiten Toolbar und App-Bereich in 320 ms an ihre neuen Positionen, ohne iFrames neu zu laden. Bei reduzierter Bewegung erfolgt der Wechsel sofort. Das Dropdown schließt vor der Bewegung. Shell-Cache `shell-v37`; bestehende Offline-Pakete bleiben erhalten.
+
+Prüfung: JavaScript-Syntax und beide Offline-Testreihen bestanden. Chromium bei 320×568, 390×800, 700×390, 768×800 und 1280×800: Menüposition, Offline-Manager-Link inklusive Workspace-Parameter, Richtungspfeil-Beschriftung, Speicherung und vorhandene App-Aktionen geprüft. Animationsdauer und Zwischenpositionen beider Ebenen bei 390 und 1280 px geprüft, ebenso Erhalt der iFrame-Knoten und reduzierte Bewegung. Browser-Test mit eingebettetem HTML/CSS/JS, Testkatalog, simuliertem localStorage und Offline-Client-Stub; produktive App-URLs und echter Service-Worker-Betrieb nicht geprüft.
+
+## Neu in v36: Workspace-Toolbar-Dropdown
+
+- Ganz rechts in der Toolbar öffnet ein Drei-Punkte-Button das Menü. Home und Sidebar bleiben direkt erreichbar. In der ersten Zeile stehen die bisherigen Aktionen Reload und extern öffnen; ohne aktive startbare App sind beide deaktiviert.
+- Darunter stehen bis zu neun zuletzt verwendete Apps (neueste zuerst, globale vorhandene Nutzungshistorie). Beim Antippen wird die App geöffnet bzw. der vorhandene iFrame wiederverwendet. Ohne Historie erscheint ein entsprechender Hinweis. Auf kleinen Bildschirmen scrollt der mittlere Bereich; die Aktionszeile und der Positionsschalter bleiben sichtbar.
+- Die letzte Zeile enthält den Schalter „Toolbar unten“. Die Einstellung wird in `localStorage.boilerRoom.workspaceToolbarBottom` gespeichert und beim Start wiederhergestellt. Das Menü öffnet je nach Position nach unten oder oben; App-Inhalt, Safe Areas und Toast-Position werden berücksichtigt. Ein Wechsel der Toolbar-Position lädt keine App neu.
+- Das Menü schließt bei Auswahl einer App/Aktion, Positionswechsel, erneutem Antippen, Escape oder Klick außerhalb. Der Shell-Cache ist `shell-v36`; bestehende Offline-Pakete bleiben erhalten.
+
+Prüfung: JavaScript-Syntax, beide Offline-Testreihen und Chromium-Tests bei 320×568, 390×800, 700×390, 768×800 und 1280×800 bestanden. Geprüft wurden Erstbenutzung, Limit und Reihenfolge der neun Apps, App-Wechsel, Reload, externe Linkattribute, Menüposition, Schließen sowie Wiederherstellung der Toolbar-Position. Browser-Test mit eingebettetem HTML/CSS/JS, Testkatalog, simuliertem localStorage, Offline-Client-Stub und Test-iFrames; produktive App-URLs und realer Service-Worker-Betrieb wurden nicht getestet.
+
+## Neu in v35: Workspace-Favoriten (Toast und Bounce)
+
+- App-Übersicht und Sidebar verwenden dieselbe Toast-Funktion und dasselbe Stylesheet wie Bibliothek und Launcher. Beim Hinzufügen/Entfernen erscheint unten links eine Meldung mit Slide-Animation (200 ms), automatisch ausgeblendet nach 3,3 Sekunden; maximal drei reguläre Meldungen, manuell schließbar.
+- Der Stern federt beim Umschalten in 320 ms von der vorherigen Größe zur neuen Größe (mit kurzem Über- und Unterschwingen). Goldton, Stern-Größen und Klickfläche bleiben unverändert. Verschwindet die App beim Entfernen aus dem Favoriten-Workspace, klingt der Stern an der bisherigen Position kurz aus. Die Favoriten werden sofort gespeichert und alle Ansichten aktualisiert.
+- Bei reduzierter Bewegung entfallen Bounce und Slide. Das gemeinsame Toast-Script und Stylesheet werden auch im Offline-Shell-Cache `shell-v35` gespeichert. Bestehende Offline-Pakete bleiben erhalten.
+
+Prüfung: JavaScript-Syntax und beide Offline-Testreihen bestanden (inklusive Offline-Verfügbarkeit der beiden Toast-Dateien). Chromium bei 320, 390, 768 und 1280 px: Hinzufügen/Entfernen in Cards und Sidebar, Bounce, verschwindender Stern, Toast-Text, Schließen, automatische Ausblendung und reduzierte Bewegung geprüft. Aufgrund gesperrter lokaler URL-Navigation mit eingebettetem HTML/CSS/JS, Testkatalog, simuliertem localStorage und Offline-Client-Stub; produktive App-URLs und echter Service-Worker-Betrieb nicht geprüft.
+
+## Neu in v34: Workspace-Übergänge (Depth & Scale)
+
+- Die App-Übersicht tritt beim Öffnen einer App mit Skalierung auf 94 % und gedämpfter Deckkraft in den Hintergrund. Die neue App erscheint darüber mit einer Skalierung von 104,5 % auf 100 %. Beim Home-Button läuft der Effekt umgekehrt; die aktualisierte Übersicht erscheint wieder.
+- Auch App-Wechsel nutzen zwei überlagerte Ebenen mit 320 ms Dauer und sanfter Ease-out-Kurve. Toolbar und Sidebar bleiben unabhängig davon. Bereits geladene iFrames werden wiederverwendet und behalten ihren Zustand.
+- Schnelle Wechsel brechen die alte Animation kontrolliert ab. Nur die aktuelle Ebene ist bedienbar; nach dem Übergang werden inaktive Ebenen ausgeblendet. Bei reduzierter Bewegung erfolgt der Wechsel sofort.
+- Initialer Start und Reload der App erfolgen ohne Eintrittsanimation. Offline-Auflösung bleibt vor der Erstellung neuer iFrames erhalten. Shell-Cache auf `shell-v34` erhöht; Offline-Pakete bleiben erhalten.
+
+Prüfung: Beide Offline-Testreihen und JavaScript-Syntaxprüfung bestanden. Chromium bei 320, 390, 700, 768 und 1280 px: Dauer und Keyframes, Ebenenreihenfolge, Home-Rückkehr, schnelle Wechsel, iFrame-Zustand, Reload und reduzierte Bewegung geprüft. Tests mit eingebettetem HTML/CSS/JS, simuliertem localStorage, Offline-Client-Stub und Test-iFrames (srcdoc); produktive App-URLs und echter Service-Worker-Betrieb im Browser nicht geprüft.
+
+## Neu in v33: Workspace-Sidebar
+
+- Die Sidebar fährt beim Öffnen und Schließen in 240 ms ein bzw. aus. Auf Desktop passt sich der App-Bereich synchron an; mobil blendet die Abdunklung mit ein und aus. Bei aktivierter Systemeinstellung „Bewegung reduzieren“ entfällt die Animation. Geschlossene Sidebar-Elemente sind nicht fokussierbar.
+- Aktive Sidebar-Favoriten verwenden denselben gedämpften Goldton (`#b7a06a`) wie die großen App-Cards. Stern-Größen und inaktive Sterne bleiben unverändert.
+- Neben „APPS“ öffnet eine Lupe die standardmäßig ausgeblendete Suche und fokussiert das Eingabefeld. Erneuter Klick oder Escape im Suchfeld schließt die Suche, leert sie und stellt die Workspace-Liste wieder her. Workspace-Wechsel schließt die Suche ebenfalls; beim reinen Ein-/Ausblenden der Sidebar bleibt ihr Zustand erhalten. Die katalogweite Suche ist weiterhin auf 27 Treffer begrenzt.
+- Shell-Cache auf `shell-v33` erhöht; vorhandene Offline-Pakete bleiben erhalten. Cache-Lifecycle-Test auf den neuen Versionsstand angepasst.
+
+Prüfung: Beide Offline-Testreihen, JavaScript-Syntaxprüfung sowie Chromium-Tests bei 320, 390, 700, 768 und 1280 px bestanden (Animation in beide Richtungen, Sidebar-Layout, Such-Toggle, Fokus, Escape, Trefferlimit, Favoriten und reduzierte Bewegung). Wegen gesperrter URL-Navigation wurden HTML/CSS/JS eingebettet, ein Testkatalog und simulierter localStorage verwendet. Produktive URLs und echter Service-Worker-Betrieb im Browser wurden nicht getestet.
+
+## Neu in v32: Workspace-Toolbar und App-Übersicht
+
+- Die aktuelle Workspace-/App-Überschrift öffnet die Sidebar per Klick, Touch oder Tastatur. Ist die Sidebar schon sichtbar, bleibt sie geöffnet.
+- Aktive Favoriten in großen Cards haben keinen sichtbaren Kreis mehr und verwenden einen dezenten, gedämpften Goldton. Sidebar-Sterne bleiben unverändert.
+- Neben „Apps“ öffnet eine Lupe die zunächst ausgeblendete Katalogsuche und fokussiert das Eingabefeld. Erneuter Klick oder Escape schließt die Suche, löscht den Suchbegriff und stellt die Übersicht wieder her. Home und Workspace-Wechsel starten mit geschlossener Suche. Die Sidebar-Suche und beide 27-Treffer-Limits bleiben unverändert.
+- Shell-Cache auf `shell-v32` erhöht; vorhandene Offline-Pakete bleiben erhalten.
+
+Prüfung: Beide Offline-Testreihen und JavaScript-Syntaxprüfung bestanden. Chromium mit eingebetteten Projektdateien, Test-Repos, simuliertem localStorage und Test-iFrames: Toolbar-Klick und Tastaturbedienung, Such-Toggle, Fokus, Escape, 27-Treffer-Limits, Favoriten-Darstellung und bisherige Übersichtsfunktionen bei 320, 390, 700, 768 und 1280 px geprüft. Produktive App-URLs wurden nicht getestet.
+
+## Neu in v31: Workspace-Suche, Übersicht und Favoriten
+
+- Beide Workspace-Suchfelder zeigen höchstens 27 Treffer aus dem gesamten startbaren Repo-Katalog, nach bisheriger Nutzungsreihenfolge und Relevanz sortiert. Die Begrenzung gilt nur bei aktiver Suche.
+- Ohne Suchbegriff erscheint „Zuletzt verwendet“ nur bei vorhandener gültiger Nutzungshistorie (maximal neun). Darunter stehen alle startbaren „Workspace Apps“ des gewählten Workspaces, in dessen Reihenfolge. Bei Erstbenutzung wird nur dieser Abschnitt angezeigt; er ersetzt den bisherigen Launcher-Fallback. Eine App kann in beiden Abschnitten erscheinen. Bei aktiver Suche werden nur die Suchergebnisse gezeigt.
+- Cards erhalten oben links einen Favoriten-Stern, Sidebar-Zeilen rechts einen eigenen Favoriten-Button. Markiert: kleiner gelber Stern; unmarkiert: größerer grauer Stern. Die Sterne sind unabhängig von der App-Auswahl bedienbar, auch per Tastatur.
+- Beide Ansichten verwenden dieselben Favoriten und dieselbe Reihenfolge wie die Hauptplattform (`localStorage.boilerRoom.favorites` und `favoriteOrder`). „Mein Workspace“ aktualisiert seine Mitglieder direkt; in Gruppen bleibt die Mitgliedschaft unverändert. Änderungen werden zwischen geöffneten Tabs synchronisiert.
+- Shell-Cache auf `shell-v31` erhöht; `js/favorites.js` gehört jetzt zur Workspace-Shell. Vorhandene Offline-Pakete bleiben erhalten.
+
+Prüfung: Beide Offline-Testreihen und JavaScript-Syntaxprüfung bestanden. Chromium mit eingebetteten Projektdateien, 40 startbaren Test-Repos, simuliertem localStorage und Test-iFrames: Suchlimit, Abschnittswechsel, Favoritenzustand, simulierte Persistenz und Storage-Ereignisse, Layout bei 320, 390, 700, 768 und 1280 px bestanden. Produktive URLs und echte tabübergreifende Browser-Persistenz konnten hier nicht getestet werden.
+
+## Neu in v30: Workspace-App-Übersicht (historisch; in v31 angepasst)
 
 - Der Workspace startet immer mit der App-Übersicht statt einer automatisch geöffneten App. Auch der Wechsel zwischen Workspaces zeigt die Übersicht.
 - Das responsive Raster zeigt bis zu neun zuletzt im Workspace geöffnete Apps, neueste zuerst, ohne Duplikate. Vor der ersten Nutzung erscheinen bis zu neun startbare Apps aus dem Launcher in dessen Reihenfolge. Ist der Launcher leer, steht die Katalogsuche zur Verfügung.
@@ -58,7 +184,8 @@ Geändert: `index.html`, `css/platform.css`, `js/launcher.js`, `README.md`.
   label: 'Textanalyse',
   type: 'tool',
   workspace: 'dev',
-  url: 'https://myprojectpages.github.io/Textanalyse/'
+  url: 'https://myprojectpages.github.io/Textanalyse/',
+  boiler_room_pwa: true // seit v41 für den Offline-Manager erforderlich
 }
 ```
 
@@ -95,9 +222,9 @@ Keine Authentifizierung, Weiterleitungen (außer der üblichen Verzeichnis-URL, 
 
 Der Manager bleibt aus der Workspace-Sidebar erreichbar. Einzel-/Sammelbereitstellung, Reparatur, Versionsupdate und Entfernen bleiben erhalten. Updates werden atomar gespeichert; bei einem fehlgeschlagenen Download bleibt das alte Paket erhalten. Installierte Pakete können offline entfernt werden, ohne Favoriten oder App-Nutzerdaten zu löschen. Speicher ist browserprofilbezogen und kann vom Browser freigegeben werden.
 
-Produktive `repos.js` und eigene Ressourcen erhalten; `repo.offline` wird ignoriert und kann gelöscht werden. Jede kompatible App benötigt eine eigene `boiler-room.json`. Bestehende v24-Pakete werden nicht pauschal gelöscht; sie bleiben nur dann als Offline-Einstieg nutzbar, wenn ihre gespeicherte URL zu `repo.url` passt. Sie können nach dem Manifest-Update neu bereitgestellt oder entfernt werden. Aktuelle Shell: `shell-v28`. Nach dem Deployment alle alten Workspace-Tabs/PWA-Fenster schließen und online erneut öffnen, damit der neue Worker aktiviert wird.
+Produktive `repos.js` und eigene Ressourcen erhalten; `repo.offline` wird ignoriert und kann gelöscht werden. Jede kompatible App benötigt eine eigene `boiler-room.json`. Bestehende v24-Pakete werden nicht pauschal gelöscht; sie bleiben nur dann als Offline-Einstieg nutzbar, wenn ihre gespeicherte URL zu `repo.url` passt. Sie können nach dem Manifest-Update neu bereitgestellt oder entfernt werden. Aktuelle Shell: `shell-v43`. Nach dem Deployment alle alten Workspace-Tabs/PWA-Fenster schließen und online erneut öffnen, damit der neue Worker aktiviert wird.
 
-Beispiel: `workspace/apps/offline-demo/` enthält den Notizblock samt Manifest und Changelog. Bei produktiver `repos.js` kann er optional als normaler Repo-Eintrag mit `url: 'workspace/apps/offline-demo/index.html'` aufgenommen werden.
+Beispiel: `workspace/apps/offline-demo/` enthält den Notizblock samt Manifest und Changelog. Bei produktiver `repos.js` kann er optional als normaler Repo-Eintrag mit `url: 'workspace/apps/offline-demo/index.html'` und `boiler_room_pwa: true` aufgenommen werden.
 
 ### Prüfung
 

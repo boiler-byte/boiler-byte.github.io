@@ -200,5 +200,5 @@
     return card;
   }
 
-  B.cards = { createCard };
+  B.cards = { createCard, syncFavoriteButton };
 })(window.BoilerRoom);

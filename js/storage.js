@@ -8,6 +8,7 @@
   const DEFAULTS = {
     favorites: [],
     workspaceRecentApps: [],
+    workspaceToolbarBottom: false,
     favoriteOrder: [],
     launcherTypeOrder: ['game', 'tool', 'misc'],
     launcherTypeClosed: [],
@@ -46,6 +47,7 @@
       ...raw,
       favorites: strings(raw.favorites),
       workspaceRecentApps: uniqueStrings(raw.workspaceRecentApps),
+      workspaceToolbarBottom: raw.workspaceToolbarBottom === true,
       favoriteOrder: strings(raw.favoriteOrder),
       launcherTypeOrder: Array.isArray(raw.launcherTypeOrder) ? uniqueStrings(raw.launcherTypeOrder) : DEFAULTS.launcherTypeOrder.slice(),
       launcherTypeClosed: uniqueStrings(raw.launcherTypeClosed),
