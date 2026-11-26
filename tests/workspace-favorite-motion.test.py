@@ -49,6 +49,7 @@ with sync_playwright() as p:
         assert dot.evaluate('(e)=>getComputedStyle(e).backgroundColor')==color
         assert dot.get_attribute('aria-hidden')=='true'
         a=dot.bounding_box(); b=card.locator('.app-name').bounding_box()
+        assert abs(a['width']-7/3)<0.05 and abs(a['height']-7/3)<0.05
         assert a['x']+a['width']<=b['x']
         assert abs(a['y']+a['height']/2-b['y']-b['height']/2)<1
     page.evaluate("""window.v47Node=document.querySelector('#homeWorkspaceApps > [data-label="A"]'); setInstalled(["A","E"])""")
@@ -168,6 +169,10 @@ with sync_playwright() as p:
     help_text=page.locator('#installWorkspaceHelp')
     page.locator('#toolbarMenuToggle').click()
     assert button.is_visible() and not help_text.is_visible()
+    assert button.evaluate('(e)=>getComputedStyle(e).backgroundColor')=='rgb(44, 212, 255)'
+    assert button.evaluate('(e)=>getComputedStyle(e).color')=='rgb(10, 10, 12)'
+    button.hover()
+    assert button.evaluate('(e)=>getComputedStyle(e).backgroundColor')=='rgb(44, 212, 255)'
     button.click()
     assert help_text.is_visible() and button.get_attribute('aria-expanded')=='true'
     button.click()

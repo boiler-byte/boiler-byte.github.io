@@ -67,7 +67,7 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 /* v47: type dot and larger icon for installed offline packages. */
 .app-copy { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
 .app-name { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 13px; font-weight: 500; }
-.app-type-dot { display: block; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+.app-type-dot { display: block; flex: none; align-self: center; width: calc(7px / 3); height: calc(7px / 3); border-radius: 50%; background: var(--muted); }
 .app-type-dot[data-type="game"] { background: var(--game); }
 .app-type-dot[data-type="tool"] { background: var(--tool); }
 .app-type-dot[data-type="misc"] { background: var(--misc); }
@@ -195,7 +195,7 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .toolbar-menu-offline, .toolbar-position-toggle { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 44px; padding: 7px 9px; border-radius: 8px; background: transparent; text-align: left; font-size: 12px; }
 .toolbar-menu-offline { border: 1px solid transparent; color: var(--accent-muted); }
 .toolbar-menu-offline:hover { border-color: var(--border); }
-#installWorkspace { color: var(--accent); }
+#installWorkspace { background: var(--accent); color: var(--bg); }
 #installWorkspace:disabled { opacity: .5; cursor: default; }
 .toolbar-install-help { margin: 0; padding: 4px 9px 8px; color: var(--muted); font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
 #boilerRoomLink .brand-mark { width: 28px; height: 28px; border-radius: 7px; font-size: 14px; }
